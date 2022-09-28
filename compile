@@ -1,0 +1,54 @@
+#!/bin/bash
+
+clear
+
+MAIN="main.c"
+UPDATER_TYPE="ubuntu"
+FILENAME="filesystem"
+
+DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
+LFLAGS=" -lcurl"
+
+echo "Cleaning up..."
+rm *.o
+
+if [ "$1" == "debug" ] || [ "$1" == "d" ]; then
+
+    echo "Compiling $UPDATER_TYPE in debugmode"
+
+	gcc -g -c $MAIN -D WCOMPILEDEBUG -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST $LFLAGS $DFLAGS || exit
+
+else  
+
+	if [ "$1" == "gdb" ]; then
+		echo "Compiling $UPDATER_TYPE for gdb"
+
+		gcc -g -c $MAIN -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+
+	else
+	    echo "Compiling $UPDATER_TYPE"
+
+		gcc -c $MAIN -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+	fi
+fi
+
+echo "Removing old application..."
+rm $FILENAME
+echo "Linking..."
+
+gcc -Wall -o $FILENAME main.o $LFLAGS || exit
+
+echo "Setting chmod..."
+chmod +x $FILENAME
+
+echo "Cleaning up..."
+rm *.o
+
+cp NilaController ../NilaController2/
+
+echo "All done!"
+echo "File: \"$FILENAME\" is created"
+
+if [ "$1" == "r" ] || [ "$1" == "R" ] || [ "$2" == "r" ] || [ "$2" == "R" ]; then
+	./$FILENAME
+fi
