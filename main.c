@@ -6,12 +6,18 @@
 //Following https://www.youtube.com/watch?v=daA-KBKfJ_o
 //By Jacob Sorber
 
+typedef struct 
+{
+	int ID;
+} Server;
+
 size_t dataChunck(char* buffer, size_t itemsize, size_t nitems, void* context)
 {
 	size_t bytes = itemsize * nitems;
+	Server* server = (Server*) context;
 
 	printf("New chunk (%zu bytes)\n\r", bytes);
-
+	printf("Context: %i\n\r", server->ID);
 
 	return bytes;
 }
@@ -27,9 +33,14 @@ int main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
+	Server server;
+
+	server.ID = 100;
+
 	//Set options
 	curl_easy_setopt(curl, CURLOPT_URL, "https://google.com");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dataChunck);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &server);
 
 	//perform our action
 	CURLcode result = curl_easy_perform(curl);
