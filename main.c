@@ -11,6 +11,14 @@
 #define True 0
 #define Bool int
 
+#if defined COMPILEDEBUG
+	#define ALLOCATOR_DEBUG
+	#define ALLOCATOR_DEBUG_BORDERCHECK 6
+	#define ALLOCATOR_RUN_AFTERCHECK
+#endif
+
+#include "Libs/File.c"
+#include "Libs/Allocator.c"
 #include "Libs/Server/Filesystem_Server.c"
 
 int kbhit(void);
