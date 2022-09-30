@@ -1,6 +1,6 @@
 #include "Allocator.h"
 
-void* Allocator_Malloc(size_t size)
+void* Allocator_Malloc(int size)
 {
 	
 }

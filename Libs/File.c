@@ -96,7 +96,7 @@ int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize)
 }
 
 
-int File_Append(FILE* _File, const char* _Data, int _DataSize)
+int File_Append(FILE* _File, const unsigned char* _Data, int _DataSize)
 {
     File_SetPosition(_File, File_GetSize(_File));
     

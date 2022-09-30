@@ -2,7 +2,7 @@
 
 int Filesystem_Server_InitializePtr(const char* _Path, Filesystem_Server** _ServerPtr)
 {
-	Filesystem_Server* _Server = (struct Filesystem_Server*)malloc(sizeof(Filesystem_Server));
+	Filesystem_Server* _Server = (Filesystem_Server*)malloc(sizeof(Filesystem_Server));
 	if(_Server == NULL)
 		return -1;
 	
