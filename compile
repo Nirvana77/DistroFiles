@@ -7,7 +7,7 @@ UPDATER_TYPE="ubuntu"
 FILENAME="filesystem"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
-LFLAGS=" -lcurl"
+LFLAGS="-ljansson -lcurl"
 
 echo "Cleaning up..."
 rm *.o
