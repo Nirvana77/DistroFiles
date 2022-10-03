@@ -11,11 +11,12 @@
 #define True 0
 #define Bool int
 
-// #ifdef WCOMPILEDEBUG
+	#define ALLOCATOR_DEBUG
+#ifdef COMPILEDEBUG
 	#define ALLOCATOR_DEBUG
 	#define ALLOCATOR_DEBUG_BORDERCHECK 6
 	#define ALLOCATOR_RUN_AFTERCHECK
-// #endif
+#endif
 
 #include "Libs/File.c"
 #include "Libs/Memory.c"
@@ -27,9 +28,11 @@ int kbhit(void);
 
 int main(int argc, char* argv[])
 {
-	int doExit = 1;
+	#ifdef ALLOCATOR_DEBUG
+		Allocator_Open("AllocatorDebug.txt");
+	#endif
 
-	File_Remove("AllocatorDebug.txt");
+	int doExit = 1;
 	
 	Filesystem_Server* server = NULL;
 	int success = Filesystem_Server_InitializePtr("filesystem", &server);
@@ -61,6 +64,10 @@ int main(int argc, char* argv[])
 	}
 
 	Filesystem_Server_Dispose(server);
+
+	#ifdef ALLOCATOR_DEBUG
+		Allocator_Close();
+	#endif
 	
 	return 0;
 }

@@ -16,7 +16,7 @@ if [ "$1" == "debug" ] || [ "$1" == "d" ]; then
 
     echo "Compiling $UPDATER_TYPE in debugmode"
 
-	gcc -g -c -DWCOMPILEDEBUG $MAIN -D WCOMPILEDEBUG -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST $LFLAGS $DFLAGS || exit
+	gcc -g -c -DCOMPILEDEBUG $MAIN -D COMPILEDEBUG -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST $LFLAGS $DFLAGS || exit
 
 else  
 

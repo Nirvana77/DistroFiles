@@ -77,6 +77,8 @@ int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize)
     int bytesRead = 0;
     int totalRead = 0;
     int bytesToRead = 0;
+    int errorCheck = 0;
+
     while(bytesLeft > 0 && totalRead < _BufferSize)
     {
         bytesToRead = bytesLeft;
@@ -86,6 +88,12 @@ int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize)
         bytesRead = fread(ptr, 1, bytesToRead, _File);
         if(bytesRead < 0)
             return -2;
+
+        else if(bytesRead == 0)
+            errorCheck++;
+
+        if(errorCheck == 10)
+            return -3;
 
         ptr += bytesRead;
         bytesLeft -= bytesRead;
