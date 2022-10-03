@@ -8,6 +8,7 @@ typedef enum {
 
 } Allocator_Bordercheck;
 
+#include "Memory.h"
 
 void* Allocator_Malloc(unsigned int _Size);
 int Allocator_Free(void* _Ptr);

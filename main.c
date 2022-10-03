@@ -18,6 +18,8 @@
 // #endif
 
 #include "Libs/File.c"
+#include "Libs/Memory.c"
+
 #include "Libs/Allocator.c"
 #include "Libs/Server/Filesystem_Server.c"
 
