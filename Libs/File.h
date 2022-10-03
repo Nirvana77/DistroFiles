@@ -11,7 +11,6 @@ void File_Close(FILE* _File);
 int File_Read(FILE* _File, unsigned char* _Buffer, int _Size);
 int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize);
 
-int File_Append(FILE* _File, const unsigned char* _Data, int _DataSize);
 int File_WriteAll(FILE* _File, const unsigned char* _Data, int _DataSize);
 
 int File_Copy(const char* _Source, const char* _Destination);
