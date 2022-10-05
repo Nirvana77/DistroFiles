@@ -27,8 +27,6 @@ struct T_Filesystem_Server
 
 	json_t* m_Json;
 	Filesystem_ServerSettings m_Settings;
-
-	CURL* m_Curl;
 	
 };
 

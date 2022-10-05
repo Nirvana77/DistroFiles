@@ -28,6 +28,11 @@
 
 int kbhit(void);
 
+typedef struct
+{
+	CURL* m_Curl;
+} Server;
+
 int main(int argc, char* argv[])
 {
 	#ifdef ALLOCATOR_DEBUG

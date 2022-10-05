@@ -29,7 +29,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 {
 	_Server->m_Allocated = False;
 	_Server->m_Json = NULL;
-	_Server->m_Curl = NULL;
 
 	int success = String_Initialize(&_Server->m_Path, 32);
 
@@ -78,24 +77,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 	{
 		Filesystem_Server_Save(_Server);
 	}
-/* 
-	_Server->m_Curl = curl_easy_init();
-	if(_Server->m_Curl == NULL)
-	{
-		fprintf(stderr, "Init failed\n\r");
-		return -5;
-	}
-
-	//Set options
-	curl_easy_setopt(_Server->m_Curl, CURLOPT_URL, "https://google.com");
-	curl_easy_setopt(_Server->m_Curl, CURLOPT_WRITEFUNCTION, Filesystem_Server_CurlChunckData);
-	curl_easy_setopt(_Server->m_Curl, CURLOPT_WRITEDATA, _Server);
-
-	//perform our action
-	CURLcode result = curl_easy_perform(_Server->m_Curl);
-	if(result != CURLE_OK)
-		fprintf(stderr, "Download problem %s\n\r", curl_easy_strerror(result)); */
-	
 
 	return 0;
 }
@@ -230,11 +211,6 @@ int Filesystem_Server_Save(Filesystem_Server* _Server)
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
-	if(_Server->m_Curl != NULL)
-	{
-		curl_easy_cleanup(_Server->m_Curl);
-		_Server->m_Curl = NULL;
-	}
 
 	if(_Server->m_Json != NULL)
 		json_decref(_Server->m_Json);
