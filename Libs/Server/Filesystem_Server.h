@@ -10,6 +10,14 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "../File.h"
 #include "../Folder.h"
 #include "../Json.h"
+#include <curl/curl.h>
+
+typedef struct
+{
+	String m_IP;
+	u_int8_t m_Port;
+
+} Filesystem_ServerSettings;
 
 struct T_Filesystem_Server
 {
@@ -18,6 +26,9 @@ struct T_Filesystem_Server
 	String m_FilesytemPath;
 
 	json_t* m_Json;
+	Filesystem_ServerSettings m_Settings;
+
+	CURL* m_Curl;
 	
 };
 

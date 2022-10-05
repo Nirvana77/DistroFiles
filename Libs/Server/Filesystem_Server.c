@@ -1,8 +1,10 @@
 #include "Filesystem_Server.h"
+
+size_t Filesystem_Server_CurlChunckData(char* _Buffer, size_t _Itemsize, size_t _NItems, void* _Context);
+
 int Filesystem_Server_Load(Filesystem_Server* _Server);
 int Filesystem_Server_Read(Filesystem_Server* _Server, json_t* _JSON);
 int Filesystem_Server_Save(Filesystem_Server* _Server);
-
 
 int Filesystem_Server_InitializePtr(const char* _Path, Filesystem_Server** _ServerPtr)
 {
@@ -27,6 +29,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 {
 	_Server->m_Allocated = False;
 	_Server->m_Json = NULL;
+	_Server->m_Curl = NULL;
 
 	int success = String_Initialize(&_Server->m_Path, 32);
 
@@ -76,9 +79,36 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 		Filesystem_Server_Save(_Server);
 	}
 
-	
+	/*
+	if(_Server->m_Curl == NULL)
+	{
+		fprintf(stderr, "Init failed\n\r");
+		return EXIT_FAILURE;
+	}
+
+	//Set options
+	curl_easy_setopt(_Server->m_Curl, CURLOPT_URL, "https://google.com");
+	curl_easy_setopt(_Server->m_Curl, CURLOPT_WRITEFUNCTION, Filesystem_Server_CurlChunckData);
+	curl_easy_setopt(_Server->m_Curl, CURLOPT_WRITEDATA, _Server);
+
+	//perform our action
+	CURLcode result = curl_easy_perform(_Server->m_Curl);
+	if(result != CURLE_OK)
+		fprintf(stderr, "Download problem %s\n\r", curl_easy_strerror(result));
+	*/
 
 	return 0;
+}
+
+size_t Filesystem_Server_CurlChunckData(char* _Buffer, size_t _Itemsize, size_t _NItems, void* _Context)
+{
+	
+	size_t bytes = _Itemsize * _NItems;
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+
+	printf("New chunk (%zu bytes)\n\r", bytes);
+
+	return bytes;
 }
 
 int Filesystem_Server_Load(Filesystem_Server* _Server)
@@ -198,9 +228,14 @@ int Filesystem_Server_Save(Filesystem_Server* _Server)
 	return 0;
 }
 
-
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
+	if(_Server->m_Curl != NULL)
+	{
+		curl_easy_cleanup(_Server->m_Curl);
+		_Server->m_Curl = NULL;
+	}
+
 	if(_Server->m_Json != NULL)
 		json_decref(_Server->m_Json);
 
