@@ -19,7 +19,10 @@
 #endif
 
 #include "Libs/File.c"
+#include "Libs/Folder.c"
 #include "Libs/Memory.c"
+#include "Libs/String.c"
+#include "Libs/LinkedList.c"
 
 #include "Libs/Allocator.c"
 #include "Libs/Server/Filesystem_Server.c"
