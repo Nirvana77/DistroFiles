@@ -2,3 +2,5 @@ filesystem
 AllocatorDebug.txt
 bin
 bin/*
+Shared
+Shared/*

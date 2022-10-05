@@ -72,15 +72,12 @@ int String_Append(String* _Str, const char* _String, int _Length)
 int String_Sprintf(String* _Str, const char* _String, ...)
 {
 	va_list param;
-	int32_t optValue = (-1); /* -1 would indicate optValue is to be ignored */
-
-	// write string here
 
 	va_start(param, _String);
 	int printLength;
 	int maxLength = _Str->m_Size - _Str->m_Length - 1;
 
-	#ifdef __linux__ |  _WIN32
+	#ifdef __linux__
 		printLength = vsnprintf((char*)&_Str->m_Ptr[_Str->m_Length], maxLength, _String, param);
 	#else
 		printf("You system is not supported for sprintf\n\r");
@@ -101,7 +98,7 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 
 		va_start(param, _String);
 
-		#ifdef __linux__ |  _WIN32
+		#ifdef __linux__
 			printLength = vsnprintf((char*)&_Str->m_Ptr[_Str->m_Length], maxLength, _String, param);
 		#else
 			printf("You system is not supported for sprintf\n\r");
@@ -112,7 +109,43 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 
 	_Str->m_Length += printLength;
 	_Str->m_Ptr[_Str->m_Length] = 0;
-	
+
+	return 0;
+}
+
+int String_ReadFromFile(String* _Str, const char* _Path)
+{
+	FILE* f = NULL;
+	if(File_Open(_Path, "r", &f) != 0)
+		return -1;
+
+	int fileSize = File_GetSize(f);
+	if(_Str->m_Size < fileSize)
+	{
+		char* newPtr = (char*) Allocator_Malloc(sizeof(char) * ((int)(fileSize/_Str->m_BufferSize) + _Str->m_BufferSize));
+
+		if(newPtr == NULL)
+			return -2;
+
+		Allocator_Free(_Str->m_Ptr);
+		_Str->m_Ptr = newPtr;
+	}
+
+	File_ReadAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Size);
+
+	File_Close(f);
+	return 0;
+}
+
+int String_SaveToFile(String* _Str, const char* _Path)
+{
+	FILE* f = NULL;
+	if(File_Open(_Path, "wb", &f) != 0)
+		return -1;
+
+	File_WriteAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Length);
+
+	File_Close(f);
 	return 0;
 }
 

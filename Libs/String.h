@@ -5,6 +5,7 @@ struct T_String;
 typedef struct T_String String;
 
 #include "Allocator.h"
+#include "File.h"
 #include <stdarg.h>
 
 struct T_String
@@ -26,6 +27,10 @@ int String_Append(String* _Str, const char* _String, int _Length);
 int String_Sprintf(String* _Str, const char* _String, ...);
 
 #define String_Set(a,b) String_Append(a,b, strlen(b))
+
+
+int String_ReadFromFile(String* _Str, const char* _Path);
+int String_SaveToFile(String* _Str, const char* _Path);
 
 void String_Dispose(String* _Str);
 
