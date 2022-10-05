@@ -2,7 +2,6 @@
 
 clear
 
-MAIN="main.c"
 FILENAME="main"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
@@ -15,19 +14,19 @@ if [ "$1" == "debug" ] || [ "$1" == "d" ]; then
 
     echo "Compiling in debugmode"
 
-	gcc -g -c -D COMPILEDEBUG $MAIN $LFLAGS $DFLAGS || exit
+	gcc -g -c -D COMPILEDEBUG $FILENAME.c $LFLAGS $DFLAGS || exit
 
 else  
 
 	if [ "$1" == "gdb" ]; then
 		echo "Compiling for gdb"
 
-		gcc -g -D COMPILEDEBUG -c $MAIN -luuid -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -g -D COMPILEDEBUG -c $FILENAME.c -luuid -pthread -lbsd $LFLAGS $DFLAGS || exit
 
 	else
 	    echo "Compiling"
 
-		gcc -c $MAIN -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -c $FILENAME.c -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
 	fi
 fi
 
@@ -35,7 +34,7 @@ echo "Removing old application..."
 rm bin/$FILENAME
 echo "Linking..."
 
-gcc -Wall -o bin/$FILENAME main.o $LFLAGS || exit
+gcc -Wall -o bin/$FILENAME $FILENAME.o $LFLAGS || exit
 
 echo "Setting chmod..."
 chmod +x bin/$FILENAME
