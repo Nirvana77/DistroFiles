@@ -92,7 +92,9 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 	{
 		while(printLength >= maxLength)
 		{
-			String_ExtendBuffer(_Str);
+			if(String_ExtendBuffer(_Str) != 0)
+				return -2;
+				
 			maxLength = _Str->m_Size - _Str->m_Length - 1;
 		}
 

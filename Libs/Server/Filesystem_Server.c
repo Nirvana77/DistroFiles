@@ -78,12 +78,12 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 	{
 		Filesystem_Server_Save(_Server);
 	}
-
-	/*
+/* 
+	_Server->m_Curl = curl_easy_init();
 	if(_Server->m_Curl == NULL)
 	{
 		fprintf(stderr, "Init failed\n\r");
-		return EXIT_FAILURE;
+		return -5;
 	}
 
 	//Set options
@@ -94,8 +94,8 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 	//perform our action
 	CURLcode result = curl_easy_perform(_Server->m_Curl);
 	if(result != CURLE_OK)
-		fprintf(stderr, "Download problem %s\n\r", curl_easy_strerror(result));
-	*/
+		fprintf(stderr, "Download problem %s\n\r", curl_easy_strerror(result)); */
+	
 
 	return 0;
 }
