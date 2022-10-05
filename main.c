@@ -11,7 +11,6 @@
 #define True 0
 #define Bool int
 
-	#define ALLOCATOR_DEBUG
 #ifdef COMPILEDEBUG
 	#define ALLOCATOR_DEBUG
 	#define ALLOCATOR_DEBUG_BORDERCHECK 6
@@ -39,7 +38,7 @@ int main(int argc, char* argv[])
 	
 	Filesystem_Server* server = NULL;
 	int success = Filesystem_Server_InitializePtr("filesystem", &server);
-
+	
 	printf("Success: %i\r\n", success);
 
 	struct timespec tim, tim2;
@@ -66,7 +65,8 @@ int main(int argc, char* argv[])
 		nanosleep(&tim, &tim2);
 	}
 
-	Filesystem_Server_Dispose(server);
+	if(server != NULL)
+		Filesystem_Server_Dispose(server);
 
 	#ifdef ALLOCATOR_DEBUG
 		Allocator_Close();
