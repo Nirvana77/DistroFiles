@@ -19,6 +19,11 @@ struct T_String
 
 int String_InitializePtr(int _BufferSize, String** _StrPtr);
 int String_Initialize(String* _Str, int _BufferSize);
+
+int String_Append(String* _Str, const char* _String, int _Length);
+
+#define String_Set(a,b) String_Append(a,b, strlen(b))
+
 void String_Dispose(String* _Str);
 
 

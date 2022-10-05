@@ -7,10 +7,10 @@ int Folder_Create(const char* _Path)
 	#ifdef __linux__
 		check = mkdir(_Path, 0777);
 
-		if(check == 0)
+		if(check != 0)
 		{
-			if(check == -1)
-				check = 1; //Exists
+			if(errno == EEXIST)
+				check = 1;
 			else 
 				check = -1;
 		}
