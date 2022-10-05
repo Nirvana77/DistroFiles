@@ -37,7 +37,7 @@ int main(int argc, char* argv[])
 	int doExit = 1;
 	
 	Filesystem_Server* server = NULL;
-	int success = Filesystem_Server_InitializePtr("Root", &server);
+	int success = Filesystem_Server_InitializePtr("Shared", &server);
 	
 	printf("Success: %i\r\n", success);
 

@@ -4,9 +4,18 @@
 struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
+#include "../String.h"
+#include "../File.h"
+#include "../Folder.h"
+#include <jansson.h>
+
 struct T_Filesystem_Server
 {
 	Bool m_Allocated;
+	String m_Path;
+	String m_FilesytemPath;
+
+	json_t* m_Json;
 	
 };
 

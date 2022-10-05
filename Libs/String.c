@@ -69,6 +69,53 @@ int String_Append(String* _Str, const char* _String, int _Length)
 	return 0;
 }
 
+int String_Sprintf(String* _Str, const char* _String, ...)
+{
+	va_list param;
+	int32_t optValue = (-1); /* -1 would indicate optValue is to be ignored */
+
+	// write string here
+
+	va_start(param, _String);
+	int printLength;
+	int maxLength = _Str->m_Size - _Str->m_Length - 1;
+
+	#ifdef __linux__ |  _WIN32
+		printLength = vsnprintf((char*)&_Str->m_Ptr[_Str->m_Length], maxLength, _String, param);
+	#else
+		printf("You system is not supported for sprintf\n\r");
+	#endif
+
+	va_end(param);
+
+	if(printLength < 0)
+		return -1;
+
+	if(printLength >= maxLength)
+	{
+		while(printLength >= maxLength)
+		{
+			String_ExtendBuffer(_Str);
+			maxLength = _Str->m_Size - _Str->m_Length - 1;
+		}
+
+		va_start(param, _String);
+
+		#ifdef __linux__ |  _WIN32
+			printLength = vsnprintf((char*)&_Str->m_Ptr[_Str->m_Length], maxLength, _String, param);
+		#else
+			printf("You system is not supported for sprintf\n\r");
+		#endif
+
+		va_end(param);
+	}
+
+	_Str->m_Length += printLength;
+	_Str->m_Ptr[_Str->m_Length] = 0;
+	
+	return 0;
+}
+
 void String_Dispose(String* _Str)
 {
 	if(_Str->m_Ptr != NULL)

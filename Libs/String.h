@@ -5,6 +5,7 @@ struct T_String;
 typedef struct T_String String;
 
 #include "Allocator.h"
+#include <stdarg.h>
 
 struct T_String
 {
@@ -13,6 +14,7 @@ struct T_String
 
 	char* m_Ptr;
 	int m_Length;
+
 	int m_Size;
 
 };
@@ -21,6 +23,7 @@ int String_InitializePtr(int _BufferSize, String** _StrPtr);
 int String_Initialize(String* _Str, int _BufferSize);
 
 int String_Append(String* _Str, const char* _String, int _Length);
+int String_Sprintf(String* _Str, const char* _String, ...);
 
 #define String_Set(a,b) String_Append(a,b, strlen(b))
 

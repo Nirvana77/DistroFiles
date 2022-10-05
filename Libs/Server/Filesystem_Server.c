@@ -23,12 +23,48 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path)
 {
 	_Server->m_Allocated = False;
 
+	int success = String_Initialize(&_Server->m_Path, 32);
+
+	if(success != 0)
+	{
+		printf("Can't initialize path: %i\n\r", success);
+		return -2;
+	}
+
+	String_Set(&_Server->m_Path, _Path);
+
+	success = Folder_Create(_Server->m_Path.m_Ptr);
+
+	if(success < 0)
+	{
+		printf("Can't create folder(%i): %s\n\r", success, _Server->m_Path.m_Ptr);
+		String_Dispose(&_Server->m_Path);
+		
+		return -3;
+	}
+
+	String_Initialize(&_Server->m_FilesytemPath, 32);
+	
+	success = String_Sprintf(&_Server->m_FilesytemPath, "%s/root", _Server->m_Path.m_Ptr);
+
+	success = Folder_Create(_Server->m_FilesytemPath.m_Ptr);
+
+	if(success < 0)
+	{
+		printf("Can't create folder(%i): %s\n\r", success, _Server->m_FilesytemPath.m_Ptr);
+		String_Dispose(&_Server->m_FilesytemPath);
+		String_Dispose(&_Server->m_Path);
+
+		return -4;
+	}
+
 	return 0;
 }
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
-	
+	String_Dispose(&_Server->m_FilesytemPath);
+	String_Dispose(&_Server->m_Path);
 
 	if(_Server->m_Allocated == True)
 		Allocator_Free(_Server);
