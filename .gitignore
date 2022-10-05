@@ -1,2 +1,4 @@
 filesystem
 AllocatorDebug.txt
+bin
+bin/*

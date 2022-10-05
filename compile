@@ -3,8 +3,7 @@
 clear
 
 MAIN="main.c"
-UPDATER_TYPE="ubuntu"
-FILENAME="filesystem"
+FILENAME="main"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
 LFLAGS="-ljansson -lcurl"
@@ -14,39 +13,39 @@ rm *.o
 
 if [ "$1" == "debug" ] || [ "$1" == "d" ]; then
 
-    echo "Compiling $UPDATER_TYPE in debugmode"
+    echo "Compiling in debugmode"
 
-	gcc -g -c -DCOMPILEDEBUG $MAIN -D COMPILEDEBUG -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST $LFLAGS $DFLAGS || exit
+	gcc -g -c -D COMPILEDEBUG $MAIN $LFLAGS $DFLAGS || exit
 
 else  
 
 	if [ "$1" == "gdb" ]; then
-		echo "Compiling $UPDATER_TYPE for gdb"
+		echo "Compiling for gdb"
 
-		gcc -g -c $MAIN -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -g -D COMPILEDEBUG -c $MAIN -luuid -pthread -lbsd $LFLAGS $DFLAGS || exit
 
 	else
-	    echo "Compiling $UPDATER_TYPE"
+	    echo "Compiling"
 
-		gcc -c $MAIN -D UPDATER_TYPE=\"$UPDATER_TYPE\" -D LIBCURL -D WSYSTEM_UUID_DEV_EXIST -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -c $MAIN -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
 	fi
 fi
 
 echo "Removing old application..."
-rm $FILENAME
+rm bin/$FILENAME
 echo "Linking..."
 
-gcc -Wall -o $FILENAME main.o $LFLAGS || exit
+gcc -Wall -o bin/$FILENAME main.o $LFLAGS || exit
 
 echo "Setting chmod..."
-chmod +x $FILENAME
+chmod +x bin/$FILENAME
 
 echo "Cleaning up..."
 rm *.o
 
 echo "All done!"
-echo "File: \"$FILENAME\" is created"
+echo "File: bin/\"$FILENAME\" is created"
 
 if [ "$1" == "r" ] || [ "$1" == "R" ] || [ "$2" == "r" ] || [ "$2" == "R" ]; then
-	./$FILENAME
+	./bin/$FILENAME
 fi
