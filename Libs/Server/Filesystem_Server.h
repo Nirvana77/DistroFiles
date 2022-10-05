@@ -22,16 +22,19 @@ typedef struct
 struct T_Filesystem_Server
 {
 	Bool m_Allocated;
+	StateMachine_Task* m_Task;
+	
 	String m_Path;
 	String m_FilesytemPath;
 
 	json_t* m_Json;
 	Filesystem_ServerSettings m_Settings;
+
 	
 };
 
-int Filesystem_Server_InitializePtr(const char* _Path, Filesystem_Server** _ServerPtr);
-int Filesystem_Server_Initialize(Filesystem_Server* _Server, const char* _Path);
+int Filesystem_Server_InitializePtr(StateMachine* _Worker, const char* _Path, Filesystem_Server** _ServerPtr);
+int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Worker, const char* _Path);
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);
 

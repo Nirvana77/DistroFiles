@@ -22,16 +22,14 @@
 #include "Libs/Memory.c"
 #include "Libs/String.c"
 #include "Libs/LinkedList.c"
+#include "Libs/StateMachine.c"
 
 #include "Libs/Allocator.c"
 #include "Libs/Server/Filesystem_Server.c"
 
 int kbhit(void);
 
-typedef struct
-{
-	CURL* m_Curl;
-} Server;
+StateMachine g_StateMachine;
 
 int main(int argc, char* argv[])
 {
@@ -40,9 +38,11 @@ int main(int argc, char* argv[])
 	#endif
 
 	int doExit = 1;
+
+	StateMachine_Initialize(&g_StateMachine);
 	
 	Filesystem_Server* server = NULL;
-	int success = Filesystem_Server_InitializePtr("Shared", &server);
+	int success = Filesystem_Server_InitializePtr(&g_StateMachine, "Shared", &server);
 	
 	printf("Success: %i\r\n", success);
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 	tim.tv_nsec = 0;
 	while(doExit == 1)
 	{
-		
+		StateMachine_Work(&g_StateMachine);
 		
 		if(kbhit())
 		{
@@ -72,6 +72,8 @@ int main(int argc, char* argv[])
 
 	if(server != NULL)
 		Filesystem_Server_Dispose(server);
+
+	StateMachine_Dispose(&g_StateMachine);
 
 	#ifdef ALLOCATOR_DEBUG
 		Allocator_Close();
