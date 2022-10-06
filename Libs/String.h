@@ -7,6 +7,7 @@ typedef struct T_String String;
 #include "Allocator.h"
 #include "File.h"
 #include <stdarg.h>
+#include "Portability.h"
 
 struct T_String
 {

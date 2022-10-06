@@ -7,9 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define False 1
-#define True 0
-#define Bool int
 
 #ifdef COMPILEDEBUG
 	#define ALLOCATOR_DEBUG
@@ -55,7 +52,7 @@ int main(int argc, char* argv[])
 		
 		if(kbhit())
 		{
-			u_int8_t chr = getchar();
+			UInt8 chr = getchar();
 			if(chr == 'q')
 				doExit = 0;
 
