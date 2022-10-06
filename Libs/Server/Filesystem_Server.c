@@ -1,5 +1,7 @@
 #include "Filesystem_Server.h"
 
+int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
+
 void Filesystem_Server_Work(UInt64 _MSTime, void* _Context);
 
 int Filesystem_Server_Load(Filesystem_Server* _Server);
@@ -29,6 +31,8 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Work
 {
 	_Server->m_Allocated = False;
 	_Server->m_Json = NULL;
+	_Server->m_Task = NULL;
+	_Server->m_Worker = _Worker;
 
 	int success = String_Initialize(&_Server->m_Path, 32);
 
@@ -65,6 +69,20 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Work
 		return -4;
 	}
 
+	//-------------Initialize------------------
+	String_Initialize(&_Server->m_Settings.m_IP, 16);
+	LinkedList_Initialize(&_Server->m_Sockets);
+
+	//-----------------------------------------
+
+
+	//-----------Default Settings--------------
+
+	_Server->m_Settings.m_Port = 5566;
+
+	String_Set(&_Server->m_Settings.m_IP, "127.0.0.1");
+
+	//-----------------------------------------
 	int loadSuccess = Filesystem_Server_Load(_Server);
 	if(loadSuccess < 0)
 	{
@@ -78,7 +96,36 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Work
 		Filesystem_Server_Save(_Server);
 	}
 
-	StateMachine_CreateTask(_Worker, 0, "FilesystemServer", Filesystem_Server_Work, _Server, &_Server->m_Task);
+	int TCPSuccess = TCPServer_Initialize(&_Server->m_TCPServer, Filesystem_Server_ConnectedSocket, _Server);
+	if(TCPSuccess != 0)
+	{
+		printf("TCP Server error: %i\n\r", TCPSuccess);
+		return -5;
+	}
+
+	TCPSuccess = TCPServer_Listen(&_Server->m_TCPServer, _Server->m_Settings.m_IP.m_Ptr, _Server->m_Settings.m_Port);
+	if(TCPSuccess != 0)
+	{
+		printf("TCP Listen error: %i\n\r", TCPSuccess);
+		return -5;
+	}
+
+	StateMachine_CreateTask(_Server->m_Worker, 0, "FilesystemServer", Filesystem_Server_Work, _Server, &_Server->m_Task);
+	return 0;
+}
+
+int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
+{
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+
+	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
+
+	//TODO: data handeling!
+
+	char ip[17];
+	memset(ip, 0, sizeof(ip));
+	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
+	printf("Connected socket(%u): %s\n\r", _TCPSocket->m_Addr.sin_port, ip);
 
 	return 0;
 }
@@ -87,9 +134,9 @@ void Filesystem_Server_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Work%u\n\r", _MSTime);
+	TCPServer_Work(&_Server->m_TCPServer);
 
-	return 0;
+	// printf("Work%lu\n\r", _MSTime);
 }
 
 int Filesystem_Server_Load(Filesystem_Server* _Server)
@@ -140,7 +187,7 @@ int Filesystem_Server_Load(Filesystem_Server* _Server)
 
 int Filesystem_Server_Read(Filesystem_Server* _Server, json_t* _JSON)
 {
-	unsigned int version;
+	UInt8 version;
 	
 	if(json_getUInt(_JSON, "version", &version) == 0)
 	{
@@ -154,7 +201,27 @@ int Filesystem_Server_Read(Filesystem_Server* _Server, json_t* _JSON)
 	
 	Bool needSave = False;
 	const char* charVal;
-	int intVal;
+	//UInt8 uintVal;
+	UInt16 ulintVal;
+
+	if(json_getString(_JSON, "IP", &charVal) == 0)
+	{
+		String_Set(&_Server->m_Settings.m_IP, charVal);
+	}
+	else
+	{
+		needSave = True;
+	}
+
+	if(json_getUInt16(_JSON, "port", &ulintVal) == 0)
+	{
+		_Server->m_Settings.m_Port = ulintVal;
+	}
+	else
+	{
+		needSave = True;
+	}
+
 	
 	return needSave == True ? 1 : 0;
 }
@@ -162,15 +229,16 @@ int Filesystem_Server_Read(Filesystem_Server* _Server, json_t* _JSON)
 int Filesystem_Server_Save(Filesystem_Server* _Server)
 {
 	String str;
-	if(String_Initialize(&str, 512) != 0)
+	if(String_Initialize(&str, 16) != 0)
 		return -1;
 
 	printf("2.1\n\r");
 	if(String_Sprintf(&str, 
 		"{"
-			"\"version\": %u"
-		"}",
-		Filesystem_Server_VERSION
+			"\"version\": %u,"
+			"\"port\": %i,"
+			"\"IP\": \"%s\""
+		"}",Filesystem_Server_VERSION, _Server->m_Settings.m_Port, _Server->m_Settings.m_IP.m_Ptr
 	) != 0)
 	{
 		String_Dispose(&str);
@@ -211,6 +279,26 @@ int Filesystem_Server_Save(Filesystem_Server* _Server)
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
+	TCPServer_Dispose(&_Server->m_TCPServer);
+
+	if(_Server->m_Task != NULL)
+	{
+		StateMachine_RemoveTask(_Server->m_Worker, _Server->m_Task);
+		_Server->m_Task = NULL;
+	}
+
+	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	while(currentNode != NULL)
+	{
+		TCPSocket* TCPSocket = currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		TCPSocket_Dispose(TCPSocket);
+		LinkedList_RemoveFirst(&_Server->m_Sockets);
+	}
+
+	LinkedList_Dispose(&_Server->m_Sockets);
+	String_Dispose(&_Server->m_Settings.m_IP);
 
 	if(_Server->m_Json != NULL)
 		json_decref(_Server->m_Json);

@@ -55,11 +55,67 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 	return 0;
 }
 
+int TCPSocket_Read(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _BufferSize)
+{
+	char buffer[_BufferSize];
+	memset(buffer, 0, sizeof(buffer));
 
+	int bytesRead = recv(_TCPSocket->m_FD, buffer, _BufferSize, 0);
 
+	if(bytesRead < 0)
+	{
+		_TCPSocket->m_Status = TCPSocket_Status_Error;
+		return -1;
+	}
+	else if(bytesRead == 0)
+	{
+		_TCPSocket->m_Status = TCPSocket_Status_Closed;
+		return 0;
+	}
+	else
+	{
+		return Buffer_WriteBuffer(_Buffer, (UInt8*)buffer, bytesRead);
+	}
+
+}
+
+int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _BufferSize)
+{
+	char buffer[_BufferSize];
+	memset(buffer, 0, sizeof(buffer));
+
+	Buffer_ReadBuffer(_Buffer, (UInt8*)buffer, _BufferSize);
+
+	int bytesSent = send(_TCPSocket->m_FD, buffer, _BufferSize, 0);
+	if(bytesSent < 0)
+	{
+		_TCPSocket->m_Status = TCPSocket_Status_Error;
+		return -1;
+	}
+	else if(bytesSent == 0)
+	{
+		_TCPSocket->m_Status = TCPSocket_Status_Closed;
+		return 0;
+	}
+
+	return bytesSent;
+}
+
+void TCPSocket_Disconnect(TCPSocket* _TCPSocket)
+{
+
+	#ifdef __linux__
+		close(_TCPSocket->m_FD);
+	#else
+
+	#endif
+
+	_TCPSocket->m_Status = TCPSocket_Status_Closed;
+}
 
 void TCPSocket_Dispose(TCPSocket* _TCPSocket)
 {
+	TCPSocket_Disconnect(_TCPSocket);
 
 	if(_TCPSocket->m_Allocated == True)
 		Allocator_Free(_TCPSocket);

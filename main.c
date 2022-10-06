@@ -20,8 +20,14 @@
 #include "Libs/String.c"
 #include "Libs/LinkedList.c"
 #include "Libs/StateMachine.c"
+#include "Libs/Buffer.c"
 
 #include "Libs/Allocator.c"
+
+#include "Libs/TCP/TCPSocket.c"
+#include "Libs/TCP/TCPServer.c"
+#include "Libs/TCP/TCPClient.c"
+
 #include "Libs/Server/Filesystem_Server.c"
 
 int kbhit(void);
@@ -43,6 +49,9 @@ int main(int argc, char* argv[])
 	
 	printf("Success: %i\r\n", success);
 
+	TCPClient client;
+	TCPClient_Initialize(&client, "127.0.0.1", 5566);
+
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;
 	tim.tv_nsec = 0;
@@ -60,12 +69,47 @@ int main(int argc, char* argv[])
 				system("clear");
 			
 			else
-				printf(">%c", chr);
+			{
+				switch (chr)
+				{
+					case 'e':
+					{
+						TCPClient_Connect(&client);
+					} break;
+					case 'r':
+					{
+						
+					} break;
+
+					case 'w':
+					{
+						Buffer buffer;
+						Buffer_Initialize(&buffer, 64);
+						const char* str = "Hellow, server!";
+
+						printf("Client: %s\n\r", str);
+						Buffer_WriteBuffer(&buffer, (UInt8*)str, strlen(str));
+
+						TCPClient_Write(&client, &buffer, strlen(str));
+						Buffer_Dispose(&buffer);
+						
+					} break;
+				
+					default:
+					{
+						printf(">%c", chr);
+
+					}break;
+				}
+			}
+				
 
 		}
 
 		nanosleep(&tim, &tim2);
 	}
+
+	TCPClient_Dispose(&client);
 
 	if(server != NULL)
 		Filesystem_Server_Dispose(server);

@@ -13,18 +13,21 @@ typedef struct T_TCPServer TCPServer;
 struct T_TCPServer
 {
 	Bool m_Allocated;
-	String m_IP;
-	int m_Port;
 
-	TCPSocket m_Socket;
-	struct sockaddr_in m_Addr;
+	TCPSocket_FD m_Socket;
+	struct sockaddr_in m_ServerAddr;
+
+	int (*m_ConnectedSocketClackkback)(TCPSocket* _TCPSocket, void* _Context);
+	void* m_Context;
 
 };
 
-int TCPServer_InitializePtr(const char* _IP, int _Port, TCPServer** _TCPServerPtr);
-int TCPServer_Initialize(TCPServer* _TCPServer, const char* _IP, int _Port);
+int TCPServer_InitializePtr(int (*m_ConnectedSocketClackkback)(TCPSocket* _TCPSocket, void* _Context), void* _Context, TCPServer** _TCPServerPtr);
+int TCPServer_Initialize(TCPServer* _TCPServer, int (*m_ConnectedSocketClackkback)(TCPSocket* _TCPSocket, void* _Context), void* _Context);
 
-int TCPServer_Listen(TCPServer* _TCPServer);
+void TCPServer_Work(TCPServer* _TCPServer);
+
+int TCPServer_Listen(TCPServer* _TCPServer, const char* _IP, UInt16 _Port);
 
 void TCPServer_Disconnect(TCPServer* _TCPServer);
 
