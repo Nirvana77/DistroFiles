@@ -36,10 +36,10 @@
 
 	unsigned char* _Allocator_Malloc(unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString)
 	{
-		u_int32_t orginalSize = (u_int32_t)_Size;
+		UInt32 orginalSize = (UInt32)_Size;
 
 		#ifdef ALLOCATOR_DEBUG_BORDERCHECK
-			_Size += sizeof(u_int32_t) + (ALLOCATOR_DEBUG_BORDERCHECK * 2);
+			_Size += sizeof(UInt32) + (ALLOCATOR_DEBUG_BORDERCHECK * 2);
 		#endif
 
 		unsigned char* ptr = (unsigned char*)malloc(_Size);
@@ -73,8 +73,8 @@
 			{
 				Allocator_Bordercheck status = Allocator_Bordercheck_OK;
 				ptr -= ALLOCATOR_DEBUG_BORDERCHECK;
-				ptr -= sizeof(u_int32_t);
-				u_int32_t orginalSize = 0;
+				ptr -= sizeof(UInt32);
+				UInt32 orginalSize = 0;
 				ptr += Memory_ParseUInt32(ptr, &orginalSize);
 				unsigned char* endPtr = ptr + ALLOCATOR_DEBUG_BORDERCHECK + orginalSize + ALLOCATOR_DEBUG_BORDERCHECK - 1;
 				
@@ -107,7 +107,7 @@
 
 			ptr = (unsigned char*)_Ptr;
 			ptr -= ALLOCATOR_DEBUG_BORDERCHECK;
-			ptr -= sizeof(u_int32_t);
+			ptr -= sizeof(UInt32);
 		#endif
 
 		free(ptr);
@@ -135,11 +135,11 @@
 		unsigned char* ptr = (unsigned char*)_Ptr;
 
 		ptr -= ALLOCATOR_DEBUG_BORDERCHECK;
-		ptr -= sizeof(u_int32_t);
-		u_int32_t orginalSize = 0;
+		ptr -= sizeof(UInt32);
+		UInt32 orginalSize = 0;
 		ptr += Memory_ParseUInt32(ptr, &orginalSize);
 
-		int length = orginalSize + sizeof(u_int32_t) + ALLOCATOR_DEBUG_BORDERCHECK * 2;
+		int length = orginalSize + sizeof(UInt32) + ALLOCATOR_DEBUG_BORDERCHECK * 2;
 		for (int i = 0; i < length; i++)
 			printf("%x%s",ptr[i], i + 1 < length ? ", " : "");
 

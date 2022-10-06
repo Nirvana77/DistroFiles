@@ -19,6 +19,7 @@ struct T_Allocator;
 typedef struct T_Allocator Allocator;
 
 #include "Memory.h"
+#include "Portability.h"
 
 struct T_Allocator
 {

@@ -8,6 +8,7 @@ struct T_LinkedList_Node;
 typedef struct T_LinkedList_Node LinkedList_Node;
 
 #include "Allocator.h"
+#include "Portability.h"
 
 struct T_LinkedList_Node
 {

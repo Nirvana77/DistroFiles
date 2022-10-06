@@ -11,11 +11,12 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "../Folder.h"
 #include "../Json.h"
 #include <curl/curl.h>
+#include "../Portability.h"
 
 typedef struct
 {
 	String m_IP;
-	u_int8_t m_Port;
+	UInt8 m_Port;
 
 } Filesystem_ServerSettings;
 
