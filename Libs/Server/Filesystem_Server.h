@@ -12,6 +12,7 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "../Json.h"
 #include <curl/curl.h>
 #include "../Portability.h"
+#include "../StateMachine.h"
 
 typedef struct
 {
@@ -31,6 +32,7 @@ struct T_Filesystem_Server
 	json_t* m_Json;
 	Filesystem_ServerSettings m_Settings;
 
+	
 	
 };
 
