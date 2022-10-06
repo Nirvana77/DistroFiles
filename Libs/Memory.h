@@ -1,6 +1,8 @@
 #ifndef Memory_h__
 #define Memory_h__
 
+#include "Types.h"
+
 int Memory_UInt64ToBuffer(UInt64* _Src, unsigned char* _Pointer);
 int Memory_UInt32ToBuffer(UInt32* _Src, unsigned char* _Pointer);
 int Memory_UInt16ToBuffer(UInt16* _Src, unsigned char* _Pointer);

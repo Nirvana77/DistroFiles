@@ -15,9 +15,9 @@ struct T_Buffer
 {
     Bool m_Allocated;
 
-    char* m_Ptr;
-    char* m_ReadPtr;
-    char* m_WritePtr;
+    unsigned char* m_Ptr;
+    unsigned char* m_ReadPtr;
+    unsigned char* m_WritePtr;
     int m_Size;
 
 };
@@ -30,10 +30,14 @@ int Buffer_ReadUInt32(Buffer* _Buffer, UInt32* _Value);
 int Buffer_ReadUInt16(Buffer* _Buffer, UInt16* _Value);
 int Buffer_ReadUInt8(Buffer* _Buffer, UInt8* _Value);
 
+int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
+
 int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value);
 int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value);
 int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value);
 int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value);
+
+int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
 
 void Buffer_Dispose(Buffer* _Buffer);
 

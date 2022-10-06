@@ -30,6 +30,7 @@ int StateMachine_InitializePtr(StateMachine** _StateMachinePtr);
 int StateMachine_Initialize(StateMachine* _StateMachine);
 
 int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, const char* _Name, void (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr);
+int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Task);
 
 void StateMachine_Dispose(StateMachine* _StateMachine);
 

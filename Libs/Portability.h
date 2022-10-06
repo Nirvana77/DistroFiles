@@ -6,13 +6,13 @@
 #include <sys/time.h>
 #include <time.h>
 
-static inline int SystemMonotonicMS(UInt64* _ResultPtr)
+static inline UInt64 SystemMonotonicMS(UInt64* _ResultPtr)
 {
 	long ms; 
 	time_t s; 
 
 	struct timespec spec;
-	u_int64_t result = 0;
+	UInt64 result = 0;
 	clock_gettime(CLOCK_REALTIME, &spec);
 	s  = spec.tv_sec;
 	ms = (spec.tv_nsec / 1.0e6);
@@ -22,6 +22,7 @@ static inline int SystemMonotonicMS(UInt64* _ResultPtr)
 	result += ms;
 
     *(_ResultPtr) = result;
+	return result;
 }
 
 #endif // Portability_h__

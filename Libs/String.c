@@ -25,8 +25,9 @@ int String_Initialize(String* _Str, int _BufferSize)
 {
 	_Str->m_Allocated = False;
 	_Str->m_BufferSize = _BufferSize;
-	//Adding the zero bit
-	_Str->m_Size = _Str->m_BufferSize + 1;
+	_Str->m_Length = 0;
+	
+	_Str->m_Size = _Str->m_BufferSize + 1;//!Adding the zero bit
 
 	_Str->m_Ptr = (char*) Allocator_Malloc(sizeof(char) * (_Str->m_Size)); 
 
@@ -40,18 +41,35 @@ int String_ExtendBuffer(String* _Str)
 	
 	if(newPtr == NULL)
 		return -1;
-
-	if(memcpy(newPtr, _Str->m_Ptr, _Str->m_Size) != 0)
-	{
-		Allocator_Free(newPtr);
-		return -2;
-	}
+	memcpy(newPtr, _Str->m_Ptr, _Str->m_Size);
 
 	Allocator_Free(_Str->m_Ptr);
 
 	_Str->m_Ptr = newPtr;
 	_Str->m_Size = newSize;
 	
+	return 0;
+}
+
+int String_Set(String* _Str, const char* _String)
+{
+	if(strlen(_String) + 1 > _Str->m_Size) //!Zero bite
+	{
+		int newSize = (int)(strlen(_String)/_Str->m_BufferSize) * _Str->m_BufferSize + _Str->m_BufferSize + 1; //!Zero bite
+		char* newPtr = (char*) Allocator_Malloc(newSize*sizeof(char));
+
+		if(newPtr == NULL)
+			return -1;
+		
+		Allocator_Free(_Str->m_Ptr);
+		_Str->m_Ptr = newPtr;
+		_Str->m_Size = newSize;
+
+	}
+
+	memcpy(_Str->m_Ptr, _String, strlen(_String));
+	_Str->m_Length = strlen(_String);
+
 	return 0;
 }
 

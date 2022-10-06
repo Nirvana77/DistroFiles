@@ -41,6 +41,7 @@ void* LinkedList_RemoveFirst(LinkedList* _List);
 void* LinkedList_RemoveAt(LinkedList* _List, int _Index);
 int LinkedList_RemoveItem(LinkedList* _List, void* _Item);
 void* LinkedList_RemoveLast(LinkedList* _List);
+void* LinkedList_RemoveNode(LinkedList* _List, LinkedList_Node* _Node);
 
 void LinkedList_Clear(LinkedList* _List);
 

@@ -27,7 +27,7 @@ int String_Initialize(String* _Str, int _BufferSize);
 int String_Append(String* _Str, const char* _String, int _Length);
 int String_Sprintf(String* _Str, const char* _String, ...);
 
-#define String_Set(a,b) String_Append(a,b, strlen(b))
+int String_Set(String* _Str, const char* _String);
 
 
 int String_ReadFromFile(String* _Str, const char* _Path);

@@ -23,7 +23,7 @@ int Buffer_Initialize(Buffer* _Buffer, int _Size)
 {
 	_Buffer->m_Allocated = False;
 
-	_Buffer->m_Ptr = (char*)Allocator_Malloc(sizeof(char) * _Size);
+	_Buffer->m_Ptr = (unsigned char*)Allocator_Malloc(sizeof(unsigned char) * _Size);
 
 	if(_Buffer->m_Ptr == NULL)
 		return -2;
@@ -63,32 +63,52 @@ int Buffer_ReadUInt8(Buffer* _Buffer, UInt8* _Value)
 	return n;
 }
 
+int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
+{
+	int readBytes = 0;
+
+	for (int i = 0; i < _Size; i++)
+		readBytes += Buffer_ReadUInt8(_Buffer, &_Ptr[i]);
+
+	return readBytes;
+}
+
 int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value)
 {
-	int n = Memory_UInt64ToBuffer(_Value, _Buffer->m_WritePtr);
+	int n = Memory_UInt64ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	return n;
 }
 
 int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value)
 {
-	int n = Memory_UInt32ToBuffer(_Value, _Buffer->m_WritePtr);
+	int n = Memory_UInt32ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	return n;
 }
 
 int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value)
 {
-	int n = Memory_UInt16ToBuffer(_Value, _Buffer->m_WritePtr);
+	int n = Memory_UInt16ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	return n;
 }
 
 int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value)
 {
-	int n = Memory_UInt8ToBuffer(_Value, _Buffer->m_WritePtr);
+	int n = Memory_UInt8ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	return n;
+}
+
+int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
+{
+	int readBytes = 0;
+
+	for (int i = 0; i < _Size; i++)
+		readBytes += Buffer_WriteUInt8(_Buffer, _Ptr[i]);
+
+	return readBytes;
 }
 
 void Buffer_Dispose(Buffer* _Buffer)

@@ -57,6 +57,25 @@ int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, con
 	return 0;
 }
 
+int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Task)
+{
+	LinkedList_Node* currentNode = _StateMachine->m_List.m_Head;
+
+	while (currentNode != NULL)
+	{
+		StateMachine_Task* task = (StateMachine_Task*) currentNode->m_Item;
+		if(_Task == task)
+		{
+			LinkedList_RemoveNode(&_StateMachine->m_List, currentNode);
+			Allocator_Free(task);
+			return 0;
+		}
+		currentNode = currentNode->m_Next;
+	}
+
+	return 1;
+}
+
 void StateMachine_Work(StateMachine* _StateMachine)
 {
 	if(_StateMachine->m_Current == NULL)
