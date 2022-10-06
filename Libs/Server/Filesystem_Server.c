@@ -1,6 +1,6 @@
 #include "Filesystem_Server.h"
 
-void Filesystem_Server_Work(u_int32_t _MSTime, void* _Context);
+void Filesystem_Server_Work(UInt64 _MSTime, void* _Context);
 
 int Filesystem_Server_Load(Filesystem_Server* _Server);
 int Filesystem_Server_Read(Filesystem_Server* _Server, json_t* _JSON);
@@ -83,7 +83,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Work
 	return 0;
 }
 
-void Filesystem_Server_Work(u_int32_t _MSTime, void* _Context)
+void Filesystem_Server_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 

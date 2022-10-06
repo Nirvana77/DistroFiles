@@ -29,7 +29,7 @@ int StateMachine_Initialize(StateMachine* _StateMachine)
 }
 
 //TODO: fix prio.
-int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, const char* _Name, void (*_Callback)(u_int32_t _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
+int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, const char* _Name, void (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
 {
 	StateMachine_Task* _Task = (StateMachine_Task*) Allocator_Malloc(sizeof(StateMachine_Task));
 
@@ -67,20 +67,13 @@ void StateMachine_Work(StateMachine* _StateMachine)
 
 	if(_StateMachine->m_Current == NULL)
 		_StateMachine->m_Current = _StateMachine->m_List.m_Head;
-	long ms; 
-	time_t s; 
+		
+	UInt64 monoTime = 0;
 
-	struct timespec spec;
-	u_int64_t timeMS = 0;
-	clock_gettime(CLOCK_REALTIME, &spec);
-	s  = spec.tv_sec;
-	ms = (spec.tv_nsec / 1.0e6);
+	SystemMonotonicMS(&monoTime);
 
-	timeMS = s;
-	timeMS *= 1000;
-	timeMS += ms;
 	if(_Task->m_Callback != NULL)
-		_Task->m_Callback(timeMS, _Task->m_Context);
+		_Task->m_Callback(monoTime, _Task->m_Context);
 
 }
 
