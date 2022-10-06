@@ -6,10 +6,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define False 1
-#define True 0
-#define Bool int
-
 static inline int SystemMonotonicMS(UInt64* _ResultPtr)
 {
 	long ms; 
