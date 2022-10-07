@@ -1,4 +1,5 @@
-![Banner](img/banner.png)
+<p align="center"><img width=100% src="img/banner.png"></p>
+
 [![GitHub all releases](https://img.shields.io/github/license/nirvana77/filesystem)](https://github.com/Nirvana77/Filesystem)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/nirvana77/filesystem)](https://github.com/Nirvana77/Filesystem)
 [![GitHub issues](https://img.shields.io/github/issues-raw/nirvana77/filesystem)](https://github.com/Nirvana77/Filesystem/issues)
