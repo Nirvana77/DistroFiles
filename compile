@@ -30,6 +30,10 @@ else
 	fi
 fi
 
+if [ ! -f bin]; then
+	mkdir bin
+fi
+
 echo "Removing old application..."
 rm bin/$FILENAME
 echo "Linking..."
