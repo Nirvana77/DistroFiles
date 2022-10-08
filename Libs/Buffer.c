@@ -43,6 +43,7 @@ void Buffer_Clear(Buffer* _Buffer)
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
 }
 
+//TODO: Fix read and write ptr's
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value)
 {
 	int n = Memory_ParseUInt64(_Buffer->m_ReadPtr, _Value);
