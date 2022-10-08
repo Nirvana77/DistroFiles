@@ -146,7 +146,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, void* _Context)
 
 		int readBytes = TCPSocket_Read(TCPSocket, &_Server->m_Buffer, 64);
 
-		if(readBytes != 0)
+		if(readBytes > 0)
 		{
 			char str[readBytes + 1];
 			Buffer_ReadBuffer(&_Server->m_Buffer, str, readBytes);
