@@ -69,6 +69,10 @@ void TCPServer_Work(TCPServer* _TCPServer)
 			newSocket->m_Addr = client_addr;
 			newSocket->m_Status = TCPSocket_Status_Connected;
 
+			char ip[17];
+			memset(ip, 0, sizeof(ip));
+			inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, ip, sizeof(ip));
+			printf("TCPServer_Work(%u): %s\n\r", client_addr.sin_port, ip);
 			if(_TCPServer->m_ConnectedSocketClackkback(newSocket, _TCPServer->m_Context) != 0)
 				TCPSocket_Dispose(newSocket);
 		}

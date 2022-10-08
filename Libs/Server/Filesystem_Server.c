@@ -110,6 +110,8 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, StateMachine* _Work
 		return -5;
 	}
 
+	Buffer_Initialize(&_Server->m_Buffer, 64);
+
 	StateMachine_CreateTask(_Server->m_Worker, 0, "FilesystemServer", Filesystem_Server_Work, _Server, &_Server->m_Task);
 	return 0;
 }
@@ -135,6 +137,25 @@ void Filesystem_Server_Work(UInt64 _MSTime, void* _Context)
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
 	TCPServer_Work(&_Server->m_TCPServer);
+
+	Buffer_Clear(&_Server->m_Buffer);
+	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	while(currentNode != NULL)
+	{
+		TCPSocket* TCPSocket = currentNode->m_Item;
+
+		int readBytes = TCPSocket_Read(TCPSocket, &_Server->m_Buffer, 64);
+
+		if(readBytes != 0)
+		{
+			char str[readBytes + 1];
+			Buffer_ReadBuffer(&_Server->m_Buffer, str, readBytes);
+			printf("Resived: %s\r\n", str);
+		}
+
+		currentNode = currentNode->m_Next;
+		Buffer_Clear(&_Server->m_Buffer);
+	}
 
 	// printf("Work%lu\n\r", _MSTime);
 }
@@ -286,6 +307,8 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 		StateMachine_RemoveTask(_Server->m_Worker, _Server->m_Task);
 		_Server->m_Task = NULL;
 	}
+
+	Buffer_Dispose(&_Server->m_Buffer);
 
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
 	while(currentNode != NULL)

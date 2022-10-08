@@ -49,6 +49,7 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 	else
 	{
 		_TCPSocket->m_FD = *(_FD);
+		TCPSocket_SetNonBlocking(_TCPSocket->m_FD);
 		_TCPSocket->m_Status = TCPSocket_Status_Connected;
 	}
 

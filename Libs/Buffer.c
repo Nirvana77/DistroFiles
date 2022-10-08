@@ -35,6 +35,14 @@ int Buffer_Initialize(Buffer* _Buffer, int _Size)
 	return 0;
 }
 
+void Buffer_Clear(Buffer* _Buffer)
+{
+	memset(_Buffer->m_Ptr, 0, _Buffer->m_Size);
+
+	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
+	_Buffer->m_WritePtr = _Buffer->m_Ptr;
+}
+
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value)
 {
 	int n = Memory_ParseUInt64(_Buffer->m_ReadPtr, _Value);

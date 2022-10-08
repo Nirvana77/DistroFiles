@@ -14,6 +14,7 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "../Portability.h"
 #include "../StateMachine.h"
 #include "../TCP/TCPServer.h"
+#include "../Buffer.h"
 
 typedef struct
 {
@@ -36,7 +37,7 @@ struct T_Filesystem_Server
 
 	TCPServer m_TCPServer;
 	LinkedList m_Sockets;
-	
+	Buffer m_Buffer;
 };
 
 int Filesystem_Server_InitializePtr(StateMachine* _Worker, const char* _Path, Filesystem_Server** _ServerPtr);

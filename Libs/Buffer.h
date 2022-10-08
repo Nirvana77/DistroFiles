@@ -25,6 +25,8 @@ struct T_Buffer
 int Buffer_InitializePtr(int _Size, Buffer** _BufferPtr);
 int Buffer_Initialize(Buffer* _Buffer, int _Size);
 
+void Buffer_Clear(Buffer* _Buffer);
+
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value);
 int Buffer_ReadUInt32(Buffer* _Buffer, UInt32* _Value);
 int Buffer_ReadUInt16(Buffer* _Buffer, UInt16* _Value);
