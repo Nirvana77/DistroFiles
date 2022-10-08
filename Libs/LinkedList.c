@@ -137,6 +137,23 @@ void* LinkedList_RemoveLast(LinkedList* _List)
 	return item;
 }
 
+void* LinkedList_RemoveNode(LinkedList* _List, LinkedList_Node* _Node)
+{
+	if(_List->m_Head == _Node)
+		return LinkedList_RemoveFirst(_List);
+
+	else if(_List->m_Tail == _Node)
+		return LinkedList_RemoveLast(_List);
+
+	void* item = _Node->m_Item;
+	_Node->m_Privios->m_Next = _Node->m_Next;
+	_Node->m_Next->m_Privios = _Node->m_Privios;
+	
+	Allocator_Free(_Node);
+	
+	return item;
+}
+
 int LinkedList_CreateNode(void* _Item, LinkedList_Node** _ElementPtr)
 {
 	if(_ElementPtr == NULL)

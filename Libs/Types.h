@@ -1,6 +1,14 @@
 #ifndef Types_h__
 #define Types_h__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define False 1
+#define True 0
+#define Bool int
+
 #ifdef __linux__
     #include <inttypes.h>
     #include <stdint.h>
