@@ -10,7 +10,6 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "../File.h"
 #include "../Folder.h"
 #include "../Json.h"
-#include <curl/curl.h>
 #include "../Portability.h"
 #include "../StateMachine.h"
 #include "../TCP/TCPServer.h"
