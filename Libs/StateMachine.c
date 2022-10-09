@@ -28,7 +28,7 @@ int StateMachine_Initialize(StateMachine* _StateMachine)
 	return 0;
 }
 
-//TODO: fix prio.
+//TODO: #6 fix prio.
 int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, const char* _Name, void (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
 {
 	StateMachine_Task* _Task = (StateMachine_Task*) Allocator_Malloc(sizeof(StateMachine_Task));
@@ -48,8 +48,6 @@ int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, con
 
 	if(_StateMachine->m_Current == NULL)
 		_StateMachine->m_Current = _StateMachine->m_List.m_Head;
-
-	//TODO: resort list with prio
 	
 	if(_TaskPtr != NULL)
 		*(_TaskPtr) = _Task;

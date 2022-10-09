@@ -103,16 +103,16 @@ void* LinkedList_RemoveFirst(LinkedList* _List)
 	return item;
 }
 
+//TODO: #4 implement LinkedList_RemoveAt
 void* LinkedList_RemoveAt(LinkedList* _List, int _Index)
 {
-	//TODO: implement this function
 	fprintf(stderr, "Not implemented\n\r");
 	return NULL;
 }
 
+//TODO: #5 implement LinkedList_RemoveItem
 int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 {
-	//TODO: implement this function
 	fprintf(stderr, "Not implemented\n\r");
 	return -1;
 }

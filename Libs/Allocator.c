@@ -29,7 +29,7 @@
 		unsigned char data[size];
 		memset(data, 0, size);
 
-		//TODO Make read function
+		//TODO #2 Make read function
 		
 		File_Close(g_Allocator.m_F);
 	}

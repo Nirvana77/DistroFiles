@@ -122,8 +122,6 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 
 	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
 
-	//TODO: data handeling!
-
 	char ip[17];
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
