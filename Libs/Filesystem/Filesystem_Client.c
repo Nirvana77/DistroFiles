@@ -1,12 +1,12 @@
 #include "Filesystem_Client.h"
 
-int Filesystem_Client_InitializePtr(StateMachine* _Worker, Filesystem_Client** _ClientPtr)
+int Filesystem_Client_InitializePtr(Filesystem_Service* _Service, Filesystem_Client** _ClientPtr)
 {
 	Filesystem_Client* _Client = (Filesystem_Client*)Allocator_Malloc(sizeof(Filesystem_Client));
 	if(_Client == NULL)
 		return -1;
 	
-	int success = Filesystem_Client_Initialize(_Client, _Worker);
+	int success = Filesystem_Client_Initialize(_Client, _Service);
 	if(success != 0)
 	{
 		Allocator_Free(_Client);
@@ -19,10 +19,10 @@ int Filesystem_Client_InitializePtr(StateMachine* _Worker, Filesystem_Client** _
 	return 0;
 }
 
-int Filesystem_Client_Initialize(Filesystem_Client* _Client, StateMachine* _Worker)
+int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service* _Service)
 {
 	_Client->m_Allocated = False;
-	_Cilent->m_Worker = _Worker;
+	_Cilent->m_Service = _Service;
 
 	//TODO: Change this do not be hard coded
 	TCPClient_Initialize(&_Cilent->m_TCPClient, "127.0.0.1", 5566);
@@ -34,10 +34,8 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, StateMachine* _Work
 	return 0;
 }
 
-void Filesystem_Client_Work(UInt64 _MSTime, void* _Context)
+void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-
 
 }
 
