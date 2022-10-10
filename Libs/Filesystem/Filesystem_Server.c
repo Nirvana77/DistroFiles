@@ -41,6 +41,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	}
 
 	Buffer_Initialize(&_Server->m_Buffer, 64);
+	LinkedList_Initialize(&_Server->m_Sockets);
 
 	return 0;
 }
@@ -74,7 +75,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		if(readBytes > 0)
 		{
 			char str[readBytes + 1];
-			Buffer_ReadBuffer(&_Server->m_Buffer, str, readBytes);
+			Buffer_ReadBuffer(&_Server->m_Buffer, (UInt8*)str, readBytes);
 			printf("Resived: %s\r\n", str);
 		}
 

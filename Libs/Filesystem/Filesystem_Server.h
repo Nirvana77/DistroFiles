@@ -4,8 +4,6 @@
 struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
-#define Filesystem_Server_VERSION 1u
-
 #include "Filesystem_Service.h"
 
 struct T_Filesystem_Server

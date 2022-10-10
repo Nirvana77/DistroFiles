@@ -4,6 +4,8 @@
 struct T_Filesystem_Service;
 typedef struct T_Filesystem_Service Filesystem_Service;
 
+#define Filesystem_Service_VERSION 1u
+
 #include "../String.h"
 #include "../File.h"
 #include "../Folder.h"
@@ -35,8 +37,8 @@ struct T_Filesystem_Service
 	String m_Path;
 	String m_FilesytemPath;
 
-	Filesystem_Server m_Server;
-	Filesystem_Client m_Client;
+	Filesystem_Server* m_Server;
+	Filesystem_Client* m_Client;
 
 	Filesystem_ServiceSettings m_Settings;
 

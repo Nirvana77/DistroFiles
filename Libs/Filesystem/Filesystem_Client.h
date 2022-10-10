@@ -12,7 +12,6 @@ struct T_Filesystem_Client
 	Filesystem_Service* m_Service;
 
 	TCPClient m_TCPClient;
-	TCPSocket m_ServerSocket;
 
 };
 

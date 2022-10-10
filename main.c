@@ -28,7 +28,9 @@
 #include "Libs/TCP/TCPServer.c"
 #include "Libs/TCP/TCPClient.c"
 
-#include "Libs/Server/Filesystem_Server.c"
+#include "Libs/Filesystem/Filesystem_Server.c"
+#include "Libs/Filesystem/Filesystem_Client.c"
+#include "Libs/Filesystem/Filesystem_Service.c"
 
 int kbhit(void);
 
@@ -44,13 +46,10 @@ int main(int argc, char* argv[])
 
 	StateMachine_Initialize(&g_StateMachine);
 	
-	Filesystem_Server* server = NULL;
-	int success = Filesystem_Server_InitializePtr(&g_StateMachine, "Shared", &server);
+	Filesystem_Service* service = NULL;
+	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
 	
 	printf("Success: %i\r\n", success);
-
-	TCPClient client;
-	TCPClient_Initialize(&client, "127.0.0.1", 5566);
 
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;
@@ -72,10 +71,7 @@ int main(int argc, char* argv[])
 			{
 				switch (chr)
 				{
-					case 'e':
-					{
-						TCPClient_Connect(&client);
-					} break;
+
 					case 'r':
 					{
 						
@@ -90,7 +86,7 @@ int main(int argc, char* argv[])
 						printf("Client: %s\n\r", str);
 						Buffer_WriteBuffer(&buffer, (UInt8*)str, strlen(str));
 
-						TCPClient_Write(&client, &buffer, strlen(str));
+						TCPClient_Write(&service->m_Client->m_TCPClient, &buffer, strlen(str));
 						Buffer_Dispose(&buffer);
 						
 					} break;
@@ -109,10 +105,8 @@ int main(int argc, char* argv[])
 		nanosleep(&tim, &tim2);
 	}
 
-	TCPClient_Dispose(&client);
-
-	if(server != NULL)
-		Filesystem_Server_Dispose(server);
+	if(service != NULL)
+		Filesystem_Service_Dispose(service);
 
 	StateMachine_Dispose(&g_StateMachine);
 

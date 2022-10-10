@@ -1,6 +1,6 @@
 #include "Filesystem_Service.h"
 
-void Filesystem_Client_Work(UInt64 _MSTime, void* _Context);
+void Filesystem_Service_Work(UInt64 _MSTime, void* _Context);
 
 int Filesystem_Service_Load(Filesystem_Service* _Service);
 int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON);
@@ -69,7 +69,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 
 	//-------------Initialize------------------
 	String_Initialize(&_Service->m_Settings.m_IP, 16);
-	LinkedList_Initialize(&_Service->m_Sockets);
 
 	//-----------------------------------------
 
@@ -89,7 +88,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_IP);
-		LinkedList_Dispose(&_Service->m_Sockets);
 		return -5;
 	}
 	else if(loadSuccess == 1)
@@ -97,7 +95,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		Filesystem_Service_Save(_Service);
 	}
 
-	success = Filesystem_Server_Initialize(&_Service->m_Server, _Service);
+	success = Filesystem_Server_InitializePtr(_Service, &_Service->m_Server);
 
 	if(success != 0)
 	{
@@ -106,11 +104,10 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_IP);
-		LinkedList_Dispose(&_Service->m_Sockets);
 		return -6;
 	}
 
-	success = Filesystem_Client_Initialize(&_Service->m_Client, _Service);
+	success = Filesystem_Client_InitializePtr(_Service, &_Service->m_Client);
 
 	if(success != 0)
 	{
@@ -119,21 +116,20 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_IP);
-		LinkedList_Dispose(&_Service->m_Sockets);
-		Filesystem_Server_Dispose(&_Service->m_Server);
+		Filesystem_Server_Dispose(_Service->m_Server);
 		return -6;
 	}
 
-	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Client_Work, _Service, &_Service->m_Task);
+	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
 }
 
-void Filesystem_Client_Work(UInt64 _MSTime, void* _Context)
+void Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
 
-	Filesystem_Server_Work(_MSTime, _Client->m_Server);
-	Filesystem_Client_Work(_MSTime, _Client->m_Client);
+	Filesystem_Server_Work(_MSTime, _Service->m_Server);
+	Filesystem_Client_Work(_MSTime, _Service->m_Client);
 }
 
 
@@ -283,8 +279,17 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Task = NULL;
 	}
 
-	Filesystem_Server_Dispose(&_Service->m_Server);
-	Filesystem_Client_Dispose(&_Service->m_Client);
+	if(_Service->m_Server != NULL)
+	{
+		Filesystem_Server_Dispose(_Service->m_Server);
+		_Service->m_Server = NULL;
+	}
+
+	if(_Service->m_Client != NULL)
+	{
+		Filesystem_Client_Dispose(_Service->m_Client);
+		_Service->m_Client = NULL;
+	}
 
 	String_Dispose(&_Service->m_Settings.m_IP);
 
