@@ -30,7 +30,7 @@ else
 	fi
 fi
 
-if [ ! -f bin]; then
+if [ ! -f bin ]; then
 	mkdir bin
 fi
 
