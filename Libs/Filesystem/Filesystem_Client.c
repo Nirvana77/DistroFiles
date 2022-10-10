@@ -1,4 +1,6 @@
 #include "Filesystem_Client.h"
+int Filesystem_Client_OnRead(void* _Context, Buffer* _Buffer, int _Size);
+int Filesystem_Client_OnWrite(void* _Context, Buffer* _Buffer, int _Size);
 
 int Filesystem_Client_InitializePtr(Filesystem_Service* _Service, Filesystem_Client** _ClientPtr)
 {
@@ -40,7 +42,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to connect the TCP client!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPClient_Dispose(&_Client->m_TCPClient);
-		return -2;
+		return -3;
 	}
 
 	return 0;
@@ -48,12 +50,13 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 
 void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 {
-
+	// DataLayer_Work(_MSTime, &_Client->m_DataLayer);
 }
 
 
 void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 {
+	// DataLayer_Dispose(&_Client->m_DataLayer);
 	TCPClient_Dispose(&_Client->m_TCPClient);
 
 	if(_Client->m_Allocated == True)

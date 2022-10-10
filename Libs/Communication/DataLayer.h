@@ -5,53 +5,13 @@ struct T_DataLayer;
 typedef struct T_DataLayer DataLayer;
 
 #include "../BitHelper.h"
+#include "Payload.h"
+#include "TransportLayer.h"
 
 #ifndef DataLayer_CRC
 	#define DataLayer_CRC (0b11011)
 #endif
 
-#ifndef DataLayer_BufferSize
-	#define DataLayer_BufferSize 256
-#endif
-
-typedef struct
-{
-	UInt16 size;
-	union 
-	{
-		UInt8 UI8;
-		UInt16 UI16;
-		UInt32 UI32;
-		UInt64 UI64;
-		UInt8 BUFFER[DataLayer_BufferSize];
-
-		//TODO: Add UUID
-		// UInt8 UUID[UUID_DATA_SIZE];
-		UInt8 IP[4];
-		UInt8 MAC[6];
-	} u;
-	
-} DataLayer_Paylode;
-
-
-typedef struct
-{
-	void* m_Context;
-	int (*m_Receive)(void* _Context, DataLayer_Paylode* _Paylode);
-	int (*m_Send)(void* _Context, DataLayer_Paylode* _Paylode);
-} DataLayer_FuncOut;
-
-static inline void DataLayer_FuncOut_Set(DataLayer_FuncOut* _FuncOut, int (*_Receive)(void* _Context, DataLayer_Paylode* _Paylode), int (*_Send)(void* _Context, DataLayer_Paylode* _Paylode), void* _Context)
-{
-	_FuncOut->m_Context = _Context;
-	_FuncOut->m_Receive = _Receive;
-	_FuncOut->m_Send = _Send;
-}
-
-static inline void DataLayer_FuncOut_Clear(DataLayer_FuncOut* _FuncOut)
-{
-	memset(_FuncOut, 0, sizeof(DataLayer_FuncOut));
-}
 
 struct T_DataLayer
 {
@@ -65,15 +25,13 @@ struct T_DataLayer
 
 	Buffer m_DataBuffer;
 
-	DataLayer_FuncOut m_FuncOut;
+	Payload_FuncOut m_FuncOut;
 
 	UInt64 m_Timeout;
 	// UInt64 m_NextHeartbeat; //? Do we need an heartbeat?
 	UInt64 m_NextTimeout;
 
 };
-
-
 
 static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Result)
 {
@@ -86,7 +44,7 @@ static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Res
 	{
 		UInt8 data;
 		ptr += Memory_ParseUInt8(ptr, &data);
-		result = result + data << 4;
+		result = result + (data << 4);
 
 		for (int j = 11; j > 4; j--)
 		{

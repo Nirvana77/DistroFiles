@@ -32,9 +32,9 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 	// _DataLayer->m_NextHeartbeat = 0;
 	_DataLayer->m_NextTimeout = 0;
 
-	DataLayer_FuncOut_Clear(&_DataLayer->m_FuncOut);
+	Payload_FuncOut_Clear(&_DataLayer->m_FuncOut);
 
-	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, DataLayer_BufferSize);
+	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, Payload_BufferSize);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataBuffer!\n\r");
@@ -51,18 +51,18 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 	{
 		_DataLayer->m_NextTimeout = _MSTime + _DataLayer->m_Timeout;
 		Buffer_Clear(&_DataLayer->m_DataBuffer);
-		if(_DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, DataLayer_BufferSize) > 0)
+		if(_DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize) > 0)
 		{
-			DataLayer_Paylode payload;
+			Payload Payload;
 
-			Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &payload.size);
-			Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, (UInt8*)payload.u.BUFFER, payload.size);
+			Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &Payload.m_Size);
+			Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, (UInt8*)Payload.m_Data.BUFFER, Payload.m_Size);
 
 			UInt8 CRC = 0;
 			UInt8 ownCRC = 0;
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
 			
-			DataLayer_GetCRC(&_DataLayer->m_DataBuffer.m_Ptr, payload.size + 2, &ownCRC);
+			DataLayer_GetCRC((unsigned char*)&_DataLayer->m_DataBuffer.m_Ptr, Payload.m_Size + 2, &ownCRC);
 
 			if(ownCRC != CRC)
 			{
@@ -72,7 +72,7 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 			}
 
 			if(_DataLayer->m_FuncOut.m_Receive != NULL)
-				_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &payload);
+				_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &Payload);
 		}
 	}
 }
