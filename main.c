@@ -23,6 +23,7 @@
 #include "Libs/Buffer.c"
 
 #include "Libs/Allocator.c"
+#include "Libs/BitHelper.c"
 
 #include "Libs/TCP/TCPSocket.c"
 #include "Libs/TCP/TCPServer.c"
