@@ -16,14 +16,14 @@ typedef struct T_DataLayer DataLayer;
 
 typedef struct
 {
-	UInt8 size;
+	UInt16 size;
 	union 
 	{
 		UInt8 UI8;
 		UInt16 UI16;
 		UInt32 UI32;
 		UInt64 UI64;
-		unsigned char BUFFER[DataLayer_BufferSize];
+		UInt8 BUFFER[DataLayer_BufferSize];
 
 		//TODO: Add UUID
 		// UInt8 UUID[UUID_DATA_SIZE];
@@ -32,6 +32,26 @@ typedef struct
 	} u;
 	
 } DataLayer_Paylode;
+
+
+typedef struct
+{
+	void* m_Context;
+	int (*m_Receive)(void* _Context, DataLayer_Paylode* _Paylode);
+	int (*m_Send)(void* _Context, DataLayer_Paylode* _Paylode);
+} DataLayer_FuncOut;
+
+static inline void DataLayer_FuncOut_Set(DataLayer_FuncOut* _FuncOut, int (*_Receive)(void* _Context, DataLayer_Paylode* _Paylode), int (*_Send)(void* _Context, DataLayer_Paylode* _Paylode), void* _Context)
+{
+	_FuncOut->m_Context = _Context;
+	_FuncOut->m_Receive = _Receive;
+	_FuncOut->m_Send = _Send;
+}
+
+static inline void DataLayer_FuncOut_Clear(DataLayer_FuncOut* _FuncOut)
+{
+	memset(_FuncOut, 0, sizeof(DataLayer_FuncOut));
+}
 
 struct T_DataLayer
 {
@@ -43,9 +63,13 @@ struct T_DataLayer
 	int (*m_OnConnect)(void* _Context);
 	int (*m_OnDisconnect)(void* _Context);
 
+	Buffer m_DataBuffer;
+
+	DataLayer_FuncOut m_FuncOut;
+
 	UInt64 m_Timeout;
-	UInt64 m_NextHeartbeat;
-	UInt64 m_LastTimeout;
+	// UInt64 m_NextHeartbeat; //? Do we need an heartbeat?
+	UInt64 m_NextTimeout;
 
 };
 
