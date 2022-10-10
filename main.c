@@ -25,6 +25,8 @@
 #include "Libs/Allocator.c"
 #include "Libs/BitHelper.c"
 
+#include "Libs/Filesystem/Datalayer.c"
+
 #include "Libs/TCP/TCPSocket.c"
 #include "Libs/TCP/TCPServer.c"
 #include "Libs/TCP/TCPClient.c"
@@ -45,6 +47,16 @@ int main(int argc, char* argv[])
 
 	int doExit = 1;
 
+	unsigned char data[1];
+	data[0] = 0b01111010;
+	UInt8 CRC = 0;
+	Datalayer_GetCRC(data, &CRC);
+
+	char str[11];
+	BitHelper_GetString(CRC, &str);
+	printf("CRC: %s\n\r", str);
+
+	return 0;
 	StateMachine_Initialize(&g_StateMachine);
 	
 	Filesystem_Service* service = NULL;

@@ -16,6 +16,19 @@ static inline Bool BitHelper_GetBit(Byte* _Byte, Byte _Bit)
 	return (Bool)((*(_Byte) >> _Bit) & 0x1);
 }
 
+static inline void BitHelper_Set16Bit(UInt16* _Byte, Byte _Bit, Bool _Value)
+{
+	if(_Value == True)
+		*(_Byte) = *(_Byte) | (0x1 << _Bit);
+	else
+		*(_Byte) = *(_Byte) & ~(0x1 << _Bit);
+}
+
+static inline Bool BitHelper_Get16Bit(UInt16* _Byte, Byte _Bit)
+{
+	return (Bool)((*(_Byte) >> _Bit) & 0x1);
+}
+
 static inline int BitHelper_GetString(Byte _Byte, const char* _Str[11])
 {
 	if(_Str == NULL)
