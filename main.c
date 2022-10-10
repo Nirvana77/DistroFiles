@@ -25,7 +25,7 @@
 #include "Libs/Allocator.c"
 #include "Libs/BitHelper.c"
 
-#include "Libs/Filesystem/Datalayer.c"
+#include "Libs/Filesystem/DataLayer.c"
 
 #include "Libs/TCP/TCPSocket.c"
 #include "Libs/TCP/TCPServer.c"
@@ -46,30 +46,6 @@ int main(int argc, char* argv[])
 	#endif
 
 	int doExit = 1;
-
-	//Size, Paylode, CRC
-	unsigned char data[2 + 16 + 1];
-	unsigned char* ptr = data;
-	UInt16 size = (UInt16)strlen("Hellow, server!") + 1;
-	ptr += Memory_UInt16ToBuffer(&size, ptr);
-
-	strcpy(&data[2], "Hellow, server!");
-	ptr += size;
-
-	UInt8 CRC = 0;
-	Datalayer_GetCRC(data, 2 + size, &CRC);
-	ptr += Memory_UInt8ToBuffer(&CRC, ptr);
-
-	char str[11];
-	BitHelper_GetString(CRC, &str);
-	printf("CRC: %s\n\rData: ", str);
-
-	for (int i = 0; i < size + 2 + 1; i++)
-		printf("%u%s",data[i], i + 1 < size + 2 + 1 ? "," : "");
-	
-	printf("\n\r");
-
-	return 0;
 	StateMachine_Initialize(&g_StateMachine);
 	
 	Filesystem_Service* service = NULL;
