@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define False 1
-#define True 0
+#define False 0
+#define True 1
 #define Bool int
 
 #ifdef __linux__
