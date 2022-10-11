@@ -70,6 +70,10 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 				printf("Own CRC: %u\n\rPayloads CRC: %u\n\r", ownCRC, CRC);
 				return;
 			}
+			else
+			{
+				printf("CRC: %u\n\r", CRC);
+			}
 
 			if(_DataLayer->m_FuncOut.m_Receive != NULL)
 				_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &Payload);
