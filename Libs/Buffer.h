@@ -20,6 +20,8 @@ struct T_Buffer
     unsigned char* m_WritePtr;
     int m_Size;
 
+    int m_BytesLeft;
+
 };
 
 int Buffer_InitializePtr(int _Size, Buffer** _BufferPtr);

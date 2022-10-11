@@ -100,7 +100,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	if(success != 0)
 	{
 		printf("Failed to initialize server!\r\n");
-		printf("Failed code: %i\n\r", loadSuccess);
+		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_IP);
@@ -112,7 +112,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	if(success != 0)
 	{
 		printf("Failed to initialize client!\r\n");
-		printf("Failed code: %i\n\r", loadSuccess);
+		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_IP);

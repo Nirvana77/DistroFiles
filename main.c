@@ -25,6 +25,10 @@
 #include "Libs/Allocator.c"
 #include "Libs/BitHelper.c"
 
+#include "Libs/Communication/Payload.c"
+#include "Libs/Communication/DataLayer.c"
+#include "Libs/Communication/TransportLayer.c"
+
 #include "Libs/TCP/TCPSocket.c"
 #include "Libs/TCP/TCPServer.c"
 #include "Libs/TCP/TCPClient.c"
@@ -44,7 +48,6 @@ int main(int argc, char* argv[])
 	#endif
 
 	int doExit = 1;
-
 	StateMachine_Initialize(&g_StateMachine);
 	
 	Filesystem_Service* service = NULL;
@@ -80,15 +83,20 @@ int main(int argc, char* argv[])
 
 					case 'w':
 					{
-						Buffer buffer;
-						Buffer_Initialize(&buffer, 64);
 						const char* str = "Hellow, server!";
+						int size = strlen(str) + 1;
+						/* Buffer buffer;
+						Buffer_Initialize(&buffer, 64);
 
 						printf("Client: %s\n\r", str);
 						Buffer_WriteBuffer(&buffer, (UInt8*)str, strlen(str));
 
 						TCPClient_Write(&service->m_Client->m_TCPClient, &buffer, strlen(str));
 						Buffer_Dispose(&buffer);
+						 */
+						
+						if(service != NULL)
+							Filesystem_Client_SendMessage(service->m_Client, str, size);
 						
 					} break;
 				

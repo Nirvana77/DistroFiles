@@ -31,6 +31,8 @@ int Buffer_Initialize(Buffer* _Buffer, int _Size)
 	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
 	_Buffer->m_Size = _Size;
+
+	_Buffer->m_BytesLeft = 0;
 	
 	return 0;
 }
@@ -41,13 +43,14 @@ void Buffer_Clear(Buffer* _Buffer)
 
 	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
+	_Buffer->m_BytesLeft = 0;
 }
 
-//TODO: #3 Fix read and write ptr's
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value)
 {
 	int n = Memory_ParseUInt64(_Buffer->m_ReadPtr, _Value);
 	_Buffer->m_ReadPtr += n;
+	_Buffer->m_BytesLeft -= n;
 	return n;
 }
 
@@ -62,6 +65,7 @@ int Buffer_ReadUInt16(Buffer* _Buffer, UInt16* _Value)
 {
 	int n = Memory_ParseUInt16(_Buffer->m_ReadPtr, _Value);
 	_Buffer->m_ReadPtr += n;
+	_Buffer->m_BytesLeft -= n;
 	return n;
 }
 
@@ -69,6 +73,7 @@ int Buffer_ReadUInt8(Buffer* _Buffer, UInt8* _Value)
 {
 	int n = Memory_ParseUInt8(_Buffer->m_ReadPtr, _Value);
 	_Buffer->m_ReadPtr += n;
+	_Buffer->m_BytesLeft -= n;
 	return n;
 }
 
@@ -86,6 +91,7 @@ int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value)
 {
 	int n = Memory_UInt64ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
+	_Buffer->m_BytesLeft += n;
 	return n;
 }
 
@@ -93,6 +99,7 @@ int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value)
 {
 	int n = Memory_UInt32ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
+	_Buffer->m_BytesLeft += n;
 	return n;
 }
 
@@ -100,6 +107,7 @@ int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value)
 {
 	int n = Memory_UInt16ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
+	_Buffer->m_BytesLeft += n;
 	return n;
 }
 
@@ -107,6 +115,7 @@ int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value)
 {
 	int n = Memory_UInt8ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
+	_Buffer->m_BytesLeft += n;
 	return n;
 }
 

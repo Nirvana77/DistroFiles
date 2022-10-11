@@ -12,8 +12,13 @@ struct T_Filesystem_Server
 	Filesystem_Service* m_Service;
 
 	TCPServer m_TCPServer;
+	DataLayer m_DataLayer;
+	TransportLayer m_TransportLayer;
+	
 	LinkedList m_Sockets;
+	LinkedList_Node* m_CurrentNode;
 	Buffer m_Buffer;
+	
 };
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr);

@@ -110,11 +110,36 @@ void* LinkedList_RemoveAt(LinkedList* _List, int _Index)
 	return NULL;
 }
 
-//TODO: #5 implement LinkedList_RemoveItem
 int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 {
-	fprintf(stderr, "Not implemented\n\r");
-	return -1;
+
+	LinkedList_Node* currentNode = _List->m_Head;
+	while(currentNode != NULL)
+	{
+		if(currentNode->m_Item == _Item)
+		{
+			if(currentNode == _List->m_Head)
+			{
+				LinkedList_RemoveFirst(_List);
+				return 0;
+			}
+			else if(currentNode == _List->m_Tail)
+			{
+				LinkedList_RemoveLast(_List);
+				return 0;
+			}
+			
+
+			currentNode->m_Privios->m_Next = currentNode->m_Next;
+			currentNode->m_Next->m_Privios = currentNode->m_Privios;
+			_List->m_Size--;
+			
+			return 0;
+		}
+		currentNode = currentNode->m_Next;
+	}
+
+	return 1;
 }
 
 void* LinkedList_RemoveLast(LinkedList* _List)
@@ -148,6 +173,8 @@ void* LinkedList_RemoveNode(LinkedList* _List, LinkedList_Node* _Node)
 	void* item = _Node->m_Item;
 	_Node->m_Privios->m_Next = _Node->m_Next;
 	_Node->m_Next->m_Privios = _Node->m_Privios;
+
+	_List->m_Size--;
 	
 	Allocator_Free(_Node);
 	
