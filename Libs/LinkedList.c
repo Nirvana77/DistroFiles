@@ -110,11 +110,30 @@ void* LinkedList_RemoveAt(LinkedList* _List, int _Index)
 	return NULL;
 }
 
-//TODO: #5 implement LinkedList_RemoveItem
 int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 {
-	fprintf(stderr, "Not implemented\n\r");
-	return -1;
+
+	LinkedList_Node* currentNode = _List->m_Head;
+	while(currentNode != NULL)
+	{
+		if(currentNode->m_Item == _Item)
+		{
+			if(currentNode == _List->m_Head)
+				return LinkedList_RemoveFirst(_List);
+			
+			else if(currentNode == _List->m_Tail)
+				return LinkedList_RemoveLast(_List);
+			
+
+			currentNode->m_Privios->m_Next = currentNode->m_Next;
+			currentNode->m_Next->m_Privios = currentNode->m_Privios;
+			
+			return 0;
+		}
+		currentNode = currentNode->m_Next;
+	}
+
+	return 1;
 }
 
 void* LinkedList_RemoveLast(LinkedList* _List)
