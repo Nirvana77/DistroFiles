@@ -32,9 +32,9 @@ struct T_TCPClient
 int TCPClient_InitializePtr(const char* _Host, UInt16 _Port, TCPClient** _TCPClientPtr);
 int TCPClient_Initialize(TCPClient* _TCPClient, const char* _Host, UInt16 _Port);
 
-int TCPClient_Read(TCPClient* _TCPClient, Buffer* _Buffer, int _Size);
+int TCPClient_Read(void* _TCPClient, Buffer* _Buffer, int _Size);
 
-int TCPClient_Write(TCPClient* _TCPClient, Buffer* _Buffer, int _Size);
+int TCPClient_Write(void* _TCPClient, Buffer* _Buffer, int _Size);
 
 void TCPClient_Disconnect(TCPClient* _TCPClient);
 

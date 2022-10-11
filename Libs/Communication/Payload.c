@@ -22,6 +22,12 @@ int Payload_InitializePtr(Payload** _PayloadPtr)
 int Payload_Initialize(Payload* _Payload)
 {
 	_Payload->m_Allocated = False;
+	_Payload->m_Dynamic = False;
+
+	_Payload->m_Size = 0;
+	_Payload->m_Time = 0;
+
+	_Payload->m_Type = Payload_Type_UI8;
 	
 	return 0;
 }

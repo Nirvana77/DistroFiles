@@ -67,5 +67,8 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 
 void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer);
 
+int DataLayer_SendMessage(void* _Context, Payload* _Paylode);
+
+
 void DataLayer_Dispose(DataLayer* _DataLayer);
 #endif // DataLayer_h__

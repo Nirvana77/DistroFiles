@@ -1,5 +1,7 @@
 #include "DataLayer.h"
 
+int DataLayer_ReceiveMessage(DataLayer* _DataLayer);
+
 int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr)
 {
 	DataLayer* _DataLayer = (DataLayer*)Allocator_Malloc(sizeof(DataLayer));
@@ -50,37 +52,86 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 	if(_DataLayer->m_NextTimeout < _MSTime)
 	{
 		_DataLayer->m_NextTimeout = _MSTime + _DataLayer->m_Timeout;
-		Buffer_Clear(&_DataLayer->m_DataBuffer);
-		if(_DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize) > 0)
+		int success = DataLayer_ReceiveMessage(_DataLayer);
+		if(success != 0)
 		{
-			Payload Payload;
-
-			Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &Payload.m_Size);
-			Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, (UInt8*)Payload.m_Data.BUFFER, Payload.m_Size);
-
-			UInt8 CRC = 0;
-			UInt8 ownCRC = 0;
-			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
-			
-			DataLayer_GetCRC((unsigned char*)&_DataLayer->m_DataBuffer.m_Ptr, Payload.m_Size + 2, &ownCRC);
-
-			if(ownCRC != CRC)
-			{
-				printf("CRC check Failed!\n\r");
-				printf("Own CRC: %u\n\rPayloads CRC: %u\n\r", ownCRC, CRC);
-				return;
-			}
-			else
-			{
-				printf("CRC: %u\n\r", CRC);
-			}
-
-			if(_DataLayer->m_FuncOut.m_Receive != NULL)
-				_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &Payload);
+			printf("DataLayer_ReceiveMessage failed\n\r");
+			printf("Error code: %i\n\r", success);
+			return;
 		}
 	}
 }
 
+int DataLayer_SendMessage(void* _Context, Payload* _Payload)
+{
+	DataLayer* _DataLayer = (DataLayer*)_Context;
+
+	Buffer_Clear(&_DataLayer->m_DataBuffer);
+	Buffer_WriteUInt16(&_DataLayer->m_DataBuffer, _Payload->m_Size);
+
+	switch (_Payload->m_Type)
+	{
+		case Payload_Type_BUFFER:
+		{
+			Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, _Payload->m_Data.BUFFER, _Payload->m_Size);
+
+		} break;
+	
+		default:
+		{
+
+		} break;
+	}
+
+	UInt8 CRC = 0;
+	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _Payload->m_Size + 2, &CRC);
+	
+	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
+
+	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, _DataLayer->m_DataBuffer.m_BytesLeft);
+	if(success < 0)
+	{
+		printf("DataLayer_SendMessage: OnWrite Error\n\r");
+		printf("Error code: %i\n\r", success);
+		return -1;
+	}
+
+	return 0;
+}
+
+int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
+{
+	Buffer_Clear(&_DataLayer->m_DataBuffer);
+	if(_DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize) > 0)
+	{
+		Payload Payload;
+
+		Payload_Initialize(&Payload);
+
+		Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &Payload.m_Size);
+		Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, Payload.m_Data.BUFFER, Payload.m_Size);
+
+		Payload.m_Type = Payload_Type_BUFFER;
+
+		UInt8 CRC = 0;
+		UInt8 ownCRC = 0;
+		Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
+		
+		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, Payload.m_Size + 2, &ownCRC);
+
+		if(ownCRC != CRC)
+		{
+			printf("CRC check Failed!\n\r");
+			printf("Own CRC: %u\n\rPayloads CRC: %u\n\r", ownCRC, CRC);
+			return -1;
+		}
+
+		if(_DataLayer->m_FuncOut.m_Receive != NULL)
+			_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &Payload);
+	}
+
+	return 0;
+}
 
 void DataLayer_Dispose(DataLayer* _DataLayer)
 {

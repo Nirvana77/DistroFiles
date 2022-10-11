@@ -119,10 +119,15 @@ int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 		if(currentNode->m_Item == _Item)
 		{
 			if(currentNode == _List->m_Head)
-				return LinkedList_RemoveFirst(_List);
-			
+			{
+				LinkedList_RemoveFirst(_List);
+				return 0;
+			}
 			else if(currentNode == _List->m_Tail)
-				return LinkedList_RemoveLast(_List);
+			{
+				LinkedList_RemoveLast(_List);
+				return 0;
+			}
 			
 
 			currentNode->m_Privios->m_Next = currentNode->m_Next;

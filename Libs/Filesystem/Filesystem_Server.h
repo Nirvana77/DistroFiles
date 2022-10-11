@@ -13,6 +13,7 @@ struct T_Filesystem_Server
 
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;
+	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Sockets;
 	LinkedList_Node* m_CurrentNode;

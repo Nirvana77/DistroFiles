@@ -27,13 +27,26 @@ static inline void Payload_FuncOut_Clear(Payload_FuncOut* _FuncOut)
 	memset(_FuncOut, 0, sizeof(Payload_FuncOut));
 }
 
+typedef enum
+{
+	Payload_Type_UI8 = 0,
+	Payload_Type_UI16 = 1,
+	Payload_Type_UI32 = 2,
+	Payload_Type_UI64 = 3,
+	Payload_Type_BUFFER = 4,
+	Payload_Type_IP = 5,
+	Payload_Type_MAC = 6
+} Payload_Type;
+
 struct T_Payload
 {
 	Bool m_Allocated;
+	Bool m_Dynamic;
 
 	UInt16 m_Size;
 	UInt64 m_Time;
 
+	Payload_Type m_Type;
 	union 
 	{
 		UInt8 UI8;
