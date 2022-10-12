@@ -30,7 +30,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	_Client->m_Service = _Service;
 
 	//TODO: Change this do not be hard coded
-	int success = TCPClient_Initialize(&_Client->m_TCPClient, "127.0.0.1", 5566);
+	int success = TCPClient_Initialize(&_Client->m_TCPClient, _Client->m_Service->m_Settings.m_IP.m_Ptr, _Client->m_Service->m_Settings.m_Port);
 
 	if(success != 0)
 	{
