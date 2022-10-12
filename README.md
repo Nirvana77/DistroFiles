@@ -8,7 +8,13 @@
 Easy to use, user based file shearing system.
 
 # Installation
-
+```
+$ sudo apt-get update && sudo apt-get upgrade -y
+$ sudo apt-get install -y libjansson-dev gcc libcurl4-gnutls-dev git
+$ git clone https://github.com/Nirvana77/Filesystem.git
+$ cd Filesystem
+$ ./compile
+```
 
 # Configuration
 - `Port`: Sets the `port` for the communication with the server.
@@ -17,7 +23,12 @@ Easy to use, user based file shearing system.
 - `Path`: Set the root `Path` for the system.
 
 # Usage
+- `Mode`: If is `deamon` or none.
+- `Path`: Is the path for the filesystem.
 
+```
+& ./bin/main <Mode> <Path>
+```
 
 # Contribute
 1. Fork the repo and create a new branch: `$ git checkout -b name_for_new_branch`.
