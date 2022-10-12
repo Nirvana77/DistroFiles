@@ -25,7 +25,7 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 	
 	if(_FD == NULL)
 	{
-		_TCPSocket->m_FD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP); //? IPPROTO_TCP?
+		_TCPSocket->m_FD = socket(AF_INET, SOCK_STREAM, 0); //? IPPROTO_TCP?
 		_TCPSocket->m_Status = TCPSocket_Status_Disconnected;
 
 		if(_TCPSocket->m_FD < 0)
@@ -87,7 +87,7 @@ int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _Buffer
 
 	Buffer_ReadBuffer(_Buffer, (UInt8*)buffer, _BufferSize);
 
-	int bytesSent = send(_TCPSocket->m_FD, buffer, _BufferSize, 0);
+	int bytesSent = send(_TCPSocket->m_FD, buffer, _BufferSize, MSG_NOSIGNAL);
 	if(bytesSent < 0)
 	{
 		_TCPSocket->m_Status = TCPSocket_Status_Error;
@@ -97,6 +97,18 @@ int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _Buffer
 	{
 		_TCPSocket->m_Status = TCPSocket_Status_Closed;
 		return 0;
+	}
+	else
+	{
+		if (errno == EWOULDBLOCK)
+		{
+			return 0;
+		}
+		else
+		{
+			_TCPSocket->m_Status = TCPSocket_Status_Failed;
+			return -1;
+		}
 	}
 
 	return bytesSent;
