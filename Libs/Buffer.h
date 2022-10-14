@@ -42,6 +42,7 @@ int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value);
 int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value);
 
 int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
+int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File);
 
 void Buffer_Dispose(Buffer* _Buffer);
 

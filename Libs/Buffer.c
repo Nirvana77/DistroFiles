@@ -86,7 +86,6 @@ int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
 
 	return readBytes;
 }
-
 int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value)
 {
 	int n = Memory_UInt64ToBuffer(&_Value, _Buffer->m_WritePtr);
@@ -128,6 +127,20 @@ int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
 
 	return readBytes;
 }
+
+int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File)
+{
+	int size = File_GetSize(_File);
+	if(_Buffer->m_Size - _Buffer->m_BytesLeft < size)
+		return -1;
+
+	int readBytes = File_ReadAll(_File, _Buffer->m_WritePtr, size);
+	_Buffer->m_WritePtr += readBytes;
+	_Buffer->m_BytesLeft += readBytes;
+
+	return readBytes;
+}
+
 
 void Buffer_Dispose(Buffer* _Buffer)
 {
