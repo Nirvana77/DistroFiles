@@ -37,7 +37,7 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 
 		memset(&_TCPSocket->m_Addr, 0, sizeof(_TCPSocket->m_Addr));
 		_TCPSocket->m_Addr.sin_family = AF_INET;
-		_TCPSocket->m_Addr.sin_port = _Port;
+		_TCPSocket->m_Addr.sin_port = htons(_Port);
 		_TCPSocket->m_Addr.sin_addr.s_addr = inet_addr(_IP);
 
 		TCPSocket_SetNonBlocking(_TCPSocket->m_FD);

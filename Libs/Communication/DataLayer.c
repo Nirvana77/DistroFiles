@@ -102,22 +102,24 @@ int DataLayer_SendMessage(void* _Context, Payload* _Payload)
 int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 {
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
-	if(_DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize) > 0)
+	int readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize);
+	if(readed > 0)
 	{
-		Payload Payload;
+		Payload payload;
 
-		Payload_Initialize(&Payload);
+		Payload_Initialize(&payload);
+		
+		//TODO: #20 This is wrong
+		Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &payload.m_Size);
+		Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, payload.m_Data.BUFFER, payload.m_Size);
 
-		Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &Payload.m_Size);
-		Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, Payload.m_Data.BUFFER, Payload.m_Size);
-
-		Payload.m_Type = Payload_Type_BUFFER;
+		payload.m_Type = Payload_Type_BUFFER;
 
 		UInt8 CRC = 0;
 		UInt8 ownCRC = 0;
 		Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
 		
-		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, Payload.m_Size + 2, &ownCRC);
+		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, payload.m_Size + 2, &ownCRC);
 
 		if(ownCRC != CRC)
 		{
@@ -127,7 +129,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		}
 
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
-			_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &Payload);
+			_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &payload);
 	}
 
 	return 0;

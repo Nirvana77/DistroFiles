@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
 
 					case 'w':
 					{
-						const char* str = "Hellow, server!";
+						const char* str = "GET / HTTP/1.1\r\n\r\n";
 						int size = strlen(str) + 1;
 						/* Buffer buffer;
 						Buffer_Initialize(&buffer, 64);
