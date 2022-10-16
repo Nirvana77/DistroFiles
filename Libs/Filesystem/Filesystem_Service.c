@@ -235,7 +235,7 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	{
 		if(json_getString(guest, "IP", &charVal) == 0)
 		{
-			String_Set(&_Service->m_Settings.m_Host.m_IP, charVal);
+			String_Set(&_Service->m_Settings.m_Guest.m_IP, charVal);
 		}
 		else
 		{
@@ -244,7 +244,7 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 
 		if(json_getUInt16(guest, "port", &ulintVal) == 0)
 		{
-			_Service->m_Settings.m_Host.m_Port = ulintVal;
+			_Service->m_Settings.m_Guest.m_Port = ulintVal;
 		}
 		else
 		{
