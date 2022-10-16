@@ -67,7 +67,7 @@ int String_Set(String* _Str, const char* _String)
 
 	}
 
-	memcpy(_Str->m_Ptr, _String, strlen(_String));
+	memcpy(_Str->m_Ptr, _String, strlen(_String) + 1);
 	_Str->m_Length = strlen(_String);
 
 	return 0;
