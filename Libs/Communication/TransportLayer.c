@@ -78,6 +78,7 @@ int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payl
 	return LinkedList_RemoveItem(&_TransportLayer->m_Queued, _Payload);
 }
 
+//TODO #16 Create a sented list for respons
 int TransportLayer_SendMessage(TransportLayer* _TransportLayer)
 {
 	if(_TransportLayer->m_Queued.m_Head == NULL)
@@ -85,8 +86,6 @@ int TransportLayer_SendMessage(TransportLayer* _TransportLayer)
 
 	Payload* _Payload = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
 	
-	//TODO #16 Create a sented list for respons
-
 	int success = _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
 	return success;
 }
