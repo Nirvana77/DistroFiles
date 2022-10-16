@@ -41,7 +41,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	}
 
 	//TODO #18 Make a state veribal and move this to work function
-	success = TCPServer_Listen(&_Server->m_TCPServer, "127.0.0.1", 5566);
+	success = TCPServer_Listen(&_Server->m_TCPServer, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Host.m_Port);
 	if(success != 0)
 	{
 		printf("TCP Listen error: %i\n\r", success);

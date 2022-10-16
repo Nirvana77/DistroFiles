@@ -68,16 +68,19 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	}
 
 	//-------------Initialize------------------
-	String_Initialize(&_Service->m_Settings.m_IP, 16);
+	String_Initialize(&_Service->m_Settings.m_Host.m_IP, 16);
+	String_Initialize(&_Service->m_Settings.m_Guest.m_IP, 16);
 
 	//-----------------------------------------
 
 
 	//-----------Default Settings--------------
 
-	_Service->m_Settings.m_Port = 5566;
+	_Service->m_Settings.m_Host.m_Port = 5566;
+	_Service->m_Settings.m_Guest.m_Port = 5566;
 
-	String_Set(&_Service->m_Settings.m_IP, "127.0.0.1");
+	String_Set(&_Service->m_Settings.m_Host.m_IP, "127.0.0.1");
+	String_Set(&_Service->m_Settings.m_Guest.m_IP, "127.0.0.1");
 
 	//-----------------------------------------
 	int loadSuccess = Filesystem_Service_Load(_Service);
@@ -87,7 +90,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed code: %i\n\r", loadSuccess);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		return -5;
 	}
 	else if(loadSuccess == 1)
@@ -103,7 +107,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		return -6;
 	}
 
@@ -115,7 +120,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Filesystem_Server_Dispose(_Service->m_Server);
 		return -6;
 	}
@@ -198,24 +204,57 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	//UInt8 uintVal;
 	UInt16 ulintVal;
 
-	if(json_getString(_JSON, "IP", &charVal) == 0)
+	json_t* host = json_object_get(_JSON, "host");
+	if(host != NULL)
 	{
-		String_Set(&_Service->m_Settings.m_IP, charVal);
+		if(json_getString(host, "IP", &charVal) == 0)
+		{
+			String_Set(&_Service->m_Settings.m_Host.m_IP, charVal);
+		}
+		else
+		{
+			needSave = True;
+		}
+
+		if(json_getUInt16(host, "port", &ulintVal) == 0)
+		{
+			_Service->m_Settings.m_Host.m_Port = ulintVal;
+		}
+		else
+		{
+			needSave = True;
+		}
 	}
 	else
 	{
 		needSave = True;
 	}
 
-	if(json_getUInt16(_JSON, "port", &ulintVal) == 0)
+	json_t* guest = json_object_get(_JSON, "guest");
+	if(guest != NULL)
 	{
-		_Service->m_Settings.m_Port = ulintVal;
+		if(json_getString(guest, "IP", &charVal) == 0)
+		{
+			String_Set(&_Service->m_Settings.m_Host.m_IP, charVal);
+		}
+		else
+		{
+			needSave = True;
+		}
+
+		if(json_getUInt16(guest, "port", &ulintVal) == 0)
+		{
+			_Service->m_Settings.m_Host.m_Port = ulintVal;
+		}
+		else
+		{
+			needSave = True;
+		}
 	}
 	else
 	{
 		needSave = True;
 	}
-
 	
 	return needSave == True ? 1 : 0;
 }
@@ -230,9 +269,15 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	if(String_Sprintf(&str, 
 		"{"
 			"\"version\": %u,"
-			"\"port\": %i,"
-			"\"IP\": \"%s\""
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Port, _Service->m_Settings.m_IP.m_Ptr
+			"\"host\": {"
+				"\"port\": %u,"
+				"\"IP\": \"%s\""
+			"},"
+			"\"guest\": {"
+				"\"port\": %u,"
+				"\"IP\": \"%s\""
+			"}"
+		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Guest.m_Port, _Service->m_Settings.m_Guest.m_IP.m_Ptr
 	) != 0)
 	{
 		String_Dispose(&str);
@@ -291,7 +336,8 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Client = NULL;
 	}
 
-	String_Dispose(&_Service->m_Settings.m_IP);
+	String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+	String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 
 	if(_Service->m_Json != NULL)
 		json_decref(_Service->m_Json);

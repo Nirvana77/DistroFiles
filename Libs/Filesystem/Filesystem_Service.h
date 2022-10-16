@@ -24,6 +24,14 @@ typedef struct
 {
 	String m_IP;
 	UInt16 m_Port;
+	
+} Filesystem_ServiceSettings_Host;
+
+typedef struct
+{
+
+	Filesystem_ServiceSettings_Host m_Host;
+	Filesystem_ServiceSettings_Host m_Guest;
 
 } Filesystem_ServiceSettings;
 
