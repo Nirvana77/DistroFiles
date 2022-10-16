@@ -23,6 +23,8 @@ $ ./compile
 - `Path`: Set the root `Path` for the system.
 
 # Usage
+When useing the service the host `port` needs to be oppen from the firewall. [Linux](https://www.cyberciti.biz/faq/how-to-open-firewall-port-on-ubuntu-linux-12-04-14-04-lts/), [Windows](https://learn.microsoft.com/en-us/answers/questions/291348/can39t-open-ports-in-windows-10.html)
+
 - `Mode`: If is `deamon` or none.
 - `Path`: Is the path for the filesystem.
 
