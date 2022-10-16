@@ -81,10 +81,10 @@ void TCPServer_Work(TCPServer* _TCPServer)
 
 int TCPServer_Listen(TCPServer* _TCPServer, const char* _IP, UInt16 _Port)
 {
-	printf("TCPServer_Listen(%u): %s\n\r", _Port, _IP);
+	printf("TCPServer_Listen(%u): %s\n\r", _Port, _IP != NULL ? _IP : "localhost");
 	memset(&_TCPServer->m_ServerAddr, 0, sizeof(_TCPServer->m_ServerAddr));
 	_TCPServer->m_ServerAddr.sin_family = AF_INET;
-	_TCPServer->m_ServerAddr.sin_port = htons(_Port);
+	_TCPServer->m_ServerAddr.sin_port = _IP != NULL ? htons(_Port) : htonl(INADDR_ANY);
 	_TCPServer->m_ServerAddr.sin_addr.s_addr = inet_addr(_IP);
 
 	int success = bind(_TCPServer->m_Socket, (struct sockaddr*)&_TCPServer->m_ServerAddr, sizeof(_TCPServer->m_ServerAddr));
