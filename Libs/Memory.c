@@ -73,3 +73,22 @@ int Memory_ParseUInt8(const void* _Pointer, UInt8* _Dest)
 	*_Dest |= (UInt8)((unsigned char*)_Pointer)[0];
 	return 1;
 }
+
+int Memory_ParseBuffer(const void* _Des, const void* _Src, int _BufferSize)
+{
+	int size = 0;
+	int readed = 0;
+	unsigned char* desPtr = (unsigned char*)_Des;
+	unsigned char* srcPtr = (unsigned char*)_Src;
+
+	for (int i = 0; i < _BufferSize; i++)
+	{
+		readed = Memory_ParseUInt8(srcPtr, desPtr);
+
+		size += readed;
+		desPtr += readed;
+		srcPtr += readed;
+	}
+
+	return size;
+}

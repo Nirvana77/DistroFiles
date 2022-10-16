@@ -5,6 +5,7 @@ struct T_DataLayer;
 typedef struct T_DataLayer DataLayer;
 
 #include "../BitHelper.h"
+#include "../Buffer.h"
 #include "Payload.h"
 #include "TransportLayer.h"
 

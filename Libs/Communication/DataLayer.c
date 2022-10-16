@@ -105,21 +105,12 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	int readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize);
 	if(readed > 0)
 	{
-		Payload payload;
-
-		Payload_Initialize(&payload);
-		
-		//TODO: #20 This is wrong
-		Buffer_ReadUInt16(&_DataLayer->m_DataBuffer, &payload.m_Size);
-		Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, payload.m_Data.BUFFER, payload.m_Size);
-
-		payload.m_Type = Payload_Type_BUFFER;
 
 		UInt8 CRC = 0;
 		UInt8 ownCRC = 0;
-		Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
+		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_Ptr[readed - 1], &CRC);
 		
-		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, payload.m_Size + 2, &ownCRC);
+		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, readed - 1, &ownCRC);
 
 		if(ownCRC != CRC)
 		{
@@ -129,7 +120,18 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		}
 
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
-			_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &payload);
+		{
+			Payload packet;
+			Payload_Initialize(&packet);
+
+			Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, packet.m_Data.BUFFER, readed - 1);
+
+			int replayData = _DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet);
+
+			Payload_Dispose(&packet);
+
+		}
+		
 	}
 
 	return 0;

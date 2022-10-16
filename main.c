@@ -142,7 +142,7 @@ int main(int argc, char* argv[])
 						 */
 						
 						if(service != NULL)
-							Filesystem_Client_SendMessage(service->m_Client, str, size);
+							Filesystem_Client_SendMessage(service->m_Client, (unsigned char*)str, size);
 						
 					} break;
 				

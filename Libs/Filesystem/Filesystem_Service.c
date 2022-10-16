@@ -230,8 +230,6 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 		needSave = True;
 	}
 
-	ulintVal = strlen(charVal) + 1;
-	memset(charVal, 0, ulintVal);
 	json_t* guest = json_object_get(_JSON, "guest");
 	if(guest != NULL)
 	{
