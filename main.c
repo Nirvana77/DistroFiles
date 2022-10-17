@@ -14,6 +14,8 @@
 	#define ALLOCATOR_RUN_AFTERCHECK
 #endif
 
+// #include "Libs/Portability.c"
+
 #include "Libs/File.c"
 #include "Libs/Folder.c"
 #include "Libs/Memory.c"
@@ -122,11 +124,6 @@ int main(int argc, char* argv[])
 			{
 				switch (chr)
 				{
-
-					case 'r':
-					{
-						
-					} break;
 
 					case 'w':
 					{

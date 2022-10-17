@@ -1,6 +1,7 @@
 #include "DataLayer.h"
 
 int DataLayer_ReceiveMessage(DataLayer* _DataLayer);
+int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload);
 
 int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr)
 {
@@ -53,19 +54,34 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 	{
 		_DataLayer->m_NextTimeout = _MSTime + _DataLayer->m_Timeout;
 		int success = DataLayer_ReceiveMessage(_DataLayer);
-		if(success != 0)
+		if(success < 0)
 		{
 			printf("DataLayer_ReceiveMessage failed\n\r");
 			printf("Error code: %i\n\r", success);
 			return;
 		}
+		else if(success == 0)
+		{
+			Payload message;
+			Payload_Initialize(&message);
+			if(_DataLayer->m_FuncOut.m_Send(_DataLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send message
+			{
+				//send message/payload
+				if(DataLayer_SendMessage(_DataLayer, &message) != 0)
+					message.m_State = Payload_State_Failed;
+				
+				else
+					message.m_State = Payload_State_Sented;
+
+			}
+
+			Payload_Dispose(&message);
+		}
 	}
 }
 
-int DataLayer_SendMessage(void* _Context, Payload* _Payload)
+int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
-	DataLayer* _DataLayer = (DataLayer*)_Context;
-
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
 	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
 	{
@@ -77,6 +93,12 @@ int DataLayer_SendMessage(void* _Context, Payload* _Payload)
 	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _Payload->m_Size, &CRC);
 	
 	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
+
+	printf("Data(W):\r\n");
+	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
+		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? ", " : "");
+	printf("\n\r");
+	
 
 	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, _DataLayer->m_DataBuffer.m_BytesLeft);
 	if(success < 0)
@@ -101,6 +123,11 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_Ptr[readed - 1], &CRC);
 		
 		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, readed - 1, &ownCRC);
+
+		printf("Data(R):\r\n");
+		for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
+			printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? ", " : "");
+		printf("\n\r");
 
 		if(ownCRC != CRC)
 		{

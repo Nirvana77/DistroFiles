@@ -29,12 +29,13 @@ static inline void Payload_FuncOut_Clear(Payload_FuncOut* _FuncOut)
 
 typedef enum
 {
-	Payload_Type_UI8 = 0,
-	Payload_Type_UI16 = 1,
-	Payload_Type_UI32 = 2,
-	Payload_Type_UI64 = 3,
-	Payload_Type_BUFFER = 4,
-} Payload_Type;
+	Payload_State_Init = 0,
+	Payload_State_Sented = 1,
+	Payload_State_Resived = 2,
+	Payload_State_Removed = 3,
+	Payload_State_Destroyed = 4,
+	Payload_State_Failed = 5
+} Payload_State;
 
 typedef enum
 {
@@ -52,9 +53,9 @@ typedef enum
 
 typedef enum
 {
-	Payload_Communicator_Type_IP = 5,
-	Payload_Communicator_Type_MAC = 6
-} Payload_Communicator_Type;
+	Payload_Communicator_Type_IP = 0,
+	Payload_Communicator_Type_MAC = 1
+} Payload_Type;
 
 typedef struct
 {
@@ -73,13 +74,13 @@ typedef struct
 struct T_Payload
 {
 	Bool m_Allocated;
-	Bool m_Dynamic;
+
+	Payload_State m_State;
 
 	UInt16 m_Size;
 	UInt64 m_Time;
 
-	Payload_Type m_Type;
-	Payload_MessageType m_MessageType;
+	Payload_MessageType m_Type;
 
 	Payload_Communicator m_Src;
 	Payload_Communicator m_Des;
@@ -89,6 +90,9 @@ struct T_Payload
 
 int Payload_InitializePtr(Payload** _PayloadPtr);
 int Payload_Initialize(Payload* _Payload);
+
+int Payload_WriteCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
+int Payload_ReadCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
 
 
 void Payload_Dispose(Payload* _Payload);

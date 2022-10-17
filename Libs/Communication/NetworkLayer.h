@@ -5,12 +5,12 @@ struct T_NetworkLayer;
 typedef struct T_NetworkLayer NetworkLayer;
 
 #include "Payload.h"
-#include "../Memory.h"
+#include "../Buffer.h"
 
 struct T_NetworkLayer
 {
-    Bool m_Allocated;
-    
+	Bool m_Allocated;
+	
 	Payload_FuncOut m_FuncOut;
 
 };

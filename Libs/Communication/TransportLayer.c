@@ -52,6 +52,8 @@ int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _
 
 	_Payload->m_Type = _Type;
 
+
+
 	if(_PayloadPtr != NULL)
 		*(_PayloadPtr) = _Payload;
 
@@ -95,9 +97,20 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
-	printf("TransportLayer_SendPayload\n\r");
-
-	_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Paylode);
+	if(_TransportLayer->m_FuncOut.m_Send != NULL)
+	{
+		if(_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Paylode) == 1)
+		{
+			printf("TransportLayer_SendPayload\n\r");
+			return 1;
+		}
+	}
+	else if(_TransportLayer->m_CurrentNode != NULL)
+	{
+		printf("TransportLayer_SendPayload\n\r");
+		memcpy(_Paylode, _TransportLayer->m_CurrentNode->m_Item, sizeof(Payload)); //! DONT USE MEMCPY!
+		return 1;
+ 	}
 
 
 	return 0;
@@ -119,6 +132,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Paylode)
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
+	return;
 	if(_TransportLayer->m_CurrentNode != NULL)
 	{
 		Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;

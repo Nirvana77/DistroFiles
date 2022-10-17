@@ -13,6 +13,7 @@ struct T_Filesystem_Server
 
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;
+	NetworkLayer m_NetworkLayer;
 	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Sockets;

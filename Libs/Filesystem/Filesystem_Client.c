@@ -57,6 +57,16 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		return -5;
 	}
 
+	success = NetworkLayer_Initialize(&_Client->m_NetworkLayer);
+	if(success != 0)
+	{
+		printf("Failed to initialize the NetworkLayer for client!\n\r");
+		printf("Error code: %i\n\r", success);
+		TCPClient_Dispose(&_Client->m_TCPClient);
+		DataLayer_Dispose(&_Client->m_DataLayer);
+		return -6;
+	}
+
 	success = TransportLayer_Initialize(&_Client->m_TransportLayer);
 	if(success != 0)
 	{
@@ -64,11 +74,13 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPClient_Dispose(&_Client->m_TCPClient);
 		DataLayer_Dispose(&_Client->m_DataLayer);
+		NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 		return -6;
 	}
 
-	Payload_FuncOut_Set(&_Client->m_DataLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Client->m_TransportLayer);
-	Payload_FuncOut_Set(&_Client->m_TransportLayer.m_FuncOut, Filesystem_Client_ReveicePayload, Filesystem_Client_SendPayload, _Client);
+	Payload_FuncOut_Set(&_Client->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Client->m_NetworkLayer);
+	Payload_FuncOut_Set(&_Client->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Client->m_TransportLayer);
+	Payload_FuncOut_Set(&_Client->m_TransportLayer.m_FuncOut, Filesystem_Client_ReveicePayload, NULL, _Client);
 
 	return 0;
 }
@@ -80,7 +92,7 @@ int Filesystem_Client_SendPayload(void* _Context, Payload* _Paylode)
 
 	printf("Filesystem_Client_SendPayload\n\r");
 
-	DataLayer_SendMessage(&_Client->m_DataLayer, _Paylode);
+	//DataLayer_SendMessage(&_Client->m_DataLayer, _Paylode);
 	
 
 	return 0;
@@ -98,7 +110,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Paylode)
 int Filesystem_Client_SendMessage(Filesystem_Client* _Client, unsigned char* _Data, int _Size)
 {
 	Payload* _Payload = NULL;
-	int success = TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_Type_BUFFER, _Size, &_Payload);
+	int success = TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_MessageType_Broadcast, _Size, &_Payload);
 	if(success != 0)
 	{
 		Payload_Dispose(_Payload);
@@ -121,6 +133,7 @@ void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 {
 	TransportLayer_Dispose(&_Client->m_TransportLayer);
+	NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 	DataLayer_Dispose(&_Client->m_DataLayer);
 
 	TCPClient_Dispose(&_Client->m_TCPClient);
