@@ -83,6 +83,9 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
+
+
+
 	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
 	{
 		printf("Buffer copy error\n\r");
@@ -96,7 +99,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 
 	printf("Data(W):\r\n");
 	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
-		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? ", " : "");
+		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
 	printf("\n\r");
 	
 

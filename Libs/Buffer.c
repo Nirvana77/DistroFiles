@@ -1,16 +1,16 @@
 #include "Buffer.h"
 
-int Buffer_Extend(Buffer* _Buffer, int _Size);
+int Buffer_Extend(Buffer* _Buffer);
 
 
 
-int Buffer_InitializePtr(Bool _IsDynamic, int _Size, Buffer** _BufferPtr)
+int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr)
 {
 	Buffer* _Buffer = (Buffer*)Allocator_Malloc(sizeof(Buffer));
 	if(_Buffer == NULL)
 		return -1;
 	
-	int success = Buffer_Initialize(_Buffer, _IsDynamic, _Size);
+	int success = Buffer_Initialize(_Buffer, _IsDynamic, _ExtentionSize);
 	if(success != 0)
 	{
 		Allocator_Free(_Buffer);
@@ -23,31 +23,33 @@ int Buffer_InitializePtr(Bool _IsDynamic, int _Size, Buffer** _BufferPtr)
 	return 0;
 }
 
-int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _Size)
+int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize)
 {
 	_Buffer->m_Allocated = False;
-	_Buffer->m_Dynamic = False;
 
-	_Buffer->m_Ptr = (unsigned char*)Allocator_Malloc(sizeof(unsigned char) * _Size);
+	_Buffer->m_Ptr = (unsigned char*)Allocator_Malloc(sizeof(unsigned char) * _ExtentionSize);
 
 	if(_Buffer->m_Ptr == NULL)
 		return -2;
 
+	_Buffer->m_Dynamic = _IsDynamic;
 	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
-	_Buffer->m_Size = _Size;
+	_Buffer->m_ExtentionSize = _ExtentionSize;
+	_Buffer->m_Size = _ExtentionSize;
 
 	_Buffer->m_BytesLeft = 0;
 	
 	return 0;
 }
 
-int Buffer_Extend(Buffer* _Buffer, int _Size)
+int Buffer_Extend(Buffer* _Buffer)
 {
 	if(_Buffer->m_Dynamic == False)
 		return -2;
 
-	unsigned char* newPtr = (unsigned char*)Allocator_Malloc(_Size);
+	int size = _Buffer->m_Size + _Buffer->m_ExtentionSize;
+	unsigned char* newPtr = (unsigned char*)Allocator_Malloc(size);
 
 	if(newPtr == NULL)
 		return -1;
@@ -60,6 +62,7 @@ int Buffer_Extend(Buffer* _Buffer, int _Size)
 
 	Allocator_Free(_Buffer->m_Ptr);
 	_Buffer->m_Ptr = newPtr;
+	_Buffer->m_Size = size;
 	
 	return 0;
 }
@@ -147,6 +150,12 @@ int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value)
 
 int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
 {
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + _Size)
+	{
+		if(Buffer_Extend(_Buffer) != 0)
+			return -1;
+	}
+
 	int readBytes = 0;
 
 	for (int i = 0; i < _Size; i++)
@@ -176,7 +185,7 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 		
 	if(_Des->m_Size < abs(_Des->m_Ptr - _Des->m_WritePtr) + _Size)
 	{
-		if(Buffer_Extend(_Des, _Des->m_Size + _Size) != 0)
+		if(Buffer_Extend(_Des) != 0)
 			return -1;
 	}
 

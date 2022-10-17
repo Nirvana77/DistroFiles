@@ -1,5 +1,7 @@
 #include "NetworkLayer.h"
 
+int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src);
+
 int NetworkLayer_InitializePtr(NetworkLayer** _NetworkLayerPtr)
 {
 	NetworkLayer* _NetworkLayer = (NetworkLayer*)Allocator_Malloc(sizeof(NetworkLayer));
@@ -79,19 +81,33 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Paylode)
 //TODO make this function
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src)
 {
+
+	int success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Type);
+	if(success < 0)
+		return -1;
+
+	success = Buffer_WriteUInt64(&_Dst->m_Data, _Src->m_Time);
+	if(success < 0)
+		return -2;
+
+	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Src.m_Type);
+	if(success < 0)
+		return -3;
+	success = Payload_WriteCommunicator(&_Src->m_Src, &_Dst->m_Data);
+	if(success < 0)
+		return -4;
+
+	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Des.m_Type);
+	if(success < 0)
+		return -5;
+	success = Payload_WriteCommunicator(&_Src->m_Des, &_Dst->m_Data);
+	if(success < 0)
+		return -6;
 	
-	/* Buffer_WriteUInt8(&_Paylode->m_Data, _Paylode->m_Type);
-
-	Buffer_WriteUInt64(&_Paylode->m_Data, _Paylode->m_Time);
-
-	Buffer_WriteUInt8(&_Paylode->m_Data, _Paylode->m_Src.m_Type);
-	Payload_WriteCommunicator(&_Paylode->m_Src, &_Paylode->m_Data);
-
-	Buffer_WriteUInt8(&_Paylode->m_Data, _Paylode->m_Des.m_Type);
-	Payload_WriteCommunicator(&_Paylode->m_Des, &_Paylode->m_Data);
-	
-	Buffer_WriteUInt16(&_Paylode->m_Data, _Paylode->m_Size);
- */
+	success = Buffer_WriteUInt16(&_Dst->m_Data, _Src->m_Size);
+	if(success < 0)
+		return -7;
+ 
 	return 0;
 }
 

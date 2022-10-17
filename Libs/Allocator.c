@@ -139,6 +139,7 @@
 		UInt32 orginalSize = 0;
 		ptr += Memory_ParseUInt32(ptr, &orginalSize);
 
+		printf("Malloced Data:\r\n");
 		int length = orginalSize + sizeof(UInt32) + ALLOCATOR_DEBUG_BORDERCHECK * 2;
 		for (int i = 0; i < length; i++)
 			printf("%x%s",ptr[i], i + 1 < length ? ", " : "");

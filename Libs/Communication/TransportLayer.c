@@ -108,7 +108,18 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 	else if(_TransportLayer->m_CurrentNode != NULL)
 	{
 		printf("TransportLayer_SendPayload\n\r");
-		memcpy(_Paylode, _TransportLayer->m_CurrentNode->m_Item, sizeof(Payload)); //! DONT USE MEMCPY!
+		Payload* p = (Payload*)_TransportLayer->m_CurrentNode->m_Item;
+		p->m_State = Payload_State_Sending;
+
+		SystemMonotonicMS(&p->m_Time);
+		Payload_Copy(_Paylode, p);
+
+		//This is temporary!
+		LinkedList_RemoveItem(&_TransportLayer->m_Queued, _TransportLayer->m_CurrentNode->m_Item);
+		Payload_Dispose(p);
+		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
+		//Core dump after adding this line!
+		
 		return 1;
  	}
 
@@ -132,10 +143,9 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Paylode)
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
-	return;
 	if(_TransportLayer->m_CurrentNode != NULL)
 	{
-		Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;
+		/* Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;
 
 		int success = _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
 		if(success < 0)
@@ -152,7 +162,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 
 		if(_TransportLayer->m_CurrentNode == NULL)
 			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
-		
+		 */
 	}
 	else if (_TransportLayer->m_Queued.m_Head != NULL)
 	{

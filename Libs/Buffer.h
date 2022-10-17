@@ -19,14 +19,15 @@ struct T_Buffer
 	unsigned char* m_Ptr;
 	unsigned char* m_ReadPtr;
 	unsigned char* m_WritePtr;
+	int m_ExtentionSize;
 	int m_Size;
 
 	int m_BytesLeft;
 
 };
 
-int Buffer_InitializePtr(Bool _IsDynamic, int _Size, Buffer** _BufferPtr);
-int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _Size);
+int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr);
+int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize);
 
 void Buffer_Clear(Buffer* _Buffer);
 

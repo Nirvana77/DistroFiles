@@ -31,10 +31,11 @@ typedef enum
 {
 	Payload_State_Init = 0,
 	Payload_State_Sented = 1,
-	Payload_State_Resived = 2,
-	Payload_State_Removed = 3,
-	Payload_State_Destroyed = 4,
-	Payload_State_Failed = 5
+	Payload_State_Sending = 2,
+	Payload_State_Resived = 3,
+	Payload_State_Removed = 4,
+	Payload_State_Destroyed = 5,
+	Payload_State_Failed = 6
 } Payload_State;
 
 typedef enum
@@ -94,6 +95,43 @@ int Payload_Initialize(Payload* _Payload);
 int Payload_WriteCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
 int Payload_ReadCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
 
+static inline void PayloadFilCommunicator(Payload_Communicator* _Des, Payload_Communicator* _Src)
+{
+	_Des->m_Type = _Src->m_Type;
+	switch (_Src->m_Type)
+	{
+		case Payload_Communicator_Type_IP:
+		{
+			_Des->m_Address.IP[0] = _Src->m_Address.IP[0];
+			_Des->m_Address.IP[1] = _Src->m_Address.IP[1];
+			_Des->m_Address.IP[2] = _Src->m_Address.IP[2];
+			_Des->m_Address.IP[3] = _Src->m_Address.IP[3];
+		} break;
+		case Payload_Communicator_Type_MAC:
+		{
+			_Des->m_Address.MAC[0] = _Src->m_Address.MAC[0];
+			_Des->m_Address.MAC[1] = _Src->m_Address.MAC[1];
+			_Des->m_Address.MAC[2] = _Src->m_Address.MAC[2];
+			_Des->m_Address.MAC[3] = _Src->m_Address.MAC[3];
+			_Des->m_Address.MAC[4] = _Src->m_Address.MAC[4];
+			_Des->m_Address.MAC[5] = _Src->m_Address.MAC[5];
+
+		} break;
+	}
+}
+
+static inline void Payload_Copy(Payload* _Des, Payload* _Src)
+{
+	_Des->m_Size = _Src->m_Size;
+	_Des->m_Time = _Src->m_Time;
+	_Des->m_Type = _Src->m_Type;
+	_Des->m_State = _Src->m_State;
+
+	PayloadFilCommunicator(&_Des->m_Des, &_Src->m_Des);
+	PayloadFilCommunicator(&_Des->m_Des, &_Src->m_Des);
+
+	Buffer_Copy(&_Des->m_Data, &_Src->m_Data, 0);
+}
 
 void Payload_Dispose(Payload* _Payload);
 #endif // Payload_h__
