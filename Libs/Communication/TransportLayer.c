@@ -109,7 +109,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Paylode)
 
 	printf("TransportLayer_ReveicePayload\n\r");
 	
-	Memory_ParseUInt16(_Paylode->m_Data.BUFFER, &_Paylode->m_Size);
+	Buffer_ReadUInt16(&_Paylode->m_Data, &_Paylode->m_Size);
 
 	int reviced = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Paylode);
 

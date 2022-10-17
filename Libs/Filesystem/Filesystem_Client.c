@@ -103,15 +103,9 @@ int Filesystem_Client_SendMessage(Filesystem_Client* _Client, unsigned char* _Da
 		Payload_Dispose(_Payload);
 		return -1;
 	}
-	
-	unsigned char* ptr = _Payload->m_Data.BUFFER;
-	for (int i = 0; i < _Size; i++)
-	{
-		int size = Memory_UInt8ToBuffer(_Data, ptr);
-		_Data += size;
-		ptr += size;
-	}
 
+	Buffer_WriteBuffer(&_Payload->m_Data, _Data, _Size);
+	
 	return 0;
 }
 

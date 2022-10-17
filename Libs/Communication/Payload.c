@@ -37,7 +37,7 @@ int Payload_Initialize(Payload* _Payload)
 
 void Payload_Dispose(Payload* _Payload)
 {
-	
+	Buffer_Dispose(&_Payload->m_Data);
 
 	if(_Payload->m_Allocated == True)
 		Allocator_Free(_Payload);

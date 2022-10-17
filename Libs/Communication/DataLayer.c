@@ -67,24 +67,14 @@ int DataLayer_SendMessage(void* _Context, Payload* _Payload)
 	DataLayer* _DataLayer = (DataLayer*)_Context;
 
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
-	Buffer_WriteUInt16(&_DataLayer->m_DataBuffer, _Payload->m_Size);
-
-	switch (_Payload->m_Type)
+	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) != 0)
 	{
-		case Payload_Type_BUFFER:
-		{
-			Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, _Payload->m_Data.BUFFER, _Payload->m_Size);
-
-		} break;
-	
-		default:
-		{
-
-		} break;
+		printf("Buffer copy error\n\r");
+		return -2;
 	}
 
 	UInt8 CRC = 0;
-	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _Payload->m_Size + 2, &CRC);
+	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _Payload->m_Size, &CRC);
 	
 	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
 
@@ -124,7 +114,13 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			Payload packet;
 			Payload_Initialize(&packet);
 
-			Buffer_ReadBuffer(&_DataLayer->m_DataBuffer, packet.m_Data.BUFFER, readed - 1);
+			Buffer_Initialize(&packet.m_Data, False, readed - 1);
+
+			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, readed - 1) != 0)
+			{
+				printf("Buffer copy error\n\r");
+				return -2;
+			}
 
 			int replayData = _DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet);
 

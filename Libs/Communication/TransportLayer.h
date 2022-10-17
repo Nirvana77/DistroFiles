@@ -4,7 +4,7 @@
 struct T_TransportLayer;
 typedef struct T_TransportLayer TransportLayer;
 
-#include "DataLayer.h"
+#include "Payload.h"
 #include "../LinkedList.h"
 
 struct T_TransportLayer

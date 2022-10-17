@@ -7,7 +7,6 @@ typedef struct T_DataLayer DataLayer;
 #include "../BitHelper.h"
 #include "../Buffer.h"
 #include "Payload.h"
-#include "TransportLayer.h"
 
 #ifndef DataLayer_CRC
 	#define DataLayer_CRC (0b11011)

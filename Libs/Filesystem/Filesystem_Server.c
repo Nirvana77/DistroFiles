@@ -163,16 +163,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Paylode)
 		return -1;
 
 	unsigned char data[_Paylode->m_Size];
-	unsigned char* ptr = data;
-	unsigned char* ptrRef = _Paylode->m_Data.BUFFER;
-	memset(data, 0, _Paylode->m_Size);
-
-	for (int i = 0; i < _Paylode->m_Size; i++)
-	{
-		int size = Memory_UInt8ToBuffer(ptrRef, ptr);
-		ptr += size;
-		ptrRef += size;
-	}
+	Buffer_ReadBuffer(&_Paylode->m_Data, data, _Paylode->m_Size);
 	
 	printf("Data: %s\n\r", data);
 

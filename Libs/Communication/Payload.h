@@ -34,9 +34,41 @@ typedef enum
 	Payload_Type_UI32 = 2,
 	Payload_Type_UI64 = 3,
 	Payload_Type_BUFFER = 4,
-	Payload_Type_IP = 5,
-	Payload_Type_MAC = 6
 } Payload_Type;
+
+typedef enum
+{
+	Payload_MessageType_Min = 0,
+
+	Payload_MessageType_Broadcast = 0,
+	Payload_MessageType_BroadcastRespons = 1,
+	Payload_MessageType_ACK = 2,
+	Payload_MessageType_UnSafe = 3,
+	Payload_MessageType_Safe = 4,
+	Payload_MessageType_Respons = 5,
+
+	Payload_MessageType_Max = 5
+} Payload_MessageType;
+
+typedef enum
+{
+	Payload_Communicator_Type_IP = 5,
+	Payload_Communicator_Type_MAC = 6
+} Payload_Communicator_Type;
+
+typedef struct
+{
+	Payload_Type m_Type;
+	union
+	{
+
+		//TODO: Add UUID
+		// UInt8 UUID[UUID_DATA_SIZE];
+		UInt8 IP[4];
+		UInt8 MAC[6];
+	} m_Address;
+	
+} Payload_Communicator;
 
 struct T_Payload
 {
@@ -47,19 +79,12 @@ struct T_Payload
 	UInt64 m_Time;
 
 	Payload_Type m_Type;
-	union 
-	{
-		UInt8 UI8;
-		UInt16 UI16;
-		UInt32 UI32;
-		UInt64 UI64;
-		UInt8 BUFFER[Payload_BufferSize];
+	Payload_MessageType m_MessageType;
 
-		//TODO: Add UUID
-		// UInt8 UUID[UUID_DATA_SIZE];
-		UInt8 IP[4];
-		UInt8 MAC[6];
-	} m_Data;
+	Payload_Communicator m_Src;
+	Payload_Communicator m_Des;
+
+	Buffer m_Data;
 };
 
 int Payload_InitializePtr(Payload** _PayloadPtr);
