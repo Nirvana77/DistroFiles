@@ -8,24 +8,25 @@ typedef struct T_Buffer Buffer;
 #include "Memory.h"
 
 #ifndef TCPBufferSize
-    #define TCPBufferSize 256
+	#define TCPBufferSize 256
 #endif
 
 struct T_Buffer
 {
-    Bool m_Allocated;
+	Bool m_Allocated;
+	Bool m_Dynamic;
 
-    unsigned char* m_Ptr;
-    unsigned char* m_ReadPtr;
-    unsigned char* m_WritePtr;
-    int m_Size;
+	unsigned char* m_Ptr;
+	unsigned char* m_ReadPtr;
+	unsigned char* m_WritePtr;
+	int m_Size;
 
-    int m_BytesLeft;
+	int m_BytesLeft;
 
 };
 
-int Buffer_InitializePtr(int _Size, Buffer** _BufferPtr);
-int Buffer_Initialize(Buffer* _Buffer, int _Size);
+int Buffer_InitializePtr(Bool _IsDynamic, int _Size, Buffer** _BufferPtr);
+int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _Size);
 
 void Buffer_Clear(Buffer* _Buffer);
 
@@ -43,6 +44,8 @@ int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value);
 
 int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
 int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File);
+
+int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size);
 
 void Buffer_Dispose(Buffer* _Buffer);
 

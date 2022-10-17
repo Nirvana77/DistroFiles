@@ -1,12 +1,16 @@
 #include "Buffer.h"
 
-int Buffer_InitializePtr(int _Size, Buffer** _BufferPtr)
+int Buffer_Extend(Buffer* _Buffer, int _Size);
+
+
+
+int Buffer_InitializePtr(Bool _IsDynamic, int _Size, Buffer** _BufferPtr)
 {
 	Buffer* _Buffer = (Buffer*)Allocator_Malloc(sizeof(Buffer));
 	if(_Buffer == NULL)
 		return -1;
 	
-	int success = Buffer_Initialize(_Buffer, _Size);
+	int success = Buffer_Initialize(_Buffer, _IsDynamic, _Size);
 	if(success != 0)
 	{
 		Allocator_Free(_Buffer);
@@ -19,9 +23,10 @@ int Buffer_InitializePtr(int _Size, Buffer** _BufferPtr)
 	return 0;
 }
 
-int Buffer_Initialize(Buffer* _Buffer, int _Size)
+int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _Size)
 {
 	_Buffer->m_Allocated = False;
+	_Buffer->m_Dynamic = False;
 
 	_Buffer->m_Ptr = (unsigned char*)Allocator_Malloc(sizeof(unsigned char) * _Size);
 
@@ -33,6 +38,28 @@ int Buffer_Initialize(Buffer* _Buffer, int _Size)
 	_Buffer->m_Size = _Size;
 
 	_Buffer->m_BytesLeft = 0;
+	
+	return 0;
+}
+
+int Buffer_Extend(Buffer* _Buffer, int _Size)
+{
+	if(_Buffer->m_Dynamic == False)
+		return -2;
+
+	unsigned char* newPtr = (unsigned char*)Allocator_Malloc(_Size);
+
+	if(newPtr == NULL)
+		return -1;
+
+	if(Memory_Copy(newPtr, _Buffer->m_Ptr, _Buffer->m_Size) != _Buffer->m_Size)
+	{
+		Allocator_Free(newPtr);
+		return -3;
+	}
+
+	Allocator_Free(_Buffer->m_Ptr);
+	_Buffer->m_Ptr = newPtr;
 	
 	return 0;
 }
@@ -139,6 +166,23 @@ int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File)
 	_Buffer->m_BytesLeft += readBytes;
 
 	return readBytes;
+}
+
+int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
+{
+
+	if(_Size == 0)
+		_Size = _Src->m_Size;
+		
+	if(_Des->m_Size < abs(_Des->m_Ptr - _Des->m_WritePtr) + _Size)
+	{
+		if(Buffer_Extend(_Des, _Des->m_Size + _Size) != 0)
+			return -1;
+	}
+
+	Buffer_Clear(_Des);
+
+	return Buffer_WriteBuffer(_Des, _Src->m_Ptr, _Size);
 }
 
 

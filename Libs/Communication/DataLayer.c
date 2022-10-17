@@ -36,7 +36,7 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 
 	Payload_FuncOut_Clear(&_DataLayer->m_FuncOut);
 
-	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, Payload_BufferSize);
+	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, True, Payload_BufferSize);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataBuffer!\n\r");
