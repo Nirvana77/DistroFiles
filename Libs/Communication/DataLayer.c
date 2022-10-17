@@ -67,10 +67,10 @@ int DataLayer_SendMessage(void* _Context, Payload* _Payload)
 	DataLayer* _DataLayer = (DataLayer*)_Context;
 
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
-	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) != 0)
+	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
 	{
 		printf("Buffer copy error\n\r");
-		return -2;
+		return -1;
 	}
 
 	UInt8 CRC = 0;
@@ -83,7 +83,7 @@ int DataLayer_SendMessage(void* _Context, Payload* _Payload)
 	{
 		printf("DataLayer_SendMessage: OnWrite Error\n\r");
 		printf("Error code: %i\n\r", success);
-		return -1;
+		return -2;
 	}
 
 	return 0;
@@ -116,7 +116,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 			Buffer_Initialize(&packet.m_Data, False, readed - 1);
 
-			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, readed - 1) != 0)
+			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, readed - 1) < 0)
 			{
 				printf("Buffer copy error\n\r");
 				return -2;

@@ -1,3 +1,5 @@
+#include "NetworkLayer.h"
+
 int NetworkLayer_InitializePtr(NetworkLayer** _NetworkLayerPtr)
 {
     NetworkLayer* _NetworkLayer = (NetworkLayer*)Allocator_Malloc(sizeof(NetworkLayer));

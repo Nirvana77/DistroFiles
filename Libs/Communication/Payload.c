@@ -28,6 +28,8 @@ int Payload_Initialize(Payload* _Payload)
 	_Payload->m_Time = 0;
 
 	_Payload->m_Type = Payload_Type_UI8;
+
+	Buffer_Initialize(&_Payload->m_Data, True, 16);
 	
 	return 0;
 }

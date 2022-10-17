@@ -27,6 +27,7 @@
 
 #include "Libs/Communication/Payload.c"
 #include "Libs/Communication/DataLayer.c"
+#include "Libs/Communication/NetworkLayer.c"
 #include "Libs/Communication/TransportLayer.c"
 
 #include "Libs/TCP/TCPSocket.c"
