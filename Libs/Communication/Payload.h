@@ -128,9 +128,25 @@ static inline void Payload_Copy(Payload* _Des, Payload* _Src)
 	_Des->m_State = _Src->m_State;
 
 	PayloadFilCommunicator(&_Des->m_Des, &_Src->m_Des);
-	PayloadFilCommunicator(&_Des->m_Des, &_Src->m_Des);
+	PayloadFilCommunicator(&_Des->m_Src, &_Src->m_Src);
 
 	Buffer_Copy(&_Des->m_Data, &_Src->m_Data, 0);
+}
+
+static inline void Payload_Print(Payload* _Payload, const char* _Str)
+{
+	printf("Payload(%s): %llu\n\r", _Str, _Payload->m_Time);
+	printf("State: %i\n\r", _Payload->m_State);
+	printf("Type: %i\n\r", _Payload->m_Type);
+
+	printf("SRC: %i.%i.%i.%i\n\r", _Payload->m_Src.m_Address.IP[0], _Payload->m_Src.m_Address.IP[1], _Payload->m_Src.m_Address.IP[2], _Payload->m_Src.m_Address.IP[3]);
+	printf("DES: %i.%i.%i.%i\n\r", _Payload->m_Des.m_Address.IP[0], _Payload->m_Des.m_Address.IP[1], _Payload->m_Des.m_Address.IP[2], _Payload->m_Des.m_Address.IP[3]);
+
+	printf("Data:\r\n");
+	for (int i = 0; i < _Payload->m_Data.m_BytesLeft; i++)
+		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
+	printf("\n\r");
+	
 }
 
 void Payload_Dispose(Payload* _Payload);

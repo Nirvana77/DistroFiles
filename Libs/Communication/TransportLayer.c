@@ -114,11 +114,17 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 		SystemMonotonicMS(&p->m_Time);
 		Payload_Copy(_Paylode, p);
 
+		Payload_Print(p, "p");
+		Payload_Print(_Paylode, "Payload");
+
 		//This is temporary!
-		LinkedList_RemoveItem(&_TransportLayer->m_Queued, _TransportLayer->m_CurrentNode->m_Item);
-		Payload_Dispose(p);
 		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
-		//Core dump after adding this line!
+
+		LinkedList_RemoveItem(&_TransportLayer->m_Queued, p);
+		Payload_Dispose(p);
+		
+		if(_TransportLayer->m_CurrentNode == NULL)
+			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
 		
 		return 1;
  	}

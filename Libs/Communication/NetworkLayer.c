@@ -44,6 +44,7 @@ int NetworkLayer_SendPayload(void* _Context, Payload* _Paylode)
 		int success = NetworkLayer_PayloadLinker(_NetworkLayer, _Paylode, &message);
 		if(success == 0)
 		{
+			Payload_Print(_Paylode, "Net");
 			Payload_Dispose(&message);
 			return 1;
 
@@ -82,14 +83,17 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Paylode)
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src)
 {
 
+	Payload_Print(_Dst, "Linker");
 	int success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Type);
 	if(success < 0)
 		return -1;
 
+	Payload_Print(_Dst, "Linker");
 	success = Buffer_WriteUInt64(&_Dst->m_Data, _Src->m_Time);
 	if(success < 0)
 		return -2;
 
+	Payload_Print(_Dst, "Linker");
 	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Src.m_Type);
 	if(success < 0)
 		return -3;
@@ -97,6 +101,7 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 	if(success < 0)
 		return -4;
 
+	Payload_Print(_Dst, "Linker");
 	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Des.m_Type);
 	if(success < 0)
 		return -5;
@@ -104,10 +109,17 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 	if(success < 0)
 		return -6;
 	
+	Payload_Print(_Dst, "Linker");
 	success = Buffer_WriteUInt16(&_Dst->m_Data, _Src->m_Size);
 	if(success < 0)
 		return -7;
+	
+	Payload_Print(_Dst, "Linker");
+	success = Buffer_WriteBuffer(&_Dst->m_Data, _Src->m_Data.m_ReadPtr, _Src->m_Data.m_BytesLeft);
+	if(success < 0)
+		return -8;
  
+	Payload_Print(_Dst, "Linker");
 	return 0;
 }
 

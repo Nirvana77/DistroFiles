@@ -59,6 +59,8 @@ int Buffer_Extend(Buffer* _Buffer)
 		Allocator_Free(newPtr);
 		return -3;
 	}
+	_Buffer->m_WritePtr = (_Buffer->m_WritePtr - _Buffer->m_Ptr) + newPtr;
+	_Buffer->m_ReadPtr = (_Buffer->m_ReadPtr - _Buffer->m_Ptr) + newPtr;
 
 	Allocator_Free(_Buffer->m_Ptr);
 	_Buffer->m_Ptr = newPtr;
@@ -181,7 +183,7 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 {
 
 	if(_Size == 0)
-		_Size = _Src->m_Size;
+		_Size = _Src->m_BytesLeft;
 		
 	if(_Des->m_Size < abs(_Des->m_Ptr - _Des->m_WritePtr) + _Size)
 	{
@@ -191,7 +193,7 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 
 	Buffer_Clear(_Des);
 
-	return Buffer_WriteBuffer(_Des, _Src->m_Ptr, _Size);
+	return Buffer_WriteBuffer(_Des, _Src->m_ReadPtr, _Size);
 }
 
 
