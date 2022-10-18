@@ -130,15 +130,24 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 	return 0;
 }
 
-int TransportLayer_ReveicePayload(void* _Context, Payload* _Paylode)
+int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
 	printf("TransportLayer_ReveicePayload\n\r");
-	
-	Buffer_ReadUInt16(&_Paylode->m_Data, &_Paylode->m_Size);
 
-	int reviced = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Paylode);
+	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
+	{
+		Payload replay;
+		Payload_Initialize(&replay);
+		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
+		{
+			
+			Payload_Dispose(&replay);
+			return 1;
+		}
+		Payload_Dispose(&replay);
+	}
 
 	return 0;
 }

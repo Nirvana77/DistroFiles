@@ -3,7 +3,7 @@ int Filesystem_Client_OnRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Client_OnWrite(void* _Context, Buffer* _Buffer, int _Size);
 
 int Filesystem_Client_SendPayload(void* _Context, Payload* _Paylode);
-int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Paylode);
+int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 int Filesystem_Client_InitializePtr(Filesystem_Service* _Service, Filesystem_Client** _ClientPtr)
 {
@@ -98,7 +98,7 @@ int Filesystem_Client_SendPayload(void* _Context, Payload* _Paylode)
 	return 0;
 }
 
-int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Paylode)
+int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 

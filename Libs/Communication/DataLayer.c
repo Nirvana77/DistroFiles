@@ -147,8 +147,24 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 				return -2;
 			}
 
-			int replayData = _DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet);
+			Payload replay;
+			Payload_Initialize(&replay);
+			if(_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet, &replay) == 1)//Whants to send replay
+			{
+				//send message/payload
+				int success = DataLayer_SendMessage(_DataLayer, &replay);
+				if(success != 0)
+				{
+					printf("Replay failed\n\r");
+					printf("Error code: %i\n\r", success);
 
+					Payload_Dispose(&replay);
+					Payload_Dispose(&packet);
+					return -1;
+				}
+			}
+
+			Payload_Dispose(&replay);
 			Payload_Dispose(&packet);
 
 		}

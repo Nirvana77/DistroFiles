@@ -6,7 +6,7 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
 
 int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode);
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Paylode);
+int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -167,14 +167,14 @@ int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode)
 	return 0;
 }
 
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Paylode)
+int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	// Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
 	printf("Filesystem_Server_ReveicePayload\n\r");
 
-	unsigned char data[_Paylode->m_Size];
-	Buffer_ReadBuffer(&_Paylode->m_Data, data, _Paylode->m_Size);
+	unsigned char data[_Message->m_Size];
+	Buffer_ReadBuffer(&_Message->m_Data, data, _Message->m_Size);
 	
 	printf("Data: %s\n\r", data);
 

@@ -55,25 +55,36 @@ int NetworkLayer_SendPayload(void* _Context, Payload* _Paylode)
 	return 0;
 }
 
-int NetworkLayer_ReveicePayload(void* _Context, Payload* _Paylode)
+int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
 
 	printf("NetworkLayer_ReveicePayload\n\r");
 	
-	Buffer_ReadUInt8(&_Paylode->m_Data, (UInt8*)&_Paylode->m_Type);
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
 
-	Buffer_ReadUInt64(&_Paylode->m_Data, &_Paylode->m_Time);
+	Buffer_ReadUInt64(&_Message->m_Data, &_Message->m_Time);
 
-	Buffer_ReadUInt8(&_Paylode->m_Data, (UInt8*)&_Paylode->m_Src.m_Type);
-	Payload_ReadCommunicator(&_Paylode->m_Src, &_Paylode->m_Data);
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Src.m_Type);
+	Payload_ReadCommunicator(&_Message->m_Src, &_Message->m_Data);
 
-	Buffer_ReadUInt8(&_Paylode->m_Data, (UInt8*)&_Paylode->m_Des.m_Type);
-	Payload_ReadCommunicator(&_Paylode->m_Des, &_Paylode->m_Data);
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Des.m_Type);
+	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
 
-	Buffer_ReadUInt16(&_Paylode->m_Data, &_Paylode->m_Size);
+	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
 
-	int reviced = _NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Paylode);
+	if(_NetworkLayer->m_FuncOut.m_Receive != NULL)
+	{
+		Payload replay;
+		Payload_Initialize(&replay);
+		if(_NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
+		{//Whant to send replay
+
+			Payload_Dispose(&replay);
+			return 1;
+		}
+		Payload_Dispose(&replay);
+	}
 
 	return 0;
 }

@@ -11,11 +11,11 @@ typedef struct T_Payload Payload;
 typedef struct
 {
 	void* m_Context;
-	int (*m_Receive)(void* _Context, Payload* _Paylode);
+	int (*m_Receive)(void* _Context, Payload* _Message, Payload* _Replay);
 	int (*m_Send)(void* _Context, Payload* _Paylode);
 } Payload_FuncOut;
 
-static inline void Payload_FuncOut_Set(Payload_FuncOut* _FuncOut, int (*_Receive)(void* _Context, Payload* _Paylode), int (*_Send)(void* _Context, Payload* _Paylode), void* _Context)
+static inline void Payload_FuncOut_Set(Payload_FuncOut* _FuncOut, int (*_Receive)(void* _Context, Payload* _Message, Payload* _Replay), int (*_Send)(void* _Context, Payload* _Paylode), void* _Context)
 {
 	_FuncOut->m_Context = _Context;
 	_FuncOut->m_Receive = _Receive;

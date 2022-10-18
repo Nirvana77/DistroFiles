@@ -28,7 +28,7 @@ int TransportLayer_SendMessage(TransportLayer* _TransportLayer);
 
 
 int TransportLayer_SendPayload(void* _Context, Payload* _Paylode);
-int TransportLayer_ReveicePayload(void* _Context, Payload* _Replay);
+int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer);
 
