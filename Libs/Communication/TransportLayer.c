@@ -114,9 +114,6 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 		SystemMonotonicMS(&p->m_Time);
 		Payload_Copy(_Paylode, p);
 
-		Payload_Print(p, "p");
-		Payload_Print(_Paylode, "Payload");
-
 		//This is temporary!
 		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
 

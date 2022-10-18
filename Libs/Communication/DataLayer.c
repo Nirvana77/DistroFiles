@@ -58,33 +58,28 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 		{
 			printf("DataLayer_ReceiveMessage failed\n\r");
 			printf("Error code: %i\n\r", success);
-			return;
 		}
-		else if(success == 0)
+		
+		Payload message;
+		Payload_Initialize(&message);
+		if(_DataLayer->m_FuncOut.m_Send(_DataLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send message
 		{
-			Payload message;
-			Payload_Initialize(&message);
-			if(_DataLayer->m_FuncOut.m_Send(_DataLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send message
-			{
-				//send message/payload
-				if(DataLayer_SendMessage(_DataLayer, &message) != 0)
-					message.m_State = Payload_State_Failed;
-				
-				else
-					message.m_State = Payload_State_Sented;
+			//send message/payload
+			if(DataLayer_SendMessage(_DataLayer, &message) != 0)
+				message.m_State = Payload_State_Failed;
+			
+			else
+				message.m_State = Payload_State_Sented;
 
-			}
-
-			Payload_Dispose(&message);
 		}
+
+		Payload_Dispose(&message);
 	}
 }
 
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
-
-
 
 	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
 	{
@@ -158,6 +153,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		}
 		
+		return readed;
 	}
 
 	return 0;
