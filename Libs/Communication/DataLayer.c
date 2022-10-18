@@ -88,11 +88,11 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	}
 
 	UInt8 CRC = 0;
-	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _Payload->m_Size, &CRC);
+	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _DataLayer->m_DataBuffer.m_BytesLeft, &CRC);
 	
 	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
 
-	printf("Data(W):\r\n");
+	printf("Data(W)%i:\r\n", CRC);
 	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
 		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
 	printf("\n\r");
@@ -118,7 +118,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		UInt8 CRC = 0;
 		UInt8 ownCRC = 0;
-		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_Ptr[readed - 1], &CRC);
+		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_ReadPtr[readed - 1], &CRC);
 		
 		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, readed - 1, &ownCRC);
 
