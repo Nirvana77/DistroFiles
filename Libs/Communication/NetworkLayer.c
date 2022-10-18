@@ -65,10 +65,13 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 	Buffer_ReadUInt64(&_Message->m_Data, &_Message->m_Time);
 
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Src.m_Type);
+	UInt8 type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
+	_Message->m_Src.m_Type = (Payload_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Src, &_Message->m_Data);
 
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Des.m_Type);
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
+	_Message->m_Des.m_Type = (Payload_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);

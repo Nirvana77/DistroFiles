@@ -139,8 +139,6 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			Payload packet;
 			Payload_Initialize(&packet);
 
-			Buffer_Initialize(&packet.m_Data, False, readed - 1);
-
 			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, readed - 1) < 0)
 			{
 				printf("Buffer copy error\n\r");
