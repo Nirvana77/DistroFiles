@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
 #ifdef COMPILEDEBUG
 	#define ALLOCATOR_DEBUG
 	#define ALLOCATOR_DEBUG_BORDERCHECK 6

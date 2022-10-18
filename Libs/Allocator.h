@@ -1,6 +1,16 @@
 #ifndef Allocator_h__
 #define Allocator_h__
 
+
+struct T_Allocator;
+typedef struct T_Allocator Allocator;
+
+struct T_List_Node;
+typedef struct T_List_Node List_Node;
+
+#include "Memory.h"
+#include "Portability.h"
+
 typedef enum {
 	Allocator_Bordercheck_OK = 0,
 	Allocator_Bordercheck_FAILBEGIN = 1,
@@ -15,17 +25,34 @@ typedef enum
 
 } Allocator_Event;
 
-struct T_Allocator;
-typedef struct T_Allocator Allocator;
+typedef struct
+{
+	unsigned int m_Size;
+	const char m_FileString[256];
+	unsigned int m_LineNumber;
+	const char m_FunctionString[126];
+	unsigned char* m_Ptr;
+} Allocator_Data;
 
-#include "Memory.h"
-#include "Portability.h"
+struct T_List_Node
+{
+    List_Node* m_Next;
+    List_Node* m_Privios;
+	Allocator_Data m_Data;
+} ;
+
+typedef struct
+{
+	int m_Size;
+	List_Node* m_Head;
+	List_Node* m_Tail;
+} List;
 
 struct T_Allocator
 {
 	char m_Path[1024];
 	FILE* m_F;
-
+	List m_Mallocs;
 };
 
 
@@ -41,6 +68,7 @@ struct T_Allocator
 	void Allocator_WriteEvent(Allocator_Event _Event, void* _Pointer, unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString);
 	
 	void Allocator_Close();
+
 #else
 
 	unsigned char* Allocator_Malloc(unsigned int _Size);
