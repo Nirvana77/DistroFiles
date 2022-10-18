@@ -135,7 +135,7 @@ static inline void Payload_Copy(Payload* _Des, Payload* _Src)
 
 static inline void Payload_Print(Payload* _Payload, const char* _Str)
 {
-	printf("Payload(%s): %llu\n\r", _Str, _Payload->m_Time);
+	printf("Payload(%s): %lu\n\r", _Str, _Payload->m_Time);
 	printf("State: %i\n\r", _Payload->m_State);
 	printf("Type: %i\n\r", _Payload->m_Type);
 
