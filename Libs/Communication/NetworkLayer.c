@@ -67,11 +67,11 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 	UInt8 type = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
-	_Message->m_Src.m_Type = (Payload_Type) type;
+	_Message->m_Src.m_Type = (Payload_Address_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Src, &_Message->m_Data);
 
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
-	_Message->m_Des.m_Type = (Payload_Type) type;
+	_Message->m_Des.m_Type = (Payload_Address_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
@@ -92,7 +92,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	return 0;
 }
 
-//TODO make this function
+//TODO #29 make the method a bit at the start
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src)
 {
 
@@ -117,10 +117,14 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 	success = Payload_WriteCommunicator(&_Src->m_Des, &_Dst->m_Data);
 	if(success < 0)
 		return -6;
+
+	success = Payload_WriteMessage(&_Src->m_Message, &_Dst->m_Data);
+	if(success < 0)
+		return -7;
 	
 	success = Buffer_WriteUInt16(&_Dst->m_Data, _Src->m_Size);
 	if(success < 0)
-		return -7;
+		return -8;
 	
 	success = Buffer_WriteBuffer(&_Dst->m_Data, _Src->m_Data.m_ReadPtr, _Src->m_Data.m_BytesLeft);
 	if(success < 0)

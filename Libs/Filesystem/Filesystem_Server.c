@@ -170,14 +170,16 @@ int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode)
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
-	// Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
 	printf("Filesystem_Server_ReveicePayload\n\r");
+	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
+		return 0;
 
-	unsigned char data[_Message->m_Size];
-	Buffer_ReadBuffer(&_Message->m_Data, data, _Message->m_Size);
-	
-	printf("Data: %s\n\r", data);
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "test") == 0)
+	{
+		printf("Test package!\n\r");
+	}
 
 	return 0;
 }

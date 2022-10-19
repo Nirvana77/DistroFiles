@@ -21,7 +21,7 @@ struct T_TransportLayer
 int TransportLayer_InitializePtr(TransportLayer** _TransportLayerPtr);
 int TransportLayer_Initialize(TransportLayer* _TransportLayer);
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _Type, int _Size, Payload** _PayloadPtr);
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, Payload** _PayloadPtr);
 int TransportLayer_DestroyMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 int TransportLayer_SendMessage(TransportLayer* _TransportLayer);

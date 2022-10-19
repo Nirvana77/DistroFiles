@@ -85,14 +85,10 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	return 0;
 }
 
-//TODO #23 Change this
 int Filesystem_Client_SendPayload(void* _Context, Payload* _Paylode)
 {
 	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-
 	printf("Filesystem_Client_SendPayload\n\r");
-
-	//DataLayer_SendMessage(&_Client->m_DataLayer, _Paylode);
 	
 
 	return 0;
@@ -110,7 +106,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 int Filesystem_Client_SendMessage(Filesystem_Client* _Client, unsigned char* _Data, int _Size)
 {
 	Payload* _Payload = NULL;
-	int success = TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_MessageType_Broadcast, _Size, &_Payload);
+	int success = TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_Type_Broadcast, _Size, &_Payload);
 	if(success != 0)
 	{
 		Payload_Dispose(_Payload);

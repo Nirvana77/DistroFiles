@@ -40,27 +40,45 @@ typedef enum
 
 typedef enum
 {
-	Payload_MessageType_Min = 0,
+	Payload_Type_Min = 0,
 
-	Payload_MessageType_Broadcast = 0,
-	Payload_MessageType_BroadcastRespons = 1,
-	Payload_MessageType_ACK = 2,
-	Payload_MessageType_UnSafe = 3,
-	Payload_MessageType_Safe = 4,
-	Payload_MessageType_Respons = 5,
+	Payload_Type_Broadcast = 0,
+	Payload_Type_BroadcastRespons = 1,
+	Payload_Type_ACK = 2,
+	Payload_Type_UnSafe = 3,
+	Payload_Type_Safe = 4,
+	Payload_Type_Respons = 5,
 
-	Payload_MessageType_Max = 5
-} Payload_MessageType;
+	Payload_Type_Max = 5
+} Payload_Type;
 
 typedef enum
 {
-	Payload_Communicator_Type_IP = 0,
-	Payload_Communicator_Type_MAC = 1
-} Payload_Type;
+	Payload_Message_Type_None = 0,
+	Payload_Message_Type_String = 1
+} Payload_Message_Type;
 
 typedef struct
 {
-	Payload_Type m_Type;
+	Payload_Message_Type m_Type;
+	UInt16 m_Size;
+	union
+	{
+		char m_Str[64]; //Make this a deff
+	} m_Method;
+	
+	
+} Payload_Message;
+
+typedef enum
+{
+	Payload_Address_Type_IP = 0,
+	Payload_Address_Type_MAC = 1
+} Payload_Address_Type;
+
+typedef struct
+{
+	Payload_Address_Type m_Type;
 	union
 	{
 
@@ -70,7 +88,7 @@ typedef struct
 		UInt8 MAC[6];
 	} m_Address;
 	
-} Payload_Communicator;
+} Payload_Address;
 
 struct T_Payload
 {
@@ -81,10 +99,12 @@ struct T_Payload
 	UInt16 m_Size;
 	UInt64 m_Time;
 
-	Payload_MessageType m_Type;
+	Payload_Type m_Type;
 
-	Payload_Communicator m_Src;
-	Payload_Communicator m_Des;
+	Payload_Message m_Message;
+
+	Payload_Address m_Src;
+	Payload_Address m_Des;
 
 	Buffer m_Data;
 };
@@ -92,46 +112,13 @@ struct T_Payload
 int Payload_InitializePtr(Payload** _PayloadPtr);
 int Payload_Initialize(Payload* _Payload);
 
-int Payload_WriteCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
-int Payload_ReadCommunicator(Payload_Communicator* _Communicator, Buffer* _Buffer);
+int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
+int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 
-static inline void PayloadFilCommunicator(Payload_Communicator* _Des, Payload_Communicator* _Src)
-{
-	_Des->m_Type = _Src->m_Type;
-	switch (_Src->m_Type)
-	{
-		case Payload_Communicator_Type_IP:
-		{
-			_Des->m_Address.IP[0] = _Src->m_Address.IP[0];
-			_Des->m_Address.IP[1] = _Src->m_Address.IP[1];
-			_Des->m_Address.IP[2] = _Src->m_Address.IP[2];
-			_Des->m_Address.IP[3] = _Src->m_Address.IP[3];
-		} break;
-		case Payload_Communicator_Type_MAC:
-		{
-			_Des->m_Address.MAC[0] = _Src->m_Address.MAC[0];
-			_Des->m_Address.MAC[1] = _Src->m_Address.MAC[1];
-			_Des->m_Address.MAC[2] = _Src->m_Address.MAC[2];
-			_Des->m_Address.MAC[3] = _Src->m_Address.MAC[3];
-			_Des->m_Address.MAC[4] = _Src->m_Address.MAC[4];
-			_Des->m_Address.MAC[5] = _Src->m_Address.MAC[5];
+int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);
+int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
-		} break;
-	}
-}
-
-static inline void Payload_Copy(Payload* _Des, Payload* _Src)
-{
-	_Des->m_Size = _Src->m_Size;
-	_Des->m_Time = _Src->m_Time;
-	_Des->m_Type = _Src->m_Type;
-	_Des->m_State = _Src->m_State;
-
-	PayloadFilCommunicator(&_Des->m_Des, &_Src->m_Des);
-	PayloadFilCommunicator(&_Des->m_Src, &_Src->m_Src);
-
-	Buffer_Copy(&_Des->m_Data, &_Src->m_Data, 0);
-}
+void Payload_Copy(Payload* _Des, Payload* _Src);
 
 static inline void Payload_Print(Payload* _Payload, const char* _Str)
 {
@@ -139,22 +126,49 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 	printf("State: %i\n\r", _Payload->m_State);
 	printf("Type: %i\n\r", _Payload->m_Type);
 
-	if(_Payload->m_Src.m_Type == Payload_Communicator_Type_IP)
+	if(_Payload->m_Src.m_Type == Payload_Address_Type_IP)
 		printf("SRC: %i.%i.%i.%i\n\r", _Payload->m_Src.m_Address.IP[0], _Payload->m_Src.m_Address.IP[1], _Payload->m_Src.m_Address.IP[2], _Payload->m_Src.m_Address.IP[3]);
 	else
 		printf("SRC: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Src.m_Address.MAC[0], _Payload->m_Src.m_Address.MAC[1], _Payload->m_Src.m_Address.MAC[2], _Payload->m_Src.m_Address.MAC[3], _Payload->m_Src.m_Address.MAC[4], _Payload->m_Src.m_Address.MAC[5]);
 		
 
-	if(_Payload->m_Des.m_Type == Payload_Communicator_Type_IP)
+	if(_Payload->m_Des.m_Type == Payload_Address_Type_IP)
 		printf("DES: %i.%i.%i.%i\n\r", _Payload->m_Des.m_Address.IP[0], _Payload->m_Des.m_Address.IP[1], _Payload->m_Des.m_Address.IP[2], _Payload->m_Des.m_Address.IP[3]);
 	else
 		printf("DES: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Des.m_Address.MAC[0], _Payload->m_Des.m_Address.MAC[1], _Payload->m_Des.m_Address.MAC[2], _Payload->m_Des.m_Address.MAC[3], _Payload->m_Des.m_Address.MAC[4], _Payload->m_Des.m_Address.MAC[5]);
+
+	if(_Payload->m_Message.m_Type == Payload_Message_Type_None)
+	{
+		if(_Payload->m_Message.m_Type == Payload_Message_Type_String)
+			printf("Method(%u): %s\n\r", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
+	}
 
 	printf("Data:\r\n");
 	for (int i = 0; i < _Payload->m_Data.m_BytesLeft; i++)
 		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
 	printf("\n\r");
 	
+}
+
+static inline int Payload_SetMessageType(Payload* _Payload, Payload_Message_Type _Type, void* _Value, int _Size)
+{
+
+	switch (_Type)
+	{
+		case Payload_Message_Type_String:
+		{
+			strncpy(_Payload->m_Message.m_Method.m_Str, (const char*)_Value, _Size);
+			
+			_Payload->m_Message.m_Type = _Type;
+			_Payload->m_Message.m_Size = _Size;
+		} break;
+		case Payload_Message_Type_None:
+		{
+			_Payload->m_Message.m_Type = _Type;
+			_Payload->m_Message.m_Size = 0;
+			
+		} break;
+	}
 }
 
 void Payload_Dispose(Payload* _Payload);
