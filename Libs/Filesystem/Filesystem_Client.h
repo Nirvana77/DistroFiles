@@ -13,6 +13,7 @@ struct T_Filesystem_Client
 
 	TCPClient m_TCPClient;
 	DataLayer m_DataLayer;
+	NetworkLayer m_NetworkLayer;
 	TransportLayer m_TransportLayer;
 
 };

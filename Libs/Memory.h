@@ -13,4 +13,13 @@ int Memory_ParseUInt32(const void* _Pointer, UInt32* _Dest);
 int Memory_ParseUInt16(const void* _Pointer, UInt16* _Dest);
 int Memory_ParseUInt8(const void* _Pointer, UInt8* _Dest);
 
+static inline int Memory_Copy(const void* _Des, const void* _Src, int _Size)
+{
+    int write = 0;
+    for (int i = 0; i < _Size; i++)
+        write += Memory_ParseUInt8(_Src + i, (UInt8*) (_Des + i));
+    
+    return write;
+}
+
 #endif // Memory_h__

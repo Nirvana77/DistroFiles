@@ -7,7 +7,6 @@ typedef struct T_DataLayer DataLayer;
 #include "../BitHelper.h"
 #include "../Buffer.h"
 #include "Payload.h"
-#include "TransportLayer.h"
 
 #ifndef DataLayer_CRC
 	#define DataLayer_CRC (0b11011)
@@ -68,9 +67,6 @@ int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(vo
 int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout);
 
 void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer);
-
-int DataLayer_SendMessage(void* _Context, Payload* _Paylode);
-
 
 void DataLayer_Dispose(DataLayer* _DataLayer);
 #endif // DataLayer_h__

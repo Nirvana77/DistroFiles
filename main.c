@@ -7,12 +7,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
 #ifdef COMPILEDEBUG
 	#define ALLOCATOR_DEBUG
 	#define ALLOCATOR_DEBUG_BORDERCHECK 6
 	#define ALLOCATOR_RUN_AFTERCHECK
 #endif
+
+// #include "Libs/Portability.c"
 
 #include "Libs/File.c"
 #include "Libs/Folder.c"
@@ -27,6 +28,7 @@
 
 #include "Libs/Communication/Payload.c"
 #include "Libs/Communication/DataLayer.c"
+#include "Libs/Communication/NetworkLayer.c"
 #include "Libs/Communication/TransportLayer.c"
 
 #include "Libs/TCP/TCPSocket.c"
@@ -122,11 +124,6 @@ int main(int argc, char* argv[])
 				switch (chr)
 				{
 
-					case 'r':
-					{
-						
-					} break;
-
 					case 'w':
 					{
 						const char* str = "GET / HTTP/1.1\r\n\r\n";
@@ -140,9 +137,30 @@ int main(int argc, char* argv[])
 						TCPClient_Write(&service->m_Client->m_TCPClient, &buffer, strlen(str));
 						Buffer_Dispose(&buffer);
 						 */
+
+						Payload* message = NULL;
 						
 						if(service != NULL)
-							Filesystem_Client_SendMessage(service->m_Client, (unsigned char*)str, size);
+						{
+							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_MessageType_ACK, size, &message) == 0)
+							{
+								Buffer_WriteBuffer(&message->m_Data, (UInt8*)str, size);
+								message->m_Des.m_Type = Payload_Communicator_Type_IP;
+								message->m_Des.m_Address.IP[0] = 172;
+								message->m_Des.m_Address.IP[1] = 217;
+								message->m_Des.m_Address.IP[2] = 21;
+								message->m_Des.m_Address.IP[3] = 163;
+								
+								message->m_Des.m_Type = Payload_Communicator_Type_MAC;
+								message->m_Des.m_Address.MAC[0] = 1;
+								message->m_Des.m_Address.MAC[1] = 2;
+								message->m_Des.m_Address.MAC[2] = 3;
+								message->m_Des.m_Address.MAC[3] = 4;
+								message->m_Des.m_Address.MAC[4] = 5;
+								message->m_Des.m_Address.MAC[5] = 6;
+							}
+
+						}
 						
 					} break;
 				

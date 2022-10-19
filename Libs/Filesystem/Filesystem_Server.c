@@ -6,7 +6,7 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
 
 int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode);
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Paylode);
+int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -48,7 +48,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -3;
 	}
 
-	success = Buffer_Initialize(&_Server->m_Buffer, 64);
+	success = Buffer_Initialize(&_Server->m_Buffer, False, 64);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Buffer!\n\r");
@@ -70,6 +70,18 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -5;
 	}
 
+	success = NetworkLayer_Initialize(&_Server->m_NetworkLayer);
+	if(success != 0)
+	{
+		printf("Failed to initialize the NetworkLayer for server!\n\r");
+		printf("Error code: %i\n\r", success);
+		TCPServer_Disconnect(&_Server->m_TCPServer);
+		LinkedList_Dispose(&_Server->m_Sockets);
+		Buffer_Dispose(&_Server->m_Buffer);
+		DataLayer_Dispose(&_Server->m_DataLayer);
+		return -6;
+	}
+
 	success = TransportLayer_Initialize(&_Server->m_TransportLayer);
 	if(success != 0)
 	{
@@ -79,11 +91,13 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		LinkedList_Dispose(&_Server->m_Sockets);
 		Buffer_Dispose(&_Server->m_Buffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
+		NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 		return -6;
 	}
 
-	Payload_FuncOut_Set(&_Server->m_DataLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Server->m_TransportLayer);
-	Payload_FuncOut_Set(&_Server->m_TransportLayer.m_FuncOut, Filesystem_Server_ReveicePayload, Filesystem_Server_SendPayload, _Server);
+	Payload_FuncOut_Set(&_Server->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Server->m_NetworkLayer);
+	Payload_FuncOut_Set(&_Server->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Server->m_TransportLayer);
+	Payload_FuncOut_Set(&_Server->m_TransportLayer.m_FuncOut, Filesystem_Server_ReveicePayload, NULL, _Server);
 
 	return 0;
 }
@@ -153,26 +167,14 @@ int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode)
 	return 0;
 }
 
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Paylode)
+int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	// Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
 	printf("Filesystem_Server_ReveicePayload\n\r");
 
-	if(_Paylode->m_Type != Payload_Type_BUFFER)
-		return -1;
-
-	unsigned char data[_Paylode->m_Size];
-	unsigned char* ptr = data;
-	unsigned char* ptrRef = _Paylode->m_Data.BUFFER;
-	memset(data, 0, _Paylode->m_Size);
-
-	for (int i = 0; i < _Paylode->m_Size; i++)
-	{
-		int size = Memory_UInt8ToBuffer(ptrRef, ptr);
-		ptr += size;
-		ptrRef += size;
-	}
+	unsigned char data[_Message->m_Size];
+	Buffer_ReadBuffer(&_Message->m_Data, data, _Message->m_Size);
 	
 	printf("Data: %s\n\r", data);
 
@@ -211,6 +213,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
 	TransportLayer_Dispose(&_Server->m_TransportLayer);
+	NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 	DataLayer_Dispose(&_Server->m_DataLayer);
 
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;

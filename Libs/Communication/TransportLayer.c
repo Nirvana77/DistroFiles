@@ -52,6 +52,8 @@ int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _
 
 	_Payload->m_Type = _Type;
 
+
+
 	if(_PayloadPtr != NULL)
 		*(_PayloadPtr) = _Payload;
 
@@ -95,23 +97,57 @@ int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
-	printf("TransportLayer_SendPayload\n\r");
+	if(_TransportLayer->m_FuncOut.m_Send != NULL)
+	{
+		if(_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Paylode) == 1)
+		{
+			printf("TransportLayer_SendPayload\n\r");
+			return 1;
+		}
+	}
+	else if(_TransportLayer->m_CurrentNode != NULL)
+	{
+		printf("TransportLayer_SendPayload\n\r");
+		Payload* p = (Payload*)_TransportLayer->m_CurrentNode->m_Item;
+		p->m_State = Payload_State_Sending;
 
-	_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Paylode);
+		SystemMonotonicMS(&p->m_Time);
+		Payload_Copy(_Paylode, p);
+
+		//This is temporary!
+		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
+
+		LinkedList_RemoveItem(&_TransportLayer->m_Queued, p);
+		Payload_Dispose(p);
+		
+		if(_TransportLayer->m_CurrentNode == NULL)
+			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
+		
+		return 1;
+ 	}
 
 
 	return 0;
 }
 
-int TransportLayer_ReveicePayload(void* _Context, Payload* _Paylode)
+int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
 	printf("TransportLayer_ReveicePayload\n\r");
-	
-	Memory_ParseUInt16(_Paylode->m_Data.BUFFER, &_Paylode->m_Size);
 
-	int reviced = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Paylode);
+	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
+	{
+		Payload replay;
+		Payload_Initialize(&replay);
+		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
+		{
+			
+			Payload_Dispose(&replay);
+			return 1;
+		}
+		Payload_Dispose(&replay);
+	}
 
 	return 0;
 }
@@ -121,7 +157,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
 	if(_TransportLayer->m_CurrentNode != NULL)
 	{
-		Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;
+		/* Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;
 
 		int success = _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
 		if(success < 0)
@@ -138,7 +174,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 
 		if(_TransportLayer->m_CurrentNode == NULL)
 			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
-		
+		 */
 	}
 	else if (_TransportLayer->m_Queued.m_Head != NULL)
 	{
