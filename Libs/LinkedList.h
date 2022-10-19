@@ -38,7 +38,7 @@ int LinkedList_AddLast(LinkedList* _List, void* _Item);
 #define LinkedList_Push(a,b) ((int)LinkedList_AddLast(a,b))
 
 void* LinkedList_RemoveFirst(LinkedList* _List);
-void* LinkedList_RemoveAt(LinkedList* _List, int _Index);
+int LinkedList_RemoveAt(LinkedList* _List, int _Index, void** _ItemPtr);
 int LinkedList_RemoveItem(LinkedList* _List, void* _Item);
 void* LinkedList_RemoveLast(LinkedList* _List);
 void* LinkedList_RemoveNode(LinkedList* _List, LinkedList_Node* _Node);
