@@ -176,9 +176,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
-	if(strcmp(_Message->m_Message.m_Method.m_Str, "test") == 0)
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "sync") == 0)
 	{
-		printf("Test package!\n\r");
+		
 	}
 
 	return 0;
