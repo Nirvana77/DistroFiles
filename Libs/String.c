@@ -34,6 +34,7 @@ int String_Initialize(String* _Str, int _BufferSize)
 	return 0;
 }
 
+//TODO #30 This write over the border in allocator
 int String_ExtendBuffer(String* _Str)
 {
 	int newSize = _Str->m_Size + _Str->m_BufferSize;
@@ -163,10 +164,16 @@ int String_SaveToFile(String* _Str, const char* _Path)
 	if(File_Open(_Path, "wb", &f) != 0)
 		return -1;
 
-	File_WriteAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Length);
+	int success = File_WriteAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Length);
+	if(success <= 0)
+	{
+		printf("File write error\n\r");
+		printf("Error code: %i\n\r", success);
+		return -2;
+	}
 
 	File_Close(f);
-	return 0;
+	return success;
 }
 
 void String_Dispose(String* _Str)

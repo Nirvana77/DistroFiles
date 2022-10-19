@@ -127,26 +127,18 @@ int main(int argc, char* argv[])
 					case 'w':
 					case 'e':
 					{
-						const char* str = "GET / HTTP/1.1\r\n\r\n";
-						int size = strlen(str) + 1;
-						/* Buffer buffer;
-						Buffer_Initialize(&buffer, 64);
+						String str;
+						const char* path = "Shared/root/test.txt";
+						String_Initialize(&str, 8);
 
-						printf("Client: %s\n\r", str);
-						Buffer_WriteBuffer(&buffer, (UInt8*)str, strlen(str));
-
-						TCPClient_Write(&service->m_Client->m_TCPClient, &buffer, strlen(str));
-						Buffer_Dispose(&buffer);
-						 */
+						String_Set(&str, "Hellow");
 
 						Payload* message = NULL;
 						
 						if(service != NULL)
 						{
 							FILE* f = NULL;
-							File_Open("test.txt", "rb", &f);
-
-
+							File_Open(path, "rb", &f);
 
 							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, File_GetSize(f), &message) == 0)
 							{
@@ -173,6 +165,8 @@ int main(int argc, char* argv[])
 							File_Close(f);
 
 						}
+
+						String_Dispose(&str);
 						
 					} break;
 				
