@@ -82,11 +82,16 @@ int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
 		case Payload_Message_Type_String:
 		{
 			
-			success = Buffer_WriteBuffer(_Buffer, _Message->m_Method.m_Str, _Message->m_Size);
+			success = Buffer_WriteBuffer(_Buffer, (UInt8*)_Message->m_Method.m_Str, _Message->m_Size);
 
 			if(written < 0 )
 				return -3;
 			written += success;
+
+		} break;
+
+		default:
+		{
 
 		} break;
 	}
@@ -133,7 +138,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 	{
 		case Payload_Message_Type_String:
 		{
-			Buffer_ReadBuffer(_Buffer, _Message->m_Method.m_Str, _Message->m_Size);
+			Buffer_ReadBuffer(_Buffer, (UInt8*)_Message->m_Method.m_Str, _Message->m_Size);
 			if(success < 0)
 				return -3;
 
@@ -141,6 +146,9 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 
 			readed += success;
 
+		} break;
+		case Payload_Message_Type_None:
+		{
 		} break;
 	}
 

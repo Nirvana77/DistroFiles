@@ -74,6 +74,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	_Message->m_Des.m_Type = (Payload_Address_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
 
+	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
 
 	if(_NetworkLayer->m_FuncOut.m_Receive != NULL)

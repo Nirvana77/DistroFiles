@@ -150,7 +150,7 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 	
 }
 
-static inline int Payload_SetMessageType(Payload* _Payload, Payload_Message_Type _Type, void* _Value, int _Size)
+static inline void Payload_SetMessageType(Payload* _Payload, Payload_Message_Type _Type, void* _Value, int _Size)
 {
 
 	switch (_Type)

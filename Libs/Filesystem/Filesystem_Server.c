@@ -172,7 +172,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Filesystem_Server_ReveicePayload\n\r");
+	printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
