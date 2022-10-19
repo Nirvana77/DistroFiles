@@ -176,9 +176,46 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
-	if(strcmp(_Message->m_Message.m_Method.m_Str, "sync") == 0)
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
 		
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0)
+	{
+		UInt16 size;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size];
+		Buffer_ReadBuffer(&_Message->m_Data, (UInt8*)path, size);
+
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		UInt8 data[size];
+		Buffer_ReadBuffer(&_Message->m_Data, data, size);
+	
+		FILE* f = NULL;
+		File_Open(path, "wb+", &f);
+
+		File_WriteAll(f, data, size);
+
+		File_Close(f);
+		return 0;
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
+	{
+
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
+	{
+
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Move") == 0)
+	{
+
+	}
+	else
+	{
+		printf("Can't handel method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 	}
 
 	return 0;

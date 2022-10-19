@@ -94,7 +94,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	
 	Payload_Print(_Payload, "Datalayer");
 
-	printf("Data(W)%i:\r\n", CRC);
+	printf("Data(W): %i\r\n", _DataLayer->m_DataBuffer.m_BytesLeft);
 	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
 		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
 	printf("\n\r");
@@ -125,7 +125,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		printf("Data(R):\r\n");
 		for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
-			printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? ", " : "");
+			printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
 		printf("\n\r");
 
 		if(ownCRC != CRC)

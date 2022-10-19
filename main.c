@@ -140,8 +140,14 @@ int main(int argc, char* argv[])
 							FILE* f = NULL;
 							File_Open(path, "rb", &f);
 
-							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, File_GetSize(f), &message) == 0)
+							int size = 2 + strlen(path) + 1 + 2 + File_GetSize(f);
+
+							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
+								Buffer_WriteBuffer(&message->m_Data, path, strlen(path) + 1);
+
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
 								Buffer_ReadFromFile(&message->m_Data, f);
 								//Buffer_WriteBuffer(&message->m_Data, (UInt8*)str, size);
 								message->m_Des.m_Type = Payload_Address_Type_IP;
