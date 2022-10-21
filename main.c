@@ -123,7 +123,29 @@ int main(int argc, char* argv[])
 			{
 				switch (chr)
 				{
+					case 'i':
+					{
+						UInt8 add[4];
+						UInt8 mac[6];
+						add[0] = 12;
+						GetIP(add);//! This is wrong!
+						GetMAC(mac);
 
+						printf("IP: ");
+						for (int i = 0; i < 4; i++)
+						{
+							printf("%d%s", add[i], i + 1< 4 ? "." : "");
+						}
+						printf("\n\r");
+
+						printf("MAC: ");
+						for (int i = 0; i < 6; i++)
+						{
+							printf("%x%s", mac[i], i + 1< 6 ? "." : "");
+						}
+						printf("\n\r");
+
+					} break;
 					case 'w':
 					case 'e':
 					{

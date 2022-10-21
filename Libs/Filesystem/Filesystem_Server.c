@@ -178,6 +178,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
+		_Replay->m_Src.m_Type = Payload_Address_Type_IP;
+		GetIP(&_Replay->m_Src.m_Address.IP);
 		
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0)
