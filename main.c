@@ -136,14 +136,14 @@ int main(int argc, char* argv[])
 						printf("IP: ");
 						for (int i = 0; i < 4; i++)
 						{
-							printf("%d%s", add[i], i + 1< 4 ? "." : "");
+							printf("%d%s", add[i], i + 1 < 4 ? "." : "");
 						}
 						printf("\n\r");
 
 						printf("MAC: ");
 						for (int i = 0; i < 6; i++)
 						{
-							printf("%x%s", mac[i], i + 1< 6 ? "." : "");
+							printf("%x%s", mac[i], i + 1 < 6 ? "." : "");
 						}
 						printf("\n\r");
 
@@ -182,6 +182,19 @@ int main(int argc, char* argv[])
 
 					} break;
 
+					case 's':
+					{
+						Payload* message = NULL;
+						if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
+						{
+							unsigned char hash[16];
+							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
+							Buffer_WriteBuffer(&message->m_Data, hash, 16);
+
+							Payload_SetMessageType(&message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+						}
+					} break;
+
 					case 'w':
 					case 'e':
 					{
@@ -191,7 +204,6 @@ int main(int argc, char* argv[])
 
 						String_Set(&str, "Hellow");
 
-						Payload* message = NULL;
 						
 						if(service != NULL)
 						{
@@ -200,6 +212,7 @@ int main(int argc, char* argv[])
 
 							int size = 2 + strlen(path) + 1 + 2 + File_GetSize(f);
 
+							Payload* message = NULL;
 							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
