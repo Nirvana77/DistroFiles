@@ -15,6 +15,7 @@
 
 // #include "Libs/Portability.c"
 
+#include "Libs/Hash/md5.c"
 #include "Libs/File.c"
 #include "Libs/Folder.c"
 #include "Libs/Memory.c"
@@ -39,6 +40,7 @@
 #include "Libs/Filesystem/Filesystem_Client.c"
 #include "Libs/Filesystem/Filesystem_Service.c"
 
+void printHash(unsigned char result[16]);
 int kbhit(void);
 
 StateMachine g_StateMachine;
@@ -146,6 +148,40 @@ int main(int argc, char* argv[])
 						printf("\n\r");
 
 					} break;
+
+					case 'h':
+					{
+						FILE* f = NULL;
+						File_Open("Shared/root/test.txt", "rb", &f);
+
+
+						if(f != NULL)
+						{
+							unsigned char hash[16];
+							memset(hash, 0, 16);
+
+							File_Hash(f, hash);
+							printf("Hash:\t");
+							printHash(hash);
+
+							File_Close(f);
+						}
+						else
+						{
+							printf("No file\n\r");
+						}
+					} break;
+
+					case 'f':
+					{
+						unsigned char hash[16];
+						memset(hash, 0, 16);
+						Folder_Hash("Shared/root/", hash);
+						printf("Hash:\t");
+						printHash(hash);
+
+					} break;
+
 					case 'w':
 					case 'e':
 					{
@@ -222,6 +258,13 @@ int main(int argc, char* argv[])
 	#endif
 	
 	return 0;
+}
+
+void printHash(unsigned char result[16])
+{
+	for(int i = 0; i < 16; i++)
+		printf("%x", result[i]);
+	printf("\n\r");
 }
 
 int kbhit(void)
