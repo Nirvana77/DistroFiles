@@ -29,6 +29,7 @@ int String_Sprintf(String* _Str, const char* _String, ...);
 
 int String_Set(String* _Str, const char* _String);
 
+Bool String_EndsWith(String* _Str, const char* _Exp);
 
 int String_ReadFromFile(String* _Str, const char* _Path);
 int String_SaveToFile(String* _Str, const char* _Path);

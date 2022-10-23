@@ -176,6 +176,23 @@ int String_SaveToFile(String* _Str, const char* _Path)
 	return success;
 }
 
+Bool String_EndsWith(String* _Str, const char* _Exp)
+{
+	int length = strlen(_Exp);
+
+	if(_Str->m_Length - length < 0)
+		return False;
+
+	int j = 0;
+	for (int i = _Str->m_Length - length; i < _Str->m_Length; i++)
+	{
+		if(_Str->m_Ptr[i] != _Exp[j++])
+			return False;
+	}
+	
+	return True;
+}
+
 void String_Dispose(String* _Str)
 {
 	if(_Str->m_Ptr != NULL)
