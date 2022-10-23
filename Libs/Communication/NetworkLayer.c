@@ -37,6 +37,9 @@ int NetworkLayer_SendPayload(void* _Context, Payload* _Paylode)
 
 	Payload message;
 	Payload_Initialize(&message);
+		
+	message.m_Src.m_Type = Payload_Address_Type_IP;
+	GetIP(message.m_Src.m_Address.IP);
 
 	if(_NetworkLayer->m_FuncOut.m_Send(_NetworkLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send meesage
 	{
@@ -74,6 +77,22 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	_Message->m_Des.m_Type = (Payload_Address_Type) type;
 	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
 
+	if(_Message->m_Des.m_Type == Payload_Address_Type_IP)
+	{
+		UInt8 addrass[4];
+		GetIP(addrass);
+		if(CommperIP(addrass, _Message->m_Des.m_Address.IP) == False)
+			return 0;
+		
+	}
+	else if(_Message->m_Des.m_Type == Payload_Address_Type_MAC)
+	{
+		UInt8 mac[6];
+		GetMAC(mac);
+		if(CommperMAC(mac, _Message->m_Des.m_Address.MAC) == False)
+			return 0;
+	}
+
 	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
@@ -82,9 +101,23 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	{
 		Payload replay;
 		Payload_Initialize(&replay);
+		
+		replay.m_Src.m_Type = Payload_Address_Type_IP;
+		GetIP(replay.m_Src.m_Address.IP);
+		
 		if(_NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
 		{//Whant to send replay
+			printf("NetworkLayer_ReveicePayload_Replay\n\r");
 
+			Payload_FilCommunicator(&replay.m_Des, &_Message->m_Src);
+
+			int success = NetworkLayer_PayloadLinker(_NetworkLayer, _Replay, &replay);
+			if(success != 0)
+			{
+				Payload_Dispose(&replay);
+				return -1;
+
+			}
 			Payload_Dispose(&replay);
 			return 1;
 		}
