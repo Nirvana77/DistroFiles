@@ -2,11 +2,14 @@
 #define File_h__
 
 #include <stdio.h>
+#include "Hash/md5.h"
 
 int File_Open(const char* _FilePath, const char* _Mode, FILE** _FilePtr);
 void File_SetPosition(FILE* _File, int _Position);
 unsigned int File_GetSize(FILE* _File);
 void File_Close(FILE* _File);
+
+int File_Hash(FILE* _File, unsigned char _Result[16]);
 
 int File_Read(FILE* _File, unsigned char* _Buffer, int _Size);
 int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize);
