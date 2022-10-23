@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
 							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
-								Buffer_WriteBuffer(&message->m_Data, path, strlen(path) + 1);
+								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path) + 1);
 
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
 								Buffer_ReadFromFile(&message->m_Data, f);
