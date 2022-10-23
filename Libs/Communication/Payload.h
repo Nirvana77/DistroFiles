@@ -8,6 +8,20 @@ typedef struct T_Payload Payload;
 #ifndef Payload_BufferSize
 	#define Payload_BufferSize 256
 #endif
+
+#ifdef __linux__
+
+
+	#include <unistd.h>
+	#include <sys/fcntl.h>
+	#include <arpa/inet.h>
+	#include <sys/types.h>
+	#include <sys/socket.h>
+	#include <sys/ioctl.h>
+	#include <netinet/in.h>
+	#include <net/if.h>
+
+#endif
 typedef struct
 {
 	void* m_Context;
@@ -115,6 +129,8 @@ int Payload_Initialize(Payload* _Payload);
 int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 
+void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src);
+
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);
 int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
@@ -169,6 +185,82 @@ static inline void Payload_SetMessageType(Payload* _Payload, Payload_Message_Typ
 			
 		} break;
 	}
+}
+
+static inline void GetIP(UInt8 _Address[4])
+{
+	int n;
+	struct ifreq ifr;
+	char* array = "eth0";
+
+	n = socket(AF_INET, SOCK_DGRAM, 0);
+	//Type of address to retrieve - IPv4 IP address
+	ifr.ifr_addr.sa_family = AF_INET;
+	//Copy the interface name in the ifreq structure
+	strncpy(ifr.ifr_name , array , IFNAMSIZ - 1);
+	ioctl(n, SIOCGIFADDR, &ifr);
+	close(n);
+	//display result
+	char str[16] = "";
+	sprintf(str, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr) );
+
+	int index = 0;
+	UInt8 value = 0;
+	for (int i = 0; i < strlen(str); i++)
+	{
+		if(str[i] == '.')
+		{
+			_Address[index++] = value;
+			value = 0;
+		}
+		else
+		{
+			if(value > 10 || i == 1 || i == 5 || i == 9 || i == 13)
+				value *= 10;
+
+			value += (int)str[i] - 48;
+		}
+	}
+	
+	_Address[index++] = value;
+}
+
+static inline int GetMAC(UInt8 _Address[6])
+{
+	struct ifreq s;
+	int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
+
+	strcpy(s.ifr_name, "eth0");
+	if (0 == ioctl(fd, SIOCGIFHWADDR, &s)) {
+		int j = 0;
+		for (int i = 0; i < 6; ++i)
+			_Address[j++] =s.ifr_addr.sa_data[i] - 48;
+		return 0;
+	}
+
+	return 1;
+}
+
+static inline Bool CommperIP(UInt8 _A[4], UInt8 _B[4])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		if(_A[i] != _B[i])
+			return False;
+	}
+	
+	return True;
+}
+
+static inline Bool CommperMAC(UInt8 _A[6], UInt8 _B[6])
+{
+	for (int i = 0; i < 6; i++)
+	{
+		if(_A[i] != _B[i])
+			return False;
+	}
+	
+	return True;
 }
 
 void Payload_Dispose(Payload* _Payload);

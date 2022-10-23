@@ -12,12 +12,6 @@ typedef struct T_TCPSocket TCPSocket;
 	#include <sys/fcntl.h>
 	#include <arpa/inet.h>
 
-	#include <sys/types.h>
-	#include <sys/socket.h>
-	#include <sys/ioctl.h>
-	#include <netinet/in.h>
-	#include <net/if.h>
-
 	#define TCPSocket_Error -1
 	
 	typedef int TCPSocket_FD;
@@ -61,58 +55,5 @@ int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _Buffer
 
 void TCPSocket_Dispose(TCPSocket* _TCPSocket);
 
-static inline void GetIP(UInt8 _Address[4])
-{
-	int n;
-	struct ifreq ifr;
-	char* array = "eth0";
-
-	n = socket(AF_INET, SOCK_DGRAM, 0);
-	//Type of address to retrieve - IPv4 IP address
-	ifr.ifr_addr.sa_family = AF_INET;
-	//Copy the interface name in the ifreq structure
-	strncpy(ifr.ifr_name , array , IFNAMSIZ - 1);
-	ioctl(n, SIOCGIFADDR, &ifr);
-	close(n);
-	//display result
-	char str[16] = "";
-	sprintf(str, "%s", inet_ntoa(( (struct sockaddr_in *)&ifr.ifr_addr )->sin_addr) );
-
-	int index = 0;
-	UInt8 value = 0;
-	for (int i = 0; i < strlen(str); i++)
-	{
-		if(str[i] == '.')
-		{
-			_Address[index++] = value;
-			value = 0;
-		}
-		else
-		{
-			if(value > 10 || i == 1 || i == 5 || i == 9 || i == 13)
-				value *= 10;
-
-			value += (int)str[i] - 48;
-		}
-	}
-	
-	_Address[index++] = value;
-}
-
-static inline int GetMAC(UInt8 _Address[6])
-{
-	struct ifreq s;
-	int fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
-
-	strcpy(s.ifr_name, "eth0");
-	if (0 == ioctl(fd, SIOCGIFHWADDR, &s)) {
-		int j = 0;
-		for (int i = 0; i < 6; ++i)
-			_Address[j++] =s.ifr_addr.sa_data[i] - 48;
-		return 0;
-	}
-
-	return 1;
-}
 
 #endif // TCPSocket_h__
