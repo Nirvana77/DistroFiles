@@ -5,7 +5,6 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
 
-int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode);
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
@@ -158,15 +157,6 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	return 0;
 }
 
-
-int Filesystem_Server_SendPayload(void* _Context, Payload* _Paylode)
-{
-	// Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-
-	printf("Filesystem_Server_SendPayload\n\r");
-
-	return 0;
-}
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
