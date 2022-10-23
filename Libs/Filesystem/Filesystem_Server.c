@@ -101,7 +101,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	return 0;
 }
 
-//TODO this sockets don't get closted
+//TODO #31 this sockets don't get closted
 int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
@@ -166,7 +166,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
-	printf("Mthod: %s\n\r", _Message->m_Message.m_Method.m_Str);
+	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 
 	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
