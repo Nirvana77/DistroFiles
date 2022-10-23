@@ -176,42 +176,57 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
+	printf("Mthod: %s\n\r", _Message->m_Message.m_Method.m_Str);
+
 	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
-		_Replay->m_Src.m_Type = Payload_Address_Type_IP;
-		GetIP(&_Replay->m_Src.m_Address.IP);
+		
 		
 	}
-	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0)
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0 ||
+			strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
 	{
 		UInt16 size;
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 		char path[size];
+		String fullPath;
+
+		String_Initialize(&fullPath, 64);
+		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+		if(String_EndsWith(&fullPath, "/") == False)
+			String_Append(&fullPath, "/", 1);
+
 		Buffer_ReadBuffer(&_Message->m_Data, (UInt8*)path, size);
 
+		String_Append(&fullPath, path, size);
+
+		//* This can be improved
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 		UInt8 data[size];
 		Buffer_ReadBuffer(&_Message->m_Data, data, size);
 	
 		FILE* f = NULL;
-		File_Open(path, "wb+", &f);
+		File_Open(fullPath.m_Ptr, "wb+", &f);
 
-		File_WriteAll(f, data, size);
+		printf("Testing\n\r");
+		printf("Path: %s\n\r", path);
+		printf("Fullpath: %s\n\r", fullPath.m_Ptr);
+		//File_WriteAll(f, data, size);
 
 		File_Close(f);
-		return 0;
-	}
-	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
-	{
 
+		String_Dispose(&fullPath);
+		return 0;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
 	{
 
 	}
-	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Move") == 0)
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Move") == 0 ||
+			strcmp(_Message->m_Message.m_Method.m_Str, "Rename"))
 	{
 
 	}
