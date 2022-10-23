@@ -86,8 +86,9 @@ typedef struct
 
 typedef enum
 {
-	Payload_Address_Type_IP = 0,
-	Payload_Address_Type_MAC = 1
+	Payload_Address_Type_NONE = 0,
+	Payload_Address_Type_IP = 1,
+	Payload_Address_Type_MAC = 2
 } Payload_Address_Type;
 
 typedef struct
@@ -130,6 +131,7 @@ int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 
 void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src);
+void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src);
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);
 int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);

@@ -170,8 +170,23 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
+		unsigned char hash[16];
+		unsigned char messageHash[16];
+
+		Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, hash);
+		Buffer_ReadBuffer(&_Message->m_Data, messageHash, 16);
+
+		_Replay->m_Type = Payload_Type_BroadcastRespons;
+
+		if(Filesystem_Server_HashCheck(hash, messageHash) == False)
+		{
+			
+		}
 		
-		
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
+	{
+
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0 ||
 			strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)

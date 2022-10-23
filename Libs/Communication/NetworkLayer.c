@@ -139,12 +139,30 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 	if(success < 0)
 		return -2;
 
+	if(_Src->m_Src.m_Type == Payload_Address_Type_NONE)
+		_Src->m_Src.m_Type = Payload_Address_Type_MAC;
+
 	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Src.m_Type);
 	if(success < 0)
 		return -3;
+	
+	if(_Src->m_Src.m_Type == Payload_Address_Type_IP)
+	{
+		UInt8 address[4];
+		GetIP(address);
+		Buffer_WriteBuffer(&_Dst->m_Data, address, 4);
+	}
+	else if(_Src->m_Src.m_Type == Payload_Address_Type_MAC)
+	{
+		UInt8 mac[6];
+		GetMAC(mac);
+		Buffer_WriteBuffer(&_Dst->m_Data, mac, 6);
+	}
+	/*
 	success = Payload_WriteCommunicator(&_Src->m_Src, &_Dst->m_Data);
 	if(success < 0)
 		return -4;
+	*/
 
 	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Des.m_Type);
 	if(success < 0)

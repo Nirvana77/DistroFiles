@@ -1,8 +1,5 @@
 #include "Payload.h"
 
-void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src);
-int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
-int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 
 int Payload_InitializePtr(Payload** _PayloadPtr)
 {
