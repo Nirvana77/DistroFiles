@@ -108,19 +108,20 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	if(_Server->m_CurrentNode == NULL)
-		_Server->m_CurrentNode = _Server->m_Sockets.m_Head;
-
 	char ip[17];
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
 	
 	printf("Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
+
+	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
+	return 0;
 	
 	/*
 	* NOTE: you dont get any information abute the sender
 	* Just the socket
 	*/
+	/*
 	Buffer data;
 	Buffer_Initialize(&data, True, 16);
 
@@ -150,6 +151,7 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 
 	Buffer_Dispose(&data);
 	return 1;
+	*/
 }
 
 
