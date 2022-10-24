@@ -187,6 +187,9 @@ int main(int argc, char* argv[])
 						Payload* message = NULL;
 						if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
 						{
+							unsigned char hash[16];
+							Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, hash);
+							Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
 
 							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
 						}
