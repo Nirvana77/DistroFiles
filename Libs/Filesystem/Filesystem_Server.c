@@ -340,6 +340,106 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		printf("Move/Reanme\n\r");
 	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
+	{
+		printf("Write\n\r");
+
+		Bool isFile = True;
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+		path[size] = 0;
+
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		FILE* f = NULL;
+
+		File_Open(path, "wb+", &f);
+
+		if(f == NULL)
+		{
+			printf("Error with write\n\r");
+			printf("Can't write to path: %s\n\r", path);
+			return 0;
+		}
+
+		File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
+
+		char hash[16] = "";
+		File_Hash(f, hash);
+
+		File_Close(f);
+		
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "WriteAck", strlen("WriteAck"));
+
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
+		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, strlen(path));
+
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, strlen(path));
+
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+
+		return 1;
+
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "WriteAck") == 0)
+	{
+		printf("WriteAck\n\r");
+
+		Bool isFile = True;
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size];
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+		path[size] = 0;
+
+		char hash[16] = "";
+		char serverHash[16] = "";
+		
+		Buffer_ReadBuffer(&_Message->m_Data, serverHash, 16);
+
+		FILE* f = NULL;
+
+		File_Open(path, "wb+", &f);
+
+		if(f == NULL)
+		{
+			printf("Error with write\n\r");
+			printf("Can't write to path: %s\n\r", path);
+			return 0;
+		}
+		File_Hash(f, hash);
+
+		if(Filesystem_Server_HashCheck(hash, serverHash) == False)
+		{
+			Payload* p = NULL;
+			size = 1 + 2 + strlen(path) + 1 + 2 + File_GetSize(f);
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, size, &p) == 0)
+			{
+				Payload_FilCommunicator(&p->m_Des, &_Message->m_Src);
+				Payload_SetMessageType(p, Payload_Message_Type_String, "Write", strlen("Write"));
+
+				Buffer_WriteUInt8(&p->m_Data, (UInt8)isFile);
+				
+				Buffer_WriteUInt16(&p->m_Data, (UInt16)(strlen(path) + 1));
+				Buffer_WriteBuffer(&p->m_Data, (UInt8*)path, strlen(path) + 1);
+				
+				Buffer_WriteUInt16(&p->m_Data, (UInt16)File_GetSize(f));
+				Buffer_ReadFromFile(&p->m_Data, f);
+				
+			}
+		}
+
+		File_Close(f);
+
+	}
 	else
 	{
 		printf("Can't handel method: %s\n\r", _Message->m_Message.m_Method.m_Str);
