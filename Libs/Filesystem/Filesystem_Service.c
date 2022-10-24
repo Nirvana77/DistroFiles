@@ -69,7 +69,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 
 	//-------------Initialize------------------
 	String_Initialize(&_Service->m_Settings.m_Host.m_IP, 16);
-	String_Initialize(&_Service->m_Settings.m_Guest.m_IP, 16);
+	String_Initialize(&_Service->m_Settings.m_Distributer.m_IP, 16);
+	_Service->m_Settings.m_Servers = NULL;
 
 	//-----------------------------------------
 
@@ -77,10 +78,10 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	//-----------Default Settings--------------
 
 	_Service->m_Settings.m_Host.m_Port = 5566;
-	_Service->m_Settings.m_Guest.m_Port = 5566;
+	_Service->m_Settings.m_Distributer.m_Port = 5566;
 
 	String_Set(&_Service->m_Settings.m_Host.m_IP, "127.0.0.1");
-	String_Set(&_Service->m_Settings.m_Guest.m_IP, "127.0.0.1");
+	String_Set(&_Service->m_Settings.m_Distributer.m_IP, "127.0.0.1");
 
 	//-----------------------------------------
 	int loadSuccess = Filesystem_Service_Load(_Service);
@@ -90,7 +91,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed code: %i\n\r", loadSuccess);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		return -5;
 	}
@@ -107,24 +108,25 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		return -6;
 	}
 
+	/*
 	success = Filesystem_Client_InitializePtr(_Service, &_Service->m_Client);
-
 	if(success != 0)
 	{
 		printf("Failed to initialize client!\r\n");
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Filesystem_Server_Dispose(_Service->m_Server);
 		return -6;
 	}
+	*/
 
 	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
@@ -135,7 +137,7 @@ void Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
 	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
 
 	Filesystem_Server_Work(_MSTime, _Service->m_Server);
-	Filesystem_Client_Work(_MSTime, _Service->m_Client);
+	// Filesystem_Client_Work(_MSTime, _Service->m_Client);
 }
 
 
@@ -230,26 +232,35 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 		needSave = True;
 	}
 
-	json_t* guest = json_object_get(_JSON, "guest");
-	if(guest != NULL)
+	json_t* distributer = json_object_get(_JSON, "distributer");
+	if(distributer != NULL)
 	{
-		if(json_getString(guest, "IP", &charVal) == 0)
+		if(json_getString(distributer, "IP", &charVal) == 0)
 		{
-			String_Set(&_Service->m_Settings.m_Guest.m_IP, charVal);
+			String_Set(&_Service->m_Settings.m_Distributer.m_IP, charVal);
 		}
 		else
 		{
 			needSave = True;
 		}
 
-		if(json_getUInt16(guest, "port", &ulintVal) == 0)
+		if(json_getUInt16(distributer, "port", &ulintVal) == 0)
 		{
-			_Service->m_Settings.m_Guest.m_Port = ulintVal;
+			_Service->m_Settings.m_Distributer.m_Port = ulintVal;
 		}
 		else
 		{
 			needSave = True;
 		}
+	}
+	else
+	{
+		needSave = True;
+	}
+	json_t* servers = json_object_get(_JSON, "servers");
+	if(servers != NULL)
+	{
+		_Service->m_Settings.m_Servers = json_copy(servers);
 	}
 	else
 	{
@@ -265,7 +276,29 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	if(String_Initialize(&str, 16) != 0)
 		return -1;
 
-	printf("2.1\n\r");
+	String servers;
+	
+	if(String_Initialize(&servers, 16) != 0)
+		return -1;
+	
+	char tempStr[126];
+	char ip[17];
+	LinkedList_Node* currentNode = _Service->m_Server->m_Sockets.m_Head;
+	while (currentNode != NULL)
+	{
+		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
+		memset(ip, 0, sizeof(ip));
+		inet_ntop(AF_INET, &socket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
+		
+		sprintf(tempStr, "{\"post\": %i,\"IP\": %s}", ntohs(socket->m_Addr.sin_port), ip);
+		String_Append(&servers, tempStr, strlen(tempStr));
+
+		currentNode = currentNode->m_Next;
+		if(currentNode != NULL)
+			String_Append(&servers, ",", 1);
+	}
+	
+
 	if(String_Sprintf(&str, 
 		"{"
 			"\"version\": %u,"
@@ -273,18 +306,22 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 				"\"port\": %u,"
 				"\"IP\": \"%s\""
 			"},"
-			"\"guest\": {"
+			"\"distributer\": {"
 				"\"port\": %u,"
 				"\"IP\": \"%s\""
-			"}"
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Guest.m_Port, _Service->m_Settings.m_Guest.m_IP.m_Ptr
+			"},"
+			"\"servers\": ["
+				"%s"
+			"]"
+		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Distributer.m_Port, _Service->m_Settings.m_Distributer.m_IP.m_Ptr, servers.m_Ptr
 	) != 0)
 	{
 		String_Dispose(&str);
+		String_Dispose(&servers);
 		return -1;
 	}
+	String_Dispose(&servers);
 	
-	printf("2.2\n\r");
 	json_error_t error;
 	json_t* json = json_loads(str.m_Ptr, 0, &error);
 	if(json == NULL)
@@ -295,12 +332,10 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 		return -2;
 	}
 	
-	printf("2.3\n\r");
 	char filepath[128];
 	sprintf(filepath, "%s/settings.json", _Service->m_Path.m_Ptr);
 	int success = String_SaveToFile(&str, filepath);
 	
-	printf("2.4\n\r");
 	if(success != 0)
 	{
 		printf("Error then saveing new json!\r\n");
@@ -336,8 +371,11 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Client = NULL;
 	}
 
-	String_Dispose(&_Service->m_Settings.m_Guest.m_IP);
+	String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 	String_Dispose(&_Service->m_Settings.m_Host.m_IP);
+
+	if(_Service->m_Settings.m_Servers != NULL)
+		json_decref(_Service->m_Settings.m_Servers);
 
 	if(_Service->m_Json != NULL)
 		json_decref(_Service->m_Json);

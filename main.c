@@ -104,6 +104,11 @@ int main(int argc, char* argv[])
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
 	
 	printf("Success: %i\r\n", success);
+	if(success == 0)
+	{
+		printf("Port: %u\n\r", (unsigned int)ntohs(service->m_Server->m_TCPServer.m_ServerAddr.sin_port));
+	}
+
 
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;
@@ -185,7 +190,7 @@ int main(int argc, char* argv[])
 					case 's':
 					{
 						Payload* message = NULL;
-						if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
+						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
 						{
 							unsigned char hash[16];
 							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
@@ -213,7 +218,7 @@ int main(int argc, char* argv[])
 							int size = 2 + strlen(path) + 1 + 2 + File_GetSize(f);
 
 							Payload* message = NULL;
-							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
+							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
 								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path) + 1);

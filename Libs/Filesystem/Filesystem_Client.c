@@ -30,7 +30,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	_Client->m_Service = _Service;
 
 	//TODO: Change this do not be hard coded
-	int success = TCPClient_Initialize(&_Client->m_TCPClient, _Client->m_Service->m_Settings.m_Guest.m_IP.m_Ptr, _Client->m_Service->m_Settings.m_Guest.m_Port);
+	int success = TCPClient_Initialize(&_Client->m_TCPClient, _Client->m_Service->m_Settings.m_Distributer.m_IP.m_Ptr, _Client->m_Service->m_Settings.m_Distributer.m_Port);
 
 	if(success != 0)
 	{
@@ -98,7 +98,22 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 {
 	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
-	printf("Filesystem_Client_ReveicePayload\n\r");
+	printf("Filesystem_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
+	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
+		return 0;
+
+	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
+
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "Connect") == 0)
+	{
+		_Replay->m_Type = Payload_Type_Respons;
+
+		printf("Client\n\r");
+
+		_Replay->m_Size = _Replay->m_Data.m_BytesLeft;
+
+		return 1;
+	}
 
 	return 0;
 }

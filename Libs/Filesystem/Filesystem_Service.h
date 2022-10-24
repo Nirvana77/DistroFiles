@@ -31,7 +31,9 @@ typedef struct
 {
 
 	Filesystem_ServiceSettings_Host m_Host;
-	Filesystem_ServiceSettings_Host m_Guest;
+	Filesystem_ServiceSettings_Host m_Distributer;
+
+	json_t* m_Servers; //! This will be removed later
 
 } Filesystem_ServiceSettings;
 
