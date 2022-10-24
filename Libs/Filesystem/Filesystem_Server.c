@@ -4,6 +4,7 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
 
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
+int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
@@ -98,15 +99,14 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	Payload_FuncOut_Set(&_Server->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Server->m_TransportLayer);
 	Payload_FuncOut_Set(&_Server->m_TransportLayer.m_FuncOut, Filesystem_Server_ReveicePayload, NULL, _Server);
 
+	// Filesystem_Server_LoadServer(_Server);
+
 	return 0;
 }
 
-//TODO #31 this sockets don't get closted
 int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-
-	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
 
 	if(_Server->m_CurrentNode == NULL)
 		_Server->m_CurrentNode = _Server->m_Sockets.m_Head;
@@ -115,9 +115,14 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
 	
-	printf("Connected socket(%u): %s\n\r", ntohs(_TCPSocket->m_Addr.sin_port), ip);
+	printf("Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
+	
+	/*
+	* NOTE: you dont get any information abute the sender
+	* Just the socket
+	*/
 
-	return 0;
+	return 1;
 }
 
 
@@ -151,13 +156,48 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
-	// Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
 	printf("Filesystem_Server_TCPWrite\n\r");
+
+	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	while (currentNode != NULL)
+	{
+		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
+
+		TCPSocket_Write(socket, _Buffer, _Size);
+
+		currentNode = currentNode->m_Next;
+	}
 
 	return 0;
 }
 
+int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
+{
+	printf("Filesystem_Server_LoadServer\n\r");
+	json_t* members = _Server->m_Service->m_Settings.m_Servers;
+	for (int i = 0; i < json_array_size(members); i++)
+	{
+		json_t* data;
+		data = json_array_get(members, i);
+
+		const char* charVal;
+		UInt16 port = 0;
+
+		json_getString(data, "IP", &charVal);
+		json_getUInt16(data, "port", &port);
+
+		TCPSocket* socket = NULL;
+		if(TCPSocket_InitializePtr(charVal, port, NULL, &socket) == 0)
+		{
+			LinkedList_Push(&_Server->m_Sockets, socket);
+		}
+		
+	}
+	
+	return 0;
+}
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {

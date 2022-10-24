@@ -104,6 +104,11 @@ int main(int argc, char* argv[])
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
 	
 	printf("Success: %i\r\n", success);
+	if(success == 0)
+	{
+		printf("Port: %u\n\r", (unsigned int)ntohs(service->m_Server->m_TCPServer.m_ServerAddr.sin_port));
+	}
+
 
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;
