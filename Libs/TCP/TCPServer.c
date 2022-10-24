@@ -83,7 +83,7 @@ int TCPServer_Listen(TCPServer* _TCPServer, const char* _IP, UInt16 _Port)
 	if(_IP == NULL)
 		return -1;
 
-	printf("TCPServer_Listen(%u): %s\n\r", _Port, strcmp("127.0.0.1", _IP) != 0 ? _IP : "localhost");
+	printf("TCPServer_Listen(%u): %s\n\r", (unsigned int)ntohs(_Port), strcmp("127.0.0.1", _IP) != 0 ? _IP : "localhost");
 	memset(&_TCPServer->m_ServerAddr, 0, sizeof(_TCPServer->m_ServerAddr));
 	_TCPServer->m_ServerAddr.sin_family = AF_INET;
 	_TCPServer->m_ServerAddr.sin_port = htons(_Port);

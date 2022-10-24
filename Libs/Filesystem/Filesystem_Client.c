@@ -98,7 +98,22 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 {
 	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
-	printf("Filesystem_Client_ReveicePayload\n\r");
+	printf("Filesystem_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
+	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
+		return 0;
+
+	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
+
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "Connect") == 0)
+	{
+		_Replay->m_Type = Payload_Type_Respons;
+
+		
+
+		_Replay->m_Size = _Replay->m_Data.m_BytesLeft;
+
+		return 1;
+	}
 
 	return 0;
 }

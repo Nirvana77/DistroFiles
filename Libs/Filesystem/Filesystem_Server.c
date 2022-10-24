@@ -121,7 +121,34 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	* NOTE: you dont get any information abute the sender
 	* Just the socket
 	*/
+	Buffer data;
+	Buffer_Initialize(&data, True, 16);
 
+	Buffer_WriteUInt8(&data, Payload_Type_Safe);
+	UInt64 time = 0;
+	SystemMonotonicMS(&time);
+	Buffer_WriteUInt64(&data, time);
+	
+	Buffer_WriteUInt8(&data, Payload_Address_Type_MAC);
+	UInt8 mac[6];
+	GetMAC(mac);
+	Buffer_WriteBuffer(&data, mac, 6);
+	Buffer_WriteUInt8(&data, Payload_Address_Type_NONE);
+
+	Buffer_WriteUInt8(&data, Payload_Message_Type_String);
+	UInt16 size = strlen("Connect");
+	Buffer_WriteUInt16(&data, size);
+	Buffer_WriteBuffer(&data, "Connect", size);
+
+	Buffer_WriteUInt16(&data, 0);
+	
+	UInt8 CRC = 0;
+	DataLayer_GetCRC(data.m_Ptr, data.m_BytesLeft, &CRC);
+	Buffer_WriteUInt8(&data, CRC);
+
+	TCPSocket_Write(_TCPSocket, &data, data.m_BytesLeft);
+
+	Buffer_Dispose(&data);
 	return 1;
 }
 
