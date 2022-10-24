@@ -407,7 +407,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open(path, "wb+", &f);
+		File_Open(path, "rb", &f);
 
 		if(f == NULL)
 		{
@@ -433,7 +433,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				
 				Buffer_WriteUInt16(&p->m_Data, (UInt16)File_GetSize(f));
 				Buffer_ReadFromFile(&p->m_Data, f);
-				
+
 			}
 		}
 

@@ -146,6 +146,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
 		{
 			printf("TransportLayer_ReveicePayload_Replay\n\r");
+			SystemMonotonicMS(&replay.m_Time);
+
 			Payload_Copy(_Replay, &replay);
 			Payload_Dispose(&replay);
 			return 1;
