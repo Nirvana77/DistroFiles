@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
 					} break;
 
 					case 'w':
-					case 'e':
+					case 'u':
 					{
 						String str;
 						const char* path = "Shared/root/test.txt";
@@ -215,33 +215,27 @@ int main(int argc, char* argv[])
 							FILE* f = NULL;
 							File_Open(path, "rb", &f);
 
-							int size = 2 + strlen(path) + 1 + 2 + File_GetSize(f);
+							int size = 1 + 2 + strlen(path) + 1 + 2 + File_GetSize(f);
 
 							Payload* message = NULL;
 							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
+								Buffer_WriteUInt8(&message->m_Data, True);
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
 								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path) + 1);
 
-								Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
-								Buffer_ReadFromFile(&message->m_Data, f);
-								//Buffer_WriteBuffer(&message->m_Data, (UInt8*)str, size);
-								message->m_Des.m_Type = Payload_Address_Type_IP;
-								message->m_Des.m_Address.IP[0] = 172;
-								message->m_Des.m_Address.IP[1] = 217;
-								message->m_Des.m_Address.IP[2] = 21;
-								message->m_Des.m_Address.IP[3] = 163;
-								
-								message->m_Des.m_Type = Payload_Address_Type_MAC;
-								message->m_Des.m_Address.MAC[0] = 1;
-								message->m_Des.m_Address.MAC[1] = 2;
-								message->m_Des.m_Address.MAC[2] = 3;
-								message->m_Des.m_Address.MAC[3] = 4;
-								message->m_Des.m_Address.MAC[4] = 5;
-								message->m_Des.m_Address.MAC[5] = 6;
-
 								if(chr == 'w')
+								{
+									Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
+
+									Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
+									Buffer_ReadFromFile(&message->m_Data, f);
+
+								}
+								else
+								{
 									Payload_SetMessageType(message, Payload_Message_Type_String, "Update", strlen("Update"));
+								}
 							}
 
 							File_Close(f);
