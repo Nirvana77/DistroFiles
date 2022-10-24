@@ -55,4 +55,5 @@ int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _Buffer
 
 void TCPSocket_Dispose(TCPSocket* _TCPSocket);
 
+
 #endif // TCPSocket_h__

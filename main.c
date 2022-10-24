@@ -15,6 +15,7 @@
 
 // #include "Libs/Portability.c"
 
+#include "Libs/Hash/md5.c"
 #include "Libs/File.c"
 #include "Libs/Folder.c"
 #include "Libs/Memory.c"
@@ -39,6 +40,7 @@
 #include "Libs/Filesystem/Filesystem_Client.c"
 #include "Libs/Filesystem/Filesystem_Service.c"
 
+void printHash(unsigned char result[16]);
 int kbhit(void);
 
 StateMachine g_StateMachine;
@@ -102,6 +104,11 @@ int main(int argc, char* argv[])
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
 	
 	printf("Success: %i\r\n", success);
+	if(success == 0)
+	{
+		printf("Port: %u\n\r", (unsigned int)ntohs(service->m_Server->m_TCPServer.m_ServerAddr.sin_port));
+	}
+
 
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;
@@ -123,44 +130,125 @@ int main(int argc, char* argv[])
 			{
 				switch (chr)
 				{
+					case 'i':
+					{
+						UInt8 add[4];
+						UInt8 mac[6];
+						add[0] = 12;
+						GetIP(add);//! This is wrong!
+						GetMAC(mac);
+
+						printf("IP: ");
+						for (int i = 0; i < 4; i++)
+						{
+							printf("%d%s", add[i], i + 1 < 4 ? "." : "");
+						}
+						printf("\n\r");
+
+						printf("MAC: ");
+						for (int i = 0; i < 6; i++)
+						{
+							printf("%x%s", mac[i], i + 1 < 6 ? "." : "");
+						}
+						printf("\n\r");
+
+					} break;
+
+					case 'h':
+					{
+						FILE* f = NULL;
+						File_Open("Shared/root/test.txt", "rb", &f);
+
+
+						if(f != NULL)
+						{
+							unsigned char hash[16];
+							memset(hash, 0, 16);
+
+							File_Hash(f, hash);
+							printf("Hash:\t");
+							printHash(hash);
+
+							File_Close(f);
+						}
+						else
+						{
+							printf("No file\n\r");
+						}
+					} break;
+
+					case 'f':
+					{
+						unsigned char hash[16];
+						memset(hash, 0, 16);
+						Folder_Hash("Shared/root/", hash);
+						printf("Hash:\t");
+						printHash(hash);
+
+					} break;
+
+					case 's':
+					{
+						Payload* message = NULL;
+						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
+						{
+							unsigned char hash[16];
+							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
+							Buffer_WriteBuffer(&message->m_Data, hash, 16);
+
+							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+						}
+					} break;
 
 					case 'w':
+					case 'e':
 					{
-						const char* str = "GET / HTTP/1.1\r\n\r\n";
-						int size = strlen(str) + 1;
-						/* Buffer buffer;
-						Buffer_Initialize(&buffer, 64);
+						String str;
+						const char* path = "Shared/root/test.txt";
+						String_Initialize(&str, 8);
 
-						printf("Client: %s\n\r", str);
-						Buffer_WriteBuffer(&buffer, (UInt8*)str, strlen(str));
+						String_Set(&str, "Hellow");
 
-						TCPClient_Write(&service->m_Client->m_TCPClient, &buffer, strlen(str));
-						Buffer_Dispose(&buffer);
-						 */
-
-						Payload* message = NULL;
 						
 						if(service != NULL)
 						{
-							if(TransportLayer_CreateMessage(&service->m_Client->m_TransportLayer, Payload_MessageType_ACK, size, &message) == 0)
+							FILE* f = NULL;
+							File_Open(path, "rb", &f);
+
+							int size = 2 + strlen(path) + 1 + 2 + File_GetSize(f);
+
+							Payload* message = NULL;
+							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
 							{
-								Buffer_WriteBuffer(&message->m_Data, (UInt8*)str, size);
-								message->m_Des.m_Type = Payload_Communicator_Type_IP;
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
+								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path) + 1);
+
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
+								Buffer_ReadFromFile(&message->m_Data, f);
+								//Buffer_WriteBuffer(&message->m_Data, (UInt8*)str, size);
+								message->m_Des.m_Type = Payload_Address_Type_IP;
 								message->m_Des.m_Address.IP[0] = 172;
 								message->m_Des.m_Address.IP[1] = 217;
 								message->m_Des.m_Address.IP[2] = 21;
 								message->m_Des.m_Address.IP[3] = 163;
 								
-								message->m_Des.m_Type = Payload_Communicator_Type_MAC;
+								message->m_Des.m_Type = Payload_Address_Type_MAC;
 								message->m_Des.m_Address.MAC[0] = 1;
 								message->m_Des.m_Address.MAC[1] = 2;
 								message->m_Des.m_Address.MAC[2] = 3;
 								message->m_Des.m_Address.MAC[3] = 4;
 								message->m_Des.m_Address.MAC[4] = 5;
 								message->m_Des.m_Address.MAC[5] = 6;
+
+								if(chr == 'w')
+									Payload_SetMessageType(message, Payload_Message_Type_String, "Update", strlen("Update"));
 							}
 
+							File_Close(f);
+
 						}
+
+						String_Dispose(&str);
 						
 					} break;
 				
@@ -188,6 +276,13 @@ int main(int argc, char* argv[])
 	#endif
 	
 	return 0;
+}
+
+void printHash(unsigned char result[16])
+{
+	for(int i = 0; i < 16; i++)
+		printf("%x", result[i]);
+	printf("\n\r");
 }
 
 int kbhit(void)

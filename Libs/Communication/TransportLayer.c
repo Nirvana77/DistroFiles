@@ -34,7 +34,7 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 	return 0;
 }
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _Type, int _Size, Payload** _PayloadPtr)
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, Payload** _PayloadPtr)
 {
 	if(_Size == 0)
 		return -2;
@@ -87,9 +87,12 @@ int TransportLayer_SendMessage(TransportLayer* _TransportLayer)
 		return 0;
 
 	Payload* _Payload = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
+	if(_TransportLayer->m_FuncOut.m_Send != NULL)
+	{
+		return _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
+	}
 	
-	int success = _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
-	return success;
+	return 0;
 }
 
 //TODO #17 Fix this to be a propper transport layer
@@ -142,7 +145,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		Payload_Initialize(&replay);
 		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
 		{
-			
+			printf("TransportLayer_ReveicePayload_Replay\n\r");
+			Payload_Copy(_Replay, &replay);
 			Payload_Dispose(&replay);
 			return 1;
 		}
