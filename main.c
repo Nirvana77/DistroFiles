@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
 							Buffer_WriteBuffer(&message->m_Data, hash, 16);
 
-							Payload_SetMessageType(&message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
 						}
 					} break;
 

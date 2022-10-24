@@ -163,10 +163,6 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 	if(success < 0)
 		return -4;
 	*/
-
-	success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Des.m_Type);
-	if(success < 0)
-		return -5;
 	success = Payload_WriteCommunicator(&_Src->m_Des, &_Dst->m_Data);
 	if(success < 0)
 		return -6;

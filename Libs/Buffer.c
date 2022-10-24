@@ -127,6 +127,11 @@ int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
 }
 int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value)
 {
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + 8)
+	{
+		if(Buffer_Extend(_Buffer) != 0)
+				return -1;
+	}
 	int n = Memory_UInt64ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	_Buffer->m_BytesLeft += n;
@@ -135,6 +140,11 @@ int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value)
 
 int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value)
 {
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + 4)
+	{
+		if(Buffer_Extend(_Buffer) != 0)
+				return -1;
+	}
 	int n = Memory_UInt32ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	_Buffer->m_BytesLeft += n;
@@ -143,6 +153,11 @@ int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value)
 
 int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value)
 {
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + 2)
+	{
+		if(Buffer_Extend(_Buffer) != 0)
+				return -1;
+	}
 	int n = Memory_UInt16ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	_Buffer->m_BytesLeft += n;
@@ -151,6 +166,12 @@ int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value)
 
 int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value)
 {
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + 1)
+	{
+		if(Buffer_Extend(_Buffer) != 0)
+				return -1;
+	}
+
 	int n = Memory_UInt8ToBuffer(&_Value, _Buffer->m_WritePtr);
 	_Buffer->m_WritePtr += n;
 	_Buffer->m_BytesLeft += n;
@@ -196,10 +217,10 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 	if(_Size == 0)
 		_Size = _Src->m_BytesLeft;
 		
-	if(_Des->m_Size < abs(_Des->m_Ptr - _Des->m_WritePtr) + _Size)
+	if(_Des->m_Size < _Des->m_WritePtr - _Des->m_Ptr + _Size)
 	{
-		if(Buffer_Extend(_Des) != 0)
-			return -1;
+		if(Buffer_ExtendBy(_Des, _Des->m_Size + (int)(_Des->m_WritePtr - _Des->m_Ptr + _Size)) != 0)
+				return -1;
 	}
 
 	Buffer_Clear(_Des);

@@ -41,6 +41,7 @@ int Payload_Initialize(Payload* _Payload)
 
 int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
 {
+	Buffer_WriteUInt8(_Buffer, _Communicator->m_Type);
 	switch (_Communicator->m_Type)
 	{
 		case Payload_Address_Type_IP:

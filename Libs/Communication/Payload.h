@@ -175,7 +175,7 @@ static inline void Payload_SetMessageType(Payload* _Payload, Payload_Message_Typ
 	{
 		case Payload_Message_Type_String:
 		{
-			strncpy(_Payload->m_Message.m_Method.m_Str, (const char*)_Value, _Size);
+			strncpy(_Payload->m_Message.m_Method.m_Str, (const char*)_Value, _Size + 1);
 			
 			_Payload->m_Message.m_Type = _Type;
 			_Payload->m_Message.m_Size = _Size;
