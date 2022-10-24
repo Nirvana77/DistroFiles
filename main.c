@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
 							int size = 1 + 2 + strlen(path) + 1 + 2 + File_GetSize(f);
 
 							Payload* message = NULL;
-							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_ACK, size, &message) == 0)
+							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Safe, size, &message) == 0)
 							{
 								Buffer_WriteUInt8(&message->m_Data, True);
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
