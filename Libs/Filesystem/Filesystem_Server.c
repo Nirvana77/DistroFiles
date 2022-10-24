@@ -114,7 +114,8 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	char ip[17];
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
-	printf("Connected socket(%u): %s\n\r", _TCPSocket->m_Addr.sin_port, ip);
+	
+	printf("Connected socket(%u): %s\n\r", ntohs(_TCPSocket->m_Addr.sin_port), ip);
 
 	return 0;
 }
