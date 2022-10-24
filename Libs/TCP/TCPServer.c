@@ -64,7 +64,7 @@ void TCPServer_Work(TCPServer* _TCPServer)
 			printf("TCPSocket_InitializePtr: %i\n\r", result);
 			TCPServer_Disconnect(_TCPServer);
 		}
-		else
+		else if(_TCPServer->m_ConnectedSocketClackkback != NULL)
 		{
 			newSocket->m_Addr = client_addr;
 			newSocket->m_Status = TCPSocket_Status_Connected;
@@ -72,7 +72,6 @@ void TCPServer_Work(TCPServer* _TCPServer)
 			char ip[17];
 			memset(ip, 0, sizeof(ip));
 			inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, ip, sizeof(ip));
-			printf("TCPServer_Work(%u): %s\n\r", client_addr.sin_port, ip);
 			if(_TCPServer->m_ConnectedSocketClackkback(newSocket, _TCPServer->m_Context) != 0)
 				TCPSocket_Dispose(newSocket);
 		}
@@ -114,7 +113,7 @@ void TCPServer_Disconnect(TCPServer* _TCPServer)
 	char ip[17];
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPServer->m_ServerAddr.sin_addr.s_addr, ip, sizeof(ip));
-	printf("TCPServer_Disconnect(%u): %s\n\r", _TCPServer->m_ServerAddr.sin_port, strcmp(ip, "0.0.0.0") == 0 ? "localhost" : ip);
+	printf("TCPServer_Disconnect(%u): %s\n\r", (unsigned int)ntohs(_TCPServer->m_ServerAddr.sin_port), strcmp(ip, "0.0.0.0") == 0 ? "localhost" : ip);
 	#ifdef __linux__
 		close(_TCPServer->m_Socket);
 	#else
