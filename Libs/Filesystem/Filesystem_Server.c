@@ -168,7 +168,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 
-	if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "SyncAck") == 0)
 	{
 		unsigned char hash[16];
 		unsigned char messageHash[16];
@@ -186,7 +186,29 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
+		
+		unsigned char hash[16];
+		Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, hash);
+		Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
 
+		struct stat attr;
+		char str[64];
+		UInt64 value = 0;
+		stat(_Server->m_Service->m_FilesytemPath.m_Ptr, &attr);
+		sprintf(str, "%u", attr.st_mtim);
+
+		for (int i = 0; i < strlen(str); i++)
+		{
+			value += str[i] - 48;
+			value *= 10;
+		}
+		value /= 10;
+
+		Buffer_WriteUInt64(&_Replay->m_Data, value);
+
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
+
+		return 1;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0 ||
 			strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
