@@ -51,10 +51,12 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size);
 static inline void Buffer_ResetReadPtr(Buffer* _Buffer)
 {
 	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
+	_Buffer->m_BytesLeft = abs(_Buffer->m_WritePtr - _Buffer->m_ReadPtr);
 }
 static inline void Buffer_ResetWritePtr(Buffer* _Buffer)
 {
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
+	_Buffer->m_BytesLeft = abs(_Buffer->m_WritePtr - _Buffer->m_ReadPtr);
 }
 static inline void Buffer_Reset(Buffer* _Buffer)
 {
