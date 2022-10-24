@@ -113,8 +113,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		return -6;
 	}
 
+	/*
 	success = Filesystem_Client_InitializePtr(_Service, &_Service->m_Client);
-
 	if(success != 0)
 	{
 		printf("Failed to initialize client!\r\n");
@@ -126,6 +126,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		Filesystem_Server_Dispose(_Service->m_Server);
 		return -6;
 	}
+	*/
 
 	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
@@ -136,7 +137,7 @@ void Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
 	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
 
 	Filesystem_Server_Work(_MSTime, _Service->m_Server);
-	Filesystem_Client_Work(_MSTime, _Service->m_Client);
+	// Filesystem_Client_Work(_MSTime, _Service->m_Client);
 }
 
 

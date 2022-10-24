@@ -108,7 +108,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		_Replay->m_Type = Payload_Type_Respons;
 
-		
+		printf("Client\n\r");
 
 		_Replay->m_Size = _Replay->m_Data.m_BytesLeft;
 

@@ -48,7 +48,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -3;
 	}
 
-	success = Buffer_Initialize(&_Server->m_Buffer, False, 64);
+	success = Buffer_Initialize(&_Server->m_Buffer, True, 64);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Buffer!\n\r");
@@ -157,26 +157,27 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	if(_Server->m_CurrentNode == NULL)
+	if(_Server->m_Sockets.m_Size == 0)
 		return 0;
 
-	LinkedList_Node* currentNode = _Server->m_CurrentNode;
-	_Server->m_CurrentNode = _Server->m_CurrentNode->m_Next;
-
-	if(_Server->m_CurrentNode == NULL)
-		_Server->m_CurrentNode = _Server->m_Sockets.m_Head;
-
-	TCPSocket* TCPSocket = currentNode->m_Item;
-
-	int readBytes = TCPSocket_Read(TCPSocket, _Buffer, _Size);
-
-	if(readBytes > 0)
+	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	while(currentNode != NULL)
 	{
+		Buffer_Clear(&_Server->m_Buffer);	
+		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
 
-		printf("Filesystem_Server_TCPRead: %u\r\n", readBytes);
-		
-		return readBytes;
+		int readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
+
+		if(readed > 0)
+		{
+			printf("Filesystem_Server_TCPRead\n\r");
+			Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
+			return readed;
+		}
+
+		currentNode = currentNode->m_Next;
 	}
+
 	return 0;
 
 }
@@ -318,12 +319,12 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
 	{
-
+		printf("Delete\n\r");
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Move") == 0 ||
-			strcmp(_Message->m_Message.m_Method.m_Str, "Rename"))
+			strcmp(_Message->m_Message.m_Method.m_Str, "Rename") == 0)
 	{
-
+		printf("Move/Reanme\n\r");
 	}
 	else
 	{
@@ -338,27 +339,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	TCPServer_Work(&_Server->m_TCPServer);
 	DataLayer_Work(_MSTime, &_Server->m_DataLayer);
 	TransportLayer_Work(_MSTime, &_Server->m_TransportLayer);
-/* 
-	Buffer_Clear(&_Server->m_Buffer);
-	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
-	while(currentNode != NULL)
-	{
-		TCPSocket* TCPSocket = currentNode->m_Item;
-
-		int readBytes = TCPSocket_Read(TCPSocket, &_Server->m_Buffer, 64);
-
-		if(readBytes > 0)
-		{
-			char str[readBytes + 1];
-			Buffer_ReadBuffer(&_Server->m_Buffer, (UInt8*)str, readBytes);
-			printf("Resived: %s\r\n", str);
-		}
-
-		currentNode = currentNode->m_Next;
-		Buffer_Clear(&_Server->m_Buffer);
-	} */
-
-	// printf("Work%lu\n\r", _MSTime);
 }
 
 
