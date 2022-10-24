@@ -194,7 +194,7 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	while (currentNode != NULL)
 	{
 		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
-
+		Buffer_ResetReadPtr(_Buffer);
 		TCPSocket_Write(socket, _Buffer, _Size);
 
 		currentNode = currentNode->m_Next;
@@ -257,10 +257,22 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
-		
 		unsigned char hash[16];
-		Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, hash);
-		Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+		Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
+		
+		unsigned char serverHash[16];
+		Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, serverHash);
+
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
+
+		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
+		{
+			_Replay->m_Size = 1;
+			Buffer_WriteUInt8(&_Replay->m_Data, 0);
+			return 1;
+		}
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, serverHash, 16);
 
 		struct stat attr;
 		char str[64];
@@ -275,9 +287,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 		value /= 10;
 
-		Buffer_WriteUInt64(&_Replay->m_Data, value);
+		_Replay->m_Size += Buffer_WriteUInt64(&_Replay->m_Data, value);
 
-		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
+
 
 		return 1;
 	}
