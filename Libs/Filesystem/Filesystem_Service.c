@@ -280,22 +280,25 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	
 	if(String_Initialize(&servers, 16) != 0)
 		return -1;
-	
-	char tempStr[126];
-	char ip[17];
-	LinkedList_Node* currentNode = _Service->m_Server->m_Sockets.m_Head;
-	while (currentNode != NULL)
+	if(_Service->m_Server != NULL)
 	{
-		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
-		memset(ip, 0, sizeof(ip));
-		inet_ntop(AF_INET, &socket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
-		
-		sprintf(tempStr, "{\"post\": %i,\"IP\": %s}", ntohs(socket->m_Addr.sin_port), ip);
-		String_Append(&servers, tempStr, strlen(tempStr));
+	
+		char tempStr[126];
+		char ip[17];
+		LinkedList_Node* currentNode = _Service->m_Server->m_Sockets.m_Head;
+		while (currentNode != NULL)
+		{
+			TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
+			memset(ip, 0, sizeof(ip));
+			inet_ntop(AF_INET, &socket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
+			
+			sprintf(tempStr, "{\"post\": %i,\"IP\": %s}", ntohs(socket->m_Addr.sin_port), ip);
+			String_Append(&servers, tempStr, strlen(tempStr));
 
-		currentNode = currentNode->m_Next;
-		if(currentNode != NULL)
-			String_Append(&servers, ",", 1);
+			currentNode = currentNode->m_Next;
+			if(currentNode != NULL)
+				String_Append(&servers, ",", 1);
+		}
 	}
 	
 
