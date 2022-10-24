@@ -52,6 +52,10 @@ int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
 		{
 			return Buffer_WriteBuffer(_Buffer, _Communicator->m_Address.MAC, 6);
 		} break;
+		case Payload_Address_Type_NONE:
+		{
+
+		} break;
 	}
 
 	return 0;
@@ -107,6 +111,10 @@ int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
 		case Payload_Address_Type_MAC:
 		{
 			return Buffer_ReadBuffer(_Buffer, _Communicator->m_Address.MAC, 6);
+		} break;
+		case Payload_Address_Type_NONE:
+		{
+
 		} break;
 	}
 
@@ -172,6 +180,10 @@ void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src)
 			_Des->m_Address.MAC[3] = _Src->m_Address.MAC[3];
 			_Des->m_Address.MAC[4] = _Src->m_Address.MAC[4];
 			_Des->m_Address.MAC[5] = _Src->m_Address.MAC[5];
+
+		} break;
+		case Payload_Address_Type_NONE:
+		{
 
 		} break;
 	}
