@@ -175,7 +175,7 @@
 				ptr -= sizeof(UInt32);
 				UInt32 orginalSize = 0;
 				ptr += Memory_ParseUInt32(ptr, &orginalSize);
-				unsigned char* endPtr = ptr + ALLOCATOR_DEBUG_BORDERCHECK + orginalSize + ALLOCATOR_DEBUG_BORDERCHECK - 1;
+				unsigned char* endPtr = ptr + ALLOCATOR_DEBUG_BORDERCHECK + orginalSize + ALLOCATOR_DEBUG_BORDERCHECK;
 				
 				unsigned int i;
 				for(i = 0; i < ALLOCATOR_DEBUG_BORDERCHECK; i++)
@@ -186,7 +186,7 @@
 						status = Allocator_Bordercheck_FAILBEGIN;
 						break;
 					}
-					else if(*(endPtr--) == i)
+					else if(*(endPtr--) != i)
 					{
 						fprintf(stderr, "Border Check Failed in the ending\n\r");
 						status = Allocator_Bordercheck_FAILEND;
@@ -239,7 +239,7 @@
 		ptr += Memory_ParseUInt32(ptr, &orginalSize);
 
 		printf("Malloced Data:\r\n");
-		int length = orginalSize + sizeof(UInt32) + ALLOCATOR_DEBUG_BORDERCHECK * 2;
+		int length = orginalSize + ALLOCATOR_DEBUG_BORDERCHECK * 2;
 		for (int i = 0; i < length; i++)
 			printf("%x%s",ptr[i], i + 1 < length ? ", " : "");
 
