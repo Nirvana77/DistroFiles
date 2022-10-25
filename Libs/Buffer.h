@@ -31,6 +31,12 @@ int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize);
 
 void Buffer_Clear(Buffer* _Buffer);
 
+int Buffer_ExtendBy(Buffer* _Buffer, int _Size);
+static inline int Buffer_Extend(Buffer* _Buffer)
+{
+	return Buffer_ExtendBy(_Buffer, _Buffer->m_ExtentionSize);
+}
+
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value);
 int Buffer_ReadUInt32(Buffer* _Buffer, UInt32* _Value);
 int Buffer_ReadUInt16(Buffer* _Buffer, UInt16* _Value);

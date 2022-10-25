@@ -293,8 +293,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		return 1;
 	}
-	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Update") == 0 ||
-			strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
 	{
 		UInt16 size;
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
@@ -310,7 +309,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		Buffer_ReadBuffer(&_Message->m_Data, (UInt8*)path, size);
 
-		String_Append(&fullPath, path, size);
+		String_Append(&fullPath, (const char*)path, size);
 
 		//* This can be improved
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
@@ -351,14 +350,25 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 		unsigned char path[size + 1];
-		Buffer_ReadBuffer(&_Message->m_Data, (UInt8*)path, size);
 		path[size] = 0;
+		
+		String fullPath;
+
+		String_Initialize(&fullPath, 64);
+		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+		if(String_EndsWith(&fullPath, "/") == False)
+			String_Append(&fullPath, "/", 1);
+
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+
+		String_Append(&fullPath, (const char*)path, size);
 
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 		FILE* f = NULL;
 
-		File_Open((const char*)path, "wb+", &f);
+		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
 
 		if(f == NULL)
 		{
@@ -366,7 +376,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			printf("Can't write to path: %s\n\r", path);
 			return 0;
 		}
-
+		Buffer_ExtendBy(&_Message->m_Data, size);
 		File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
 
 		unsigned char hash[16] = "";
@@ -383,6 +393,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
 
+		String_Dispose(&fullPath);
 		return 1;
 
 	}
@@ -397,8 +408,19 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 		unsigned char path[size];
+		
+		String fullPath;
+
+		String_Initialize(&fullPath, 64);
+		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+		if(String_EndsWith(&fullPath, "/") == False)
+			String_Append(&fullPath, "/", 1);
+
 		Buffer_ReadBuffer(&_Message->m_Data, path, size);
 		path[size] = 0;
+
+		String_Append(&fullPath, (const char*)path, size);
 
 		unsigned char hash[16] = "";
 		unsigned char serverHash[16] = "";
@@ -407,7 +429,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)path, "rb", &f);
+		File_Open((const char*)fullPath.m_Ptr, "rb", &f);
 
 		if(f == NULL)
 		{
@@ -438,7 +460,56 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 
 		File_Close(f);
+		String_Dispose(&fullPath);
 
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
+	{
+		printf("Read\n\r");
+
+		Bool isFile = True;
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		unsigned char path[size + 1];
+		
+		String fullPath;
+
+		String_Initialize(&fullPath, 64);
+		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+		if(String_EndsWith(&fullPath, "/") == False)
+			String_Append(&fullPath, "/", 1);
+
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+		path[size] = 0;
+
+		String_Append(&fullPath, (const char*)path, size);
+
+		FILE* f = NULL;
+
+		File_Open((const char*)path, "wb+", &f);
+
+		if(f == NULL)
+		{
+			printf("Error with write\n\r");
+			printf("Can't write to path: %s\n\r", path);
+			return 0;
+		}
+
+
+		File_WriteAll(f, _Replay->m_Data.m_ReadPtr, size);
+
+		unsigned char hash[16] = "";
+		File_Hash(f, hash);
+
+		File_Close(f);
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
+		
+		String_Dispose(&fullPath);
+		return 1;
 	}
 	else
 	{

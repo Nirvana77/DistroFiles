@@ -1,7 +1,5 @@
 #include "Buffer.h"
 
-int Buffer_Extend(Buffer* _Buffer);
-int Buffer_ExtendBy(Buffer* _Buffer, int _Size);
 
 int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr)
 {
@@ -42,10 +40,6 @@ int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize)
 	return 0;
 }
 
-int Buffer_Extend(Buffer* _Buffer)
-{
-	return Buffer_ExtendBy(_Buffer, _Buffer->m_ExtentionSize);
-}
 
 int Buffer_ExtendBy(Buffer* _Buffer, int _Size)
 {

@@ -215,14 +215,14 @@ int main(int argc, char* argv[])
 							FILE* f = NULL;
 							File_Open(path, "rb", &f);
 
-							int size = 1 + 2 + strlen(path) + 1 + 2 + File_GetSize(f);
+							int size = 1 + 2 + strlen(path) + 2 + File_GetSize(f);
 
 							Payload* message = NULL;
 							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Safe, size, &message) == 0)
 							{
 								Buffer_WriteUInt8(&message->m_Data, True);
-								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path) + 1));
-								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path) + 1);
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path)));
+								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path));
 
 								if(chr == 'w')
 								{

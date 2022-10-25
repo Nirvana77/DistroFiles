@@ -116,7 +116,7 @@ int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _Buffer
 
 void TCPSocket_Disconnect(TCPSocket* _TCPSocket)
 {
-	if(_TCPSocket->m_Status == TCPSocket_Status_Closed || _TCPSocket->m_FD == NULL)
+	if(_TCPSocket->m_Status == TCPSocket_Status_Closed || _TCPSocket->m_FD == 0)
 		return;
 
 	#ifdef __linux__
