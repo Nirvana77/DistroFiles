@@ -60,20 +60,17 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 			printf("Error code: %i\n\r", success);
 		}
 		
-		Payload message;
-		Payload_Initialize(&message);
+		Payload* message = NULL;
 		if(_DataLayer->m_FuncOut.m_Send(_DataLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send message
 		{
 			//send message/payload
-			if(DataLayer_SendMessage(_DataLayer, &message) != 0)
-				message.m_State = Payload_State_Failed;
+			if(DataLayer_SendMessage(_DataLayer, message) != 0)
+				message->m_State = Payload_State_Failed;
 			
 			else
-				message.m_State = Payload_State_Sented;
+				message->m_State = Payload_State_Sented;
 
 		}
-
-		Payload_Dispose(&message);
 	}
 }
 
@@ -81,11 +78,16 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
 
+
+	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, &_Payload->m_Data.m_ReadPtr[_Payload->m_Size], _Payload->m_Data.m_BytesLeft - _Payload->m_Size);
+	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, _Payload->m_Data.m_ReadPtr, _Payload->m_Size);
+
+/* 
 	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
 	{
 		printf("Buffer copy error\n\r");
 		return -1;
-	}
+	} */
 
 	UInt8 CRC = 0;
 	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _DataLayer->m_DataBuffer.m_BytesLeft, &CRC);

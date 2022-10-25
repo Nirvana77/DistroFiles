@@ -19,7 +19,7 @@ int NetworkLayer_InitializePtr(NetworkLayer** _NetworkLayerPtr);
 int NetworkLayer_Initialize(NetworkLayer* _NetworkLayer);
 
 
-int NetworkLayer_SendPayload(void* _Context, Payload* _Paylode);
+int NetworkLayer_SendPayload(void* _Context, Payload** _PaylodePtr);
 int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 void NetworkLayer_Dispose(NetworkLayer* _NetworkLayer);
