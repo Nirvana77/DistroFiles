@@ -170,10 +170,6 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	success = Buffer_WriteUInt16(&_Payload->m_Data, _Payload->m_Size);
 	if(success < 0)
 		return -8;
-	
-	success = Buffer_WriteBuffer(&_Payload->m_Data, _Payload->m_Data.m_ReadPtr, _Payload->m_Data.m_BytesLeft);
-	if(success < 0)
-		return -8;
 
 	return 0;
 }

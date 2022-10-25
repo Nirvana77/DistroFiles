@@ -203,13 +203,13 @@ int main(int argc, char* argv[])
 					case 'w':
 					case 'u':
 					{
-						String fullPath;
-						const char* path = "test.txt";
-						String_Initialize(&fullPath, 8);
 
 						
 						if(service != NULL)
 						{
+							String fullPath;
+							const char* path = "test.txt";
+							String_Initialize(&fullPath, 8);
 							FILE* f = NULL;
 
 							String_Set(&fullPath, service->m_FilesytemPath.m_Ptr);
@@ -244,11 +244,8 @@ int main(int argc, char* argv[])
 							}
 
 							File_Close(f);
-
+							String_Dispose(&fullPath);
 						}
-
-						String_Dispose(&fullPath);
-						
 					} break;
 				
 					default:

@@ -18,9 +18,14 @@ int File_GetHash(const char* _Path, unsigned char _Result[16])
     if(f == NULL)
         return -1;
 
-    File_Hash(f, _Result);
+    if(File_Hash(f, _Result) != 0)
+    {
+        File_Close(f);
+        return -2;
+    }
 
     File_Close(f);
+    return 0;
 }
 
 int File_Read(FILE* _File, unsigned char* _Buffer, int _Size);
