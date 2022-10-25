@@ -1,6 +1,7 @@
 #include "NetworkLayer.h"
 
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src);
+int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload);
 
 int NetworkLayer_InitializePtr(NetworkLayer** _NetworkLayerPtr)
 {
@@ -28,32 +29,28 @@ int NetworkLayer_Initialize(NetworkLayer* _NetworkLayer)
 	return 0;
 }
 
-int NetworkLayer_SendPayload(void* _Context, Payload* _Paylode)
+int NetworkLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 {
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
 	if(_NetworkLayer->m_FuncOut.m_Send == NULL)
 		return 0;
 
 
-	Payload message;
-	Payload_Initialize(&message);
-		
-	message.m_Src.m_Type = Payload_Address_Type_IP;
-	GetIP(message.m_Src.m_Address.IP);
-
+	Payload* message = NULL;
 	if(_NetworkLayer->m_FuncOut.m_Send(_NetworkLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send meesage
 	{
+		message->m_Src.m_Type = Payload_Address_Type_MAC;
+		GetMAC(message->m_Src.m_Address.MAC);
+
 		printf("NetworkLayer_SendPayload\n\r");
-		int success = NetworkLayer_PayloadLinker(_NetworkLayer, _Paylode, &message);
+		int success = NetworkLayer_PayloadBuilder(_NetworkLayer, message);
 		if(success == 0)
 		{
-			Payload_Dispose(&message);
+			*(_PaylodePtr) = message;
 			return 1;
-
 		}
-	}
 
-	Payload_Dispose(&message);
+	}
 
 	return 0;
 }
@@ -123,6 +120,60 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		}
 		Payload_Dispose(&replay);
 	}
+
+	return 0;
+}
+
+int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
+{
+
+	int success = Buffer_WriteUInt8(&_Payload->m_Data, _Payload->m_Type);
+	if(success < 0)
+		return -1;
+
+	success = Buffer_WriteUInt64(&_Payload->m_Data, _Payload->m_Time);
+	if(success < 0)
+		return -2;
+
+	if(_Payload->m_Src.m_Type == Payload_Address_Type_NONE)
+		_Payload->m_Src.m_Type = Payload_Address_Type_MAC;
+
+	success = Buffer_WriteUInt8(&_Payload->m_Data, _Payload->m_Src.m_Type);
+	if(success < 0)
+		return -3;
+	
+	if(_Payload->m_Src.m_Type == Payload_Address_Type_IP)
+	{
+		UInt8 address[4];
+		GetIP(address);
+		Buffer_WriteBuffer(&_Payload->m_Data, address, 4);
+	}
+	else if(_Payload->m_Src.m_Type == Payload_Address_Type_MAC)
+	{
+		UInt8 mac[6];
+		GetMAC(mac);
+		Buffer_WriteBuffer(&_Payload->m_Data, mac, 6);
+	}
+	/*
+	success = Payload_WriteCommunicator(&_Payload->m_Src, &_Payload->m_Data);
+	if(success < 0)
+		return -4;
+	*/
+	success = Payload_WriteCommunicator(&_Payload->m_Des, &_Payload->m_Data);
+	if(success < 0)
+		return -6;
+
+	success = Payload_WriteMessage(&_Payload->m_Message, &_Payload->m_Data);
+	if(success < 0)
+		return -7;
+	
+	success = Buffer_WriteUInt16(&_Payload->m_Data, _Payload->m_Size);
+	if(success < 0)
+		return -8;
+	
+	success = Buffer_WriteBuffer(&_Payload->m_Data, _Payload->m_Data.m_ReadPtr, _Payload->m_Data.m_BytesLeft);
+	if(success < 0)
+		return -8;
 
 	return 0;
 }

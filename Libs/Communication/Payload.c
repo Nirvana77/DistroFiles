@@ -30,7 +30,7 @@ int Payload_Initialize(Payload* _Payload)
 
 	_Payload->m_Type = Payload_Type_UnSafe;
 
-	Buffer_Initialize(&_Payload->m_Data, True, 16);
+	Buffer_Initialize(&_Payload->m_Data, True, 64);
 
 	memset(&_Payload->m_Src, 0, sizeof(Payload_Address));
 	memset(&_Payload->m_Des, 0, sizeof(Payload_Address));

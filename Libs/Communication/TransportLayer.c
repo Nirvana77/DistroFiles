@@ -30,6 +30,13 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 		printf("Error code: %i\n\r", success);
 		return -2;
 	}
+	success = LinkedList_Initialize(&_TransportLayer->m_Sented);
+	if(success != 0)
+	{
+		printf("Failed to initialize the Sented!\n\r");
+		printf("Error code: %i\n\r", success);
+		return -2;
+	}
 	
 	return 0;
 }
@@ -80,51 +87,29 @@ int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payl
 	return LinkedList_RemoveItem(&_TransportLayer->m_Queued, _Payload);
 }
 
-//TODO #16 Create a sented list for respons
-int TransportLayer_SendMessage(TransportLayer* _TransportLayer)
-{
-	if(_TransportLayer->m_Queued.m_Head == NULL)
-		return 0;
-
-	Payload* _Payload = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
-	if(_TransportLayer->m_FuncOut.m_Send != NULL)
-	{
-		return _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
-	}
-	
-	return 0;
-}
-
 //TODO #17 Fix this to be a propper transport layer
-int TransportLayer_SendPayload(void* _Context, Payload* _Paylode)
+int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
 	if(_TransportLayer->m_FuncOut.m_Send != NULL)
 	{
-		if(_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Paylode) == 1)
+		if(_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _PaylodePtr) == 1)
 		{
 			printf("TransportLayer_SendPayload\n\r");
 			return 1;
 		}
 	}
-	else if(_TransportLayer->m_CurrentNode != NULL)
+	else if(_TransportLayer->m_Queued.m_Size > 0)
 	{
 		printf("TransportLayer_SendPayload\n\r");
-		Payload* p = (Payload*)_TransportLayer->m_CurrentNode->m_Item;
+		Payload* p = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
 		p->m_State = Payload_State_Sending;
-
 		SystemMonotonicMS(&p->m_Time);
-		Payload_Copy(_Paylode, p);
 
-		//This is temporary!
-		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
+		LinkedList_Push(&_TransportLayer->m_Sented, p);
 
-		LinkedList_RemoveItem(&_TransportLayer->m_Queued, p);
-		Payload_Dispose(p);
-		
-		if(_TransportLayer->m_CurrentNode == NULL)
-			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
+		*(_PaylodePtr) = p;
 		
 		return 1;
  	}
@@ -200,7 +185,17 @@ void TransportLayer_Dispose(TransportLayer* _TransportLayer)
 		Payload_Dispose(_Payload);
 	}
 	
+	currentNode = _TransportLayer->m_Sented.m_Head;
+	while(currentNode != NULL)
+	{
+		Payload* _Payload = (Payload*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+		LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
+		Payload_Dispose(_Payload);
+	}
+	
 
+	LinkedList_Dispose(&_TransportLayer->m_Sented);
 	LinkedList_Dispose(&_TransportLayer->m_Queued);
 
 	if(_TransportLayer->m_Allocated == True)
