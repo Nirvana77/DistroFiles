@@ -218,6 +218,8 @@ int main(int argc, char* argv[])
 								String_Append(&fullPath, "/", 1);
 							String_Append(&fullPath, path, strlen(path));
 
+							printf("Full path: %s\n\r", fullPath.m_Ptr);
+
 							File_Open(fullPath.m_Ptr, "rb", &f);
 
 							int size = 1 + 2 + strlen(path) + 2 + File_GetSize(f);

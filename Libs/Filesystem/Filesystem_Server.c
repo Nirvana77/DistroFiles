@@ -426,23 +426,14 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		unsigned char serverHash[16] = "";
 		
 		Buffer_ReadBuffer(&_Message->m_Data, serverHash, 16);
-
-		FILE* f = NULL;
-
-		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
-
-		if(f == NULL)
-		{
-			printf("Error with write\n\r");
-			printf("Can't write to path: %s\n\r", path);
-			String_Dispose(&fullPath);
-			return 0;
-		}
-		File_Close(f);
 		File_GetHash(fullPath.m_Ptr, hash);
+		String_Dispose(&fullPath);
+
 
 		if(Filesystem_Server_HashCheck(hash, serverHash) == False)
 		{
+			printf("Wrong Hash!\n\r");
+			/*
 			Payload* p = NULL;
 			size = 1 + 2 + strlen((const char*)path) + 1 + 2 + File_GetSize(f);
 			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, size, &p) == 0)
@@ -459,9 +450,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				Buffer_ReadFromFile(&p->m_Data, f);
 
 			}
+			*/
 		}
-
-		String_Dispose(&fullPath);
 
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
