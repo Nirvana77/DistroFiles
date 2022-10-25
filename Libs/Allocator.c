@@ -147,7 +147,7 @@
 			if(ptr != NULL)
 			{
 				unsigned char* endPtr = ptr;
-				endPtr += _Size;
+				endPtr += _Size - 1;
 				ptr += Memory_UInt32ToBuffer(&orginalSize, ptr);
 				unsigned int i;
 				for(i = 0; i < ALLOCATOR_DEBUG_BORDERCHECK; i++)
@@ -175,7 +175,7 @@
 				ptr -= sizeof(UInt32);
 				UInt32 orginalSize = 0;
 				ptr += Memory_ParseUInt32(ptr, &orginalSize);
-				unsigned char* endPtr = ptr + ALLOCATOR_DEBUG_BORDERCHECK + orginalSize + ALLOCATOR_DEBUG_BORDERCHECK;
+				unsigned char* endPtr = ptr + ALLOCATOR_DEBUG_BORDERCHECK + orginalSize + ALLOCATOR_DEBUG_BORDERCHECK - 1;
 				
 				unsigned int i;
 				for(i = 0; i < ALLOCATOR_DEBUG_BORDERCHECK; i++)
