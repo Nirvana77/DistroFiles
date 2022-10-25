@@ -34,7 +34,6 @@ int String_Initialize(String* _Str, int _BufferSize)
 	return 0;
 }
 
-//TODO #30 This write over the border in allocator
 int String_ExtendBuffer(String* _Str)
 {
 	int newSize = _Str->m_Size + _Str->m_BufferSize;
@@ -76,10 +75,10 @@ int String_Set(String* _Str, const char* _String)
 
 int String_Append(String* _Str, const char* _String, int _Length)
 {
-	if(_Str->m_Length + _Length > _Str->m_Size) {
+	while(_Str->m_Length + _Length > _Str->m_Size)
+	{
 		if(String_ExtendBuffer(_Str) != 0)
-			return -1;
-
+			return -2;
 	}
 
 	memcpy(&_Str->m_Ptr[_Str->m_Length], _String, _Length + 1);
