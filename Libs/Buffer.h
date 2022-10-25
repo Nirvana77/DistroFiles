@@ -36,14 +36,14 @@ int Buffer_ReadUInt32(Buffer* _Buffer, UInt32* _Value);
 int Buffer_ReadUInt16(Buffer* _Buffer, UInt16* _Value);
 int Buffer_ReadUInt8(Buffer* _Buffer, UInt8* _Value);
 
-int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
+int Buffer_ReadBuffer(Buffer* _Buffer, unsigned char* _Ptr, int _Size);
 
 int Buffer_WriteUInt64(Buffer* _Buffer, UInt64 _Value);
 int Buffer_WriteUInt32(Buffer* _Buffer, UInt32 _Value);
 int Buffer_WriteUInt16(Buffer* _Buffer, UInt16 _Value);
 int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value);
 
-int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size);
+int Buffer_WriteBuffer(Buffer* _Buffer, unsigned char* _Ptr, int _Size);
 int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File);
 
 int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size);

@@ -116,7 +116,7 @@ int Buffer_ReadUInt8(Buffer* _Buffer, UInt8* _Value)
 	return n;
 }
 
-int Buffer_ReadBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
+int Buffer_ReadBuffer(Buffer* _Buffer, unsigned char* _Ptr, int _Size)
 {
 	int readBytes = 0;
 
@@ -178,7 +178,7 @@ int Buffer_WriteUInt8(Buffer* _Buffer, UInt8 _Value)
 	return n;
 }
 
-int Buffer_WriteBuffer(Buffer* _Buffer, UInt8* _Ptr, int _Size)
+int Buffer_WriteBuffer(Buffer* _Buffer, unsigned char* _Ptr, int _Size)
 {
 	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + _Size)
 	{
