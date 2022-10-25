@@ -203,17 +203,22 @@ int main(int argc, char* argv[])
 					case 'w':
 					case 'u':
 					{
-						String str;
+						String fullPath;
 						const char* path = "test.txt";
-						String_Initialize(&str, 8);
-
-						String_Set(&str, "Hellow");
+						String_Initialize(&fullPath, 8);
 
 						
 						if(service != NULL)
 						{
 							FILE* f = NULL;
-							File_Open(path, "rb", &f);
+
+							String_Set(&fullPath, service->m_FilesytemPath.m_Ptr);
+
+							if(String_EndsWith(&fullPath, "/") == False)
+								String_Append(&fullPath, "/", 1);
+							String_Append(&fullPath, path, strlen(path));
+
+							File_Open(fullPath.m_Ptr, "rb", &f);
 
 							int size = 1 + 2 + strlen(path) + 2 + File_GetSize(f);
 
@@ -242,7 +247,7 @@ int main(int argc, char* argv[])
 
 						}
 
-						String_Dispose(&str);
+						String_Dispose(&fullPath);
 						
 					} break;
 				
