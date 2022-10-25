@@ -379,11 +379,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 		Buffer_ExtendBy(&_Message->m_Data, size);
 		File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
+		File_Close(f);
 
 		unsigned char hash[16] = "";
-		File_Hash(f, hash);
-
-		File_Close(f);
+		File_GetHash(fullPath.m_Ptr, hash);
 		
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "WriteAck", strlen("WriteAck"));
 
@@ -439,7 +438,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			String_Dispose(&fullPath);
 			return 0;
 		}
-		File_Hash(f, hash);
+		File_Close(f);
+		File_GetHash(fullPath.m_Ptr, hash);
 
 		if(Filesystem_Server_HashCheck(hash, serverHash) == False)
 		{
@@ -461,7 +461,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			}
 		}
 
-		File_Close(f);
 		String_Dispose(&fullPath);
 
 	}
@@ -504,11 +503,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 
 		File_WriteAll(f, _Replay->m_Data.m_ReadPtr, size);
+		File_Close(f);
 
 		unsigned char hash[16] = "";
-		File_Hash(f, hash);
+		File_GetHash(fullPath.m_Ptr, hash);
 
-		File_Close(f);
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
 		
 		String_Dispose(&fullPath);
