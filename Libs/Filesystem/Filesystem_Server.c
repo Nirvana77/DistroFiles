@@ -368,7 +368,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)fullPath.m_Ptr, "rb+", &f);
+		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
 
 		if(f == NULL)
 		{
@@ -433,6 +433,15 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(Filesystem_Server_HashCheck(hash, serverHash) == False)
 		{
 			printf("Wrong Hash!\n\r");
+			printf("ServerHash: \n\r");
+			for (int i = 0; i < 16; i++)
+				printf("%x", serverHash[i]);
+			
+			printf("\n\r");
+			printf("Hash: \n\r");
+			for (int i = 0; i < 16; i++)
+				printf("%x", hash[i]);
+			printf("\n\r");
 			/*
 			Payload* p = NULL;
 			size = 1 + 2 + strlen((const char*)path) + 1 + 2 + File_GetSize(f);
