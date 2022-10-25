@@ -368,12 +368,13 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
+		File_Open((const char*)fullPath.m_Ptr, "rb+", &f);
 
 		if(f == NULL)
 		{
 			printf("Error with write\n\r");
 			printf("Can't write to path: %s\n\r", fullPath.m_Ptr);
+			String_Dispose(&fullPath);
 			return 0;
 		}
 		Buffer_ExtendBy(&_Message->m_Data, size);
@@ -435,6 +436,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		{
 			printf("Error with write\n\r");
 			printf("Can't write to path: %s\n\r", path);
+			String_Dispose(&fullPath);
 			return 0;
 		}
 		File_Hash(f, hash);
@@ -496,6 +498,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		{
 			printf("Error with write\n\r");
 			printf("Can't write to path: %s\n\r", path);
+			String_Dispose(&fullPath);
 			return 0;
 		}
 
