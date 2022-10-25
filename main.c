@@ -201,7 +201,6 @@ int main(int argc, char* argv[])
 					} break;
 
 					case 'w':
-					case 'u':
 					{
 
 						
@@ -230,19 +229,11 @@ int main(int argc, char* argv[])
 								Buffer_WriteUInt8(&message->m_Data, True);
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path)));
 								Buffer_WriteBuffer(&message->m_Data, (UInt8*)path, strlen(path));
+								
+								Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
 
-								if(chr == 'w')
-								{
-									Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
-
-									Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
-									Buffer_ReadFromFile(&message->m_Data, f);
-
-								}
-								else
-								{
-									Payload_SetMessageType(message, Payload_Message_Type_String, "Update", strlen("Update"));
-								}
+								Buffer_WriteUInt16(&message->m_Data, (UInt16)File_GetSize(f));
+								Buffer_ReadFromFile(&message->m_Data, f);
 							}
 
 							File_Close(f);

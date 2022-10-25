@@ -293,43 +293,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		return 1;
 	}
-	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Create") == 0)
-	{
-		UInt16 size;
-		Buffer_ReadUInt16(&_Message->m_Data, &size);
-
-		char path[size];
-		String fullPath;
-
-		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
-
-		if(String_EndsWith(&fullPath, "/") == False)
-			String_Append(&fullPath, "/", 1);
-
-		Buffer_ReadBuffer(&_Message->m_Data, (UInt8*)path, size);
-
-		String_Append(&fullPath, (const char*)path, size);
-
-		//* This can be improved
-		Buffer_ReadUInt16(&_Message->m_Data, &size);
-
-		UInt8 data[size];
-		Buffer_ReadBuffer(&_Message->m_Data, data, size);
-	
-		FILE* f = NULL;
-		File_Open(fullPath.m_Ptr, "wb+", &f);
-
-		printf("Testing\n\r");
-		printf("Path: %s\n\r", path);
-		printf("Fullpath: %s\n\r", fullPath.m_Ptr);
-		//File_WriteAll(f, data, size);
-
-		File_Close(f);
-
-		String_Dispose(&fullPath);
-		return 0;
-	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
 	{
 		printf("Delete\n\r");
@@ -377,7 +340,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			String_Dispose(&fullPath);
 			return 0;
 		}
-		Buffer_ExtendBy(&_Message->m_Data, size);
+		
 		File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
 		File_Close(f);
 
@@ -500,15 +463,18 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			return 0;
 		}
 
-
-		File_WriteAll(f, _Replay->m_Data.m_ReadPtr, size);
+		Buffer_ReadFromFile(&_Replay->m_Data, f);
 		File_Close(f);
 
 		unsigned char hash[16] = "";
 		File_GetHash(fullPath.m_Ptr, hash);
 
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
-		
+
+		Buffer_ReadUInt8(&_Replay->m_Data, (UInt8*)&isFile);
+		Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+
+
 		String_Dispose(&fullPath);
 		return 1;
 	}
