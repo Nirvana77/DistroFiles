@@ -430,7 +430,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)fullPath.m_Ptr, "rb", &f);
+		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
 
 		if(f == NULL)
 		{
