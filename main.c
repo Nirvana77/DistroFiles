@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
 					case 'u':
 					{
 						String str;
-						const char* path = "Shared/root/test.txt";
+						const char* path = "test.txt";
 						String_Initialize(&str, 8);
 
 						String_Set(&str, "Hellow");

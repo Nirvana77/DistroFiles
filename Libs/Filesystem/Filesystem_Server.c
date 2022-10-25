@@ -373,7 +373,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(f == NULL)
 		{
 			printf("Error with write\n\r");
-			printf("Can't write to path: %s\n\r", path);
+			printf("Can't write to path: %s\n\r", fullPath.m_Ptr);
 			return 0;
 		}
 		Buffer_ExtendBy(&_Message->m_Data, size);
