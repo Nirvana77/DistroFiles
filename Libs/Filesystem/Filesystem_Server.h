@@ -38,6 +38,23 @@ static inline Bool Filesystem_Server_HashCheck(unsigned char _A[16], unsigned ch
 	return True;
 }
 
+static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value)
+{
+	struct stat attr;
+	char str[64];
+	UInt64 value = 0;
+	stat(_Path, &attr);
+	sprintf(str, "%u", attr.st_mtim);
+
+	for (int i = 0; i < strlen(str); i++)
+	{
+		value += str[i] - 48;
+		value *= 10;
+	}
+	value /= 10;
+	*(_Value) = value;
+}
+
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);
 
 #endif // Filesystem_Server_h__

@@ -257,40 +257,76 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 	{
+		String fullPath;
+		String_Initialize(&fullPath, 64);
+
+		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+		path[size] = 0;
+
+		if(strcmp(path, "root") != 0)
+		{
+			if(String_EndsWith(&fullPath, "/") == False)
+				String_Append(&fullPath, "/", 1);
+
+			String_Append(&fullPath, path, strlen(path));
+		}
+
+		printf("Fullpath: %s\n\r", fullPath.m_Ptr);
+		
 		unsigned char hash[16];
 		Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
 		
 		unsigned char serverHash[16];
-		Folder_Hash(_Server->m_Service->m_FilesytemPath.m_Ptr, serverHash);
+		Folder_Hash(fullPath.m_Ptr, serverHash);
 
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
 
 		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
 		{
-			_Replay->m_Size = 1;
-			Buffer_WriteUInt8(&_Replay->m_Data, 0);
+			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
 			return 1;
 		}
-		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
-		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, serverHash, 16);
+		
+		tinydir_dir dir;
+		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+			return -1;
 
-		struct stat attr;
-		char str[64];
-		UInt64 value = 0;
-		stat(_Server->m_Service->m_FilesytemPath.m_Ptr, &attr);
-		sprintf(str, "%u", attr.st_mtim);
-
-		for (int i = 0; i < strlen(str); i++)
+		size = 0;
+		Buffer folderContext;
+		Buffer_Initialize(&folderContext, True, 64);
+		while (dir.has_next)
 		{
-			value += str[i] - 48;
-			value *= 10;
+			tinydir_file file;
+			tinydir_readfile(&dir, &file);
+			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+			{
+				Buffer_WriteUInt16(&folderContext, strlen(file.name));
+				Buffer_WriteBuffer(&folderContext, file.name, strlen(file.name));
+
+				if(file.is_dir)
+					Folder_Hash(file.path, hash);
+				else
+					File_GetHash(file.path, hash);
+
+				Buffer_WriteBuffer(&folderContext, hash, 16);
+				size++;
+			}
+			tinydir_next(&dir);
 		}
-		value /= 10;
 
-		_Replay->m_Size += Buffer_WriteUInt64(&_Replay->m_Data, value);
+		tinydir_close(&dir);
 
+		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
 
-
+		Buffer_Dispose(&folderContext);
+		String_Dispose(&fullPath);
 		return 1;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
