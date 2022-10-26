@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, &message) == 0)
 						{
 							Buffer_WriteUInt16(&message->m_Data, strlen(path));
-							Buffer_WriteBuffer(&message->m_Data, path, strlen(path));
+							Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
 
 							unsigned char hash[16];
 							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);

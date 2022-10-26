@@ -5,6 +5,10 @@ struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
 #include "Filesystem_Service.h"
+#include "../BitHelper.h"
+
+#define Filesystem_Server_TempFlag_HasList 0
+#define Filesystem_Server_TempFlag_WorkonList 1
 
 struct T_Filesystem_Server
 {
@@ -19,6 +23,10 @@ struct T_Filesystem_Server
 	LinkedList m_Sockets;
 	LinkedList_Node* m_CurrentNode;
 	Buffer m_Buffer;
+
+	Byte m_TempFlag;
+	Buffer m_TempListBuffer;
+	UInt16 m_TempListSize;
 	
 };
 

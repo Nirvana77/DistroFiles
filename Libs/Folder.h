@@ -4,6 +4,7 @@
 #include <errno.h>
 #include "tinydir.h"
 #include "File.h"
+#include "Types.h"
 
 int Folder_Create(const char* _Path);
 int Folder_Hash(const char* _Path, unsigned char _Result[16]);
@@ -15,7 +16,7 @@ static inline Bool Folder_IsEmpty(const char* _Path)
 		return True;
 	
 	Bool isEmpty = True;
-	while (dir.has_next || isEmpty != True)
+	while (dir.has_next && isEmpty == True)
 	{
 		tinydir_file file;
 		tinydir_readfile(&dir, &file);

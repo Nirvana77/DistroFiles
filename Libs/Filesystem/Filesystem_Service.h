@@ -16,6 +16,8 @@ typedef struct T_Filesystem_Service Filesystem_Service;
 #include "../TCP/TCPClient.h"
 #include "../Buffer.h"
 #include "../Communication/DataLayer.h"
+#include "../Communication/NetworkLayer.h"
+#include "../Communication/TransportLayer.h"
 
 #include "Filesystem_Client.h"
 #include "Filesystem_Server.h"
