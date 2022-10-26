@@ -27,6 +27,8 @@ int String_Initialize(String* _Str, int _BufferSize);
 int String_Append(String* _Str, const char* _String, int _Length);
 int String_Sprintf(String* _Str, const char* _String, ...);
 
+int String_Exchange(String* _Str, const char* _Exp, const char* _Value);
+
 int String_Set(String* _Str, const char* _String);
 
 Bool String_EndsWith(String* _Str, const char* _Exp);
