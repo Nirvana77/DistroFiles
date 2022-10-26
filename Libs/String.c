@@ -136,7 +136,7 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 int String_ReadFromFile(String* _Str, const char* _Path)
 {
 	FILE* f = NULL;
-	if(File_Open(_Path, "r", &f) != 0)
+	if(File_Open(_Path, File_Mode_Read, &f) != 0)
 		return -1;
 
 	int fileSize = File_GetSize(f);
@@ -160,7 +160,7 @@ int String_ReadFromFile(String* _Str, const char* _Path)
 int String_SaveToFile(String* _Str, const char* _Path)
 {
 	FILE* f = NULL;
-	if(File_Open(_Path, "wb", &f) != 0)
+	if(File_Open(_Path, File_Mode_WriteBinary, &f) != 0)
 		return -1;
 
 	int success = File_WriteAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Length);

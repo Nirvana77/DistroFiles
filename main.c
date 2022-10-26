@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
 					case 'h':
 					{
 						FILE* f = NULL;
-						File_Open("Shared/root/test.txt", "rb", &f);
+						File_Open("Shared/root/test.txt", File_Mode_ReadBinary, &f);
 
 
 						if(f != NULL)
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
 
 							printf("Full path: %s\n\r", fullPath.m_Ptr);
 
-							File_Open(fullPath.m_Ptr, "rb", &f);
+							File_Open(fullPath.m_Ptr, File_Mode_ReadBinary, &f);
 
 							int size = 1 + 2 + strlen(path) + 2 + File_GetSize(f);
 

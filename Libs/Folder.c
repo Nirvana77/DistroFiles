@@ -41,7 +41,7 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 		{
 			FILE* f = NULL;
-			File_Open(file.path, "rb", &f);
+			File_Open(file.path, File_Mode_ReadBinary, &f);
 
 			unsigned int totalSize = File_GetSize(f);
 			

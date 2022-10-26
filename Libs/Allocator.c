@@ -78,7 +78,7 @@
 	{
 		strcpy(g_Allocator.m_Path, _Path);
 		File_Remove(g_Allocator.m_Path);
-		File_Open(g_Allocator.m_Path, "ab+", &g_Allocator.m_F);
+		File_Open(g_Allocator.m_Path, File_Mode_ReadApendBinary, &g_Allocator.m_F);
 
 		g_Allocator.m_Mallocs.m_Head = NULL;
 		g_Allocator.m_Mallocs.m_Tail = NULL;

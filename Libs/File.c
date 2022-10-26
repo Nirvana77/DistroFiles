@@ -1,8 +1,8 @@
 #include "File.h"
 
-int File_Open(const char* _FilePath, const char* _Mode, FILE** _FilePtr)
+int File_Open(const char* _FilePath, File_Mode _Mode, FILE** _FilePtr)
 {
-	FILE* file = fopen(_FilePath, _Mode);
+	FILE* file = fopen(_FilePath, File_Mode_String[(int)_Mode]);
 	if(file == NULL)
 		return -1;
 

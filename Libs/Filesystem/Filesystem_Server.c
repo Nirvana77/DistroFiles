@@ -371,7 +371,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)fullPath.m_Ptr, "wb+", &f);
+		File_Open((const char*)fullPath.m_Ptr, File_Mode_ReadWriteBinary, &f);
 
 		if(f == NULL)
 		{
@@ -493,7 +493,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)path, "wb+", &f);
+		File_Open((const char*)path, File_Mode_ReadWriteBinary, &f);
 
 		if(f == NULL)
 		{
