@@ -51,6 +51,17 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		
 		return -3;
 	}
+	
+	char tempFolder[_Service->m_Path.m_Length + 5 + 1];
+	sprintf(tempFolder, "%s/temp", _Service->m_Path.m_Ptr);
+	success = Folder_Create(tempFolder);
+	if(success < 0)
+	{
+		printf("Can't create folder(%i): %s\n\r", success, tempFolder);
+		String_Dispose(&_Service->m_Path);
+		
+		return -3;
+	}
 
 	String_Initialize(&_Service->m_FilesytemPath, 32);
 	
