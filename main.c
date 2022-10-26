@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
 						UInt8 add[4];
 						UInt8 mac[6];
 						add[0] = 12;
-						GetIP(add);//! This is wrong!
+						GetIP(add);
 						GetMAC(mac);
 
 						printf("IP: ");
@@ -190,8 +190,15 @@ int main(int argc, char* argv[])
 					case 's':
 					{
 						Payload* message = NULL;
-						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, 16, &message) == 0)
+						char* path = "root";
+
+						int size = 2 + strlen(path) + 16;
+
+						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, &message) == 0)
 						{
+							Buffer_WriteUInt16(&message->m_Data, strlen(path));
+							Buffer_WriteBuffer(&message->m_Data, path, strlen(path));
+
 							unsigned char hash[16];
 							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
 							Buffer_WriteBuffer(&message->m_Data, hash, 16);
