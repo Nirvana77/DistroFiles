@@ -311,7 +311,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 			{
 				Buffer_WriteUInt16(&folderContext, strlen(file.name));
-				Buffer_WriteBuffer(&folderContext, file.name, strlen(file.name));
+				Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
 
 				if(file.is_dir)
 					Folder_Hash(file.path, hash);
@@ -319,6 +319,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 					File_GetHash(file.path, hash);
 
 				Buffer_WriteBuffer(&folderContext, hash, 16);
+				Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
 				size++;
 			}
 			tinydir_next(&dir);
