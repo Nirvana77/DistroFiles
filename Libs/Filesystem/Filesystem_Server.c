@@ -292,6 +292,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
 			return 1;
 		}
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
+		
+		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
 		
 		tinydir_dir dir;
 		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
@@ -322,7 +326,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		tinydir_close(&dir);
 
-		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
 
