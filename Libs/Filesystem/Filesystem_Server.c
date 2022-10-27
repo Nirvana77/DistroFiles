@@ -562,8 +562,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		String_Append(&fullPath, (const char*)path, size);
 
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
+		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
+
 		int success = -1;
-		
 		if(isFile == True)
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
 		
@@ -595,10 +598,9 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 	{
 		printf("Error with read\n\r");
 		printf("Can't read to path: %s\n\r", _FullPath->m_Ptr);
-		return 0;
+		return -1;
 	}
 	
-	_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)True);
 	_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, (UInt16)File_GetSize(f));
 	_Replay->m_Size += Buffer_ReadFromFile(&_Replay->m_Data, f);
 	File_Close(f);
