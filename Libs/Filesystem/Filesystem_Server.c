@@ -565,7 +565,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		int success = -1;
 		
 		if(isFile == True)
-			Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
+			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
 		
 
 
