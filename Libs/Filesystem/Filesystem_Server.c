@@ -567,7 +567,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(isFile == True)
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
 		
-
+		if(success < 0)
+			printf("Success error: %s\n\r", success);
 
 		String_Dispose(&fullPath);
 		return success;
