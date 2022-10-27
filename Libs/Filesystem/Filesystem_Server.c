@@ -379,9 +379,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			tinydir_readfile(&dir, &file);
 			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 			{
+				Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
 				Buffer_WriteUInt16(&folderContext, strlen(file.name));
 				Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
-				Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
 
 				if(file.is_dir)
 					Folder_Hash(file.path, hash);
