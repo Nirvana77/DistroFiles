@@ -9,6 +9,8 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 
 #define Filesystem_Server_TempFlag_HasList 0
 #define Filesystem_Server_TempFlag_WorkonList 1
+#define Filesystem_Server_TempFlag_WillSend 2
+#define Filesystem_Server_TempFlag_WillClear 3
 
 struct T_Filesystem_Server
 {
