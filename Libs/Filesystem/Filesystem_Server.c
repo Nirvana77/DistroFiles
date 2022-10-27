@@ -8,6 +8,8 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
+int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
+
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*)Allocator_Malloc(sizeof(Filesystem_Server));
@@ -308,7 +310,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 			Buffer_WriteUInt16(&listData, size);
-			Buffer_WriteUInt64(&listData, 8 + 2);
 			
 			int written = Buffer_WriteBuffer(&listData, _Message->m_Data.m_ReadPtr, _Message->m_Data.m_BytesLeft);
 
@@ -561,32 +562,19 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		String_Append(&fullPath, (const char*)path, size);
 
-		FILE* f = NULL;
-
-		File_Open((const char*)fullPath.m_Ptr, File_Mode_ReadBinary, &f);
-
-		if(f == NULL)
-		{
-			printf("Error with read\n\r");
-			printf("Can't read to path: %s\n\r", fullPath.m_Ptr);
-			String_Dispose(&fullPath);
-			return 0;
-		}
-
-		Buffer_ReadFromFile(&_Replay->m_Data, f);
-		File_Close(f);
-
-		unsigned char hash[16] = "";
-		File_GetHash(fullPath.m_Ptr, hash);
-
-		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
-
-		Buffer_ReadUInt8(&_Replay->m_Data, (UInt8*)&isFile);
-		Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+		int success = -1;
+		
+		if(isFile == True)
+			Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
+		
 
 
 		String_Dispose(&fullPath);
-		return 1;
+		return success;
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReadRespons") == 0)
+	{
+		printf("ReadRespons\n\r");
 	}
 	else
 	{
@@ -594,6 +582,33 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 
 	return 0;
+}
+
+int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
+{
+	FILE* f = NULL;
+
+	File_Open((const char*)_FullPath->m_Ptr, File_Mode_ReadBinary, &f);
+
+	if(f == NULL)
+	{
+		printf("Error with read\n\r");
+		printf("Can't read to path: %s\n\r", _FullPath->m_Ptr);
+		return 0;
+	}
+	
+	_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)True);
+	_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, (UInt16)File_GetSize(f));
+	_Replay->m_Size += Buffer_ReadFromFile(&_Replay->m_Data, f);
+	File_Close(f);
+
+	unsigned char hash[16] = "";
+	File_GetHash(_FullPath->m_Ptr, hash);
+	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+
+	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
+
+	return 1;
 }
 
 void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
