@@ -133,10 +133,51 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 	return 0;
 }
 
+int String_Exchange(String* _Str, const char* _Exp, const char* _Value)
+{
+	if(strlen(_Exp) != strlen(_Value))
+	{
+		printf("ERROR not supported\n\r");
+		printf("%s and %s needs to be the same length\n\r", _Exp, _Value);
+		return -1;
+	}
+
+	for (int i = 0; i < _Str->m_Length; i++)
+	{
+		if(_Str->m_Ptr[i] == _Exp[0])
+		{
+			Bool willExchange = True;
+			for (int j = 1; j < strlen(_Exp); j++)
+			{
+				if(_Str->m_Ptr[i + j] != _Exp[j])
+				{
+					willExchange = False;
+					break;
+				}
+			}
+
+			if(willExchange == True)
+			{
+				if(strlen(_Exp) == strlen(_Value))
+				{
+					int j;
+					for (j = 0; j < strlen(_Value); j++)
+						_Str->m_Ptr[i + j] = _Value[j];
+					
+					i += j;
+				}
+			}
+			
+		}
+	}
+	
+	return 0;
+}
+
 int String_ReadFromFile(String* _Str, const char* _Path)
 {
 	FILE* f = NULL;
-	if(File_Open(_Path, "r", &f) != 0)
+	if(File_Open(_Path, File_Mode_Read, &f) != 0)
 		return -1;
 
 	int fileSize = File_GetSize(f);
@@ -160,7 +201,7 @@ int String_ReadFromFile(String* _Str, const char* _Path)
 int String_SaveToFile(String* _Str, const char* _Path)
 {
 	FILE* f = NULL;
-	if(File_Open(_Path, "wb", &f) != 0)
+	if(File_Open(_Path, File_Mode_WriteBinary, &f) != 0)
 		return -1;
 
 	int success = File_WriteAll(f, (unsigned char*)_Str->m_Ptr, _Str->m_Length);

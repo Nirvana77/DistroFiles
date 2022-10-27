@@ -5,6 +5,12 @@ struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
 #include "Filesystem_Service.h"
+#include "../BitHelper.h"
+
+#define Filesystem_Server_TempFlag_HasList 0
+#define Filesystem_Server_TempFlag_WorkonList 1
+#define Filesystem_Server_TempFlag_WillSend 2
+#define Filesystem_Server_TempFlag_WillClear 3
 
 struct T_Filesystem_Server
 {
@@ -19,6 +25,10 @@ struct T_Filesystem_Server
 	LinkedList m_Sockets;
 	LinkedList_Node* m_CurrentNode;
 	Buffer m_Buffer;
+
+	Byte m_TempFlag;
+	Buffer m_TempListBuffer;
+	UInt16 m_TempListSize;
 	
 };
 
@@ -36,6 +46,23 @@ static inline Bool Filesystem_Server_HashCheck(unsigned char _A[16], unsigned ch
 	}
 	
 	return True;
+}
+
+static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value)
+{
+	struct stat attr;
+	char str[64];
+	UInt64 value = 0;
+	stat(_Path, &attr);
+	sprintf(str, "%u", attr.st_mtim);
+
+	for (int i = 0; i < strlen(str); i++)
+	{
+		value += str[i] - 48;
+		value *= 10;
+	}
+	value /= 10;
+	*(_Value) = value;
 }
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);

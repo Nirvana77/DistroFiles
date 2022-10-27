@@ -92,14 +92,16 @@ int TCPServer_Listen(TCPServer* _TCPServer, const char* _IP, UInt16 _Port)
 	int success = bind(_TCPServer->m_Socket, (struct sockaddr*)&_TCPServer->m_ServerAddr, sizeof(_TCPServer->m_ServerAddr));
 	if(success != 0)
 	{
-		TCPServer_Disconnect(_TCPServer);
-
+		printf("Bind Error TCPServer\n\r");
+		printf("Error code: %i\n\r", success);
 		return -2;
 	}
 
 	success = listen(_TCPServer->m_Socket, SOMAXCONN);
 	if(success != 0)
 	{
+		printf("Listen Error TCPServer\n\r");
+		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(_TCPServer);
 
 		return -3;

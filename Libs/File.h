@@ -4,7 +4,38 @@
 #include <stdio.h>
 #include "Hash/md5.h"
 
-int File_Open(const char* _FilePath, const char* _Mode, FILE** _FilePtr);
+typedef enum
+{
+    File_Mode_Read = 0,
+    File_Mode_ReadBinary = 1,
+    File_Mode_Write = 2,
+    File_Mode_WriteBinary = 3,
+    File_Mode_Apend = 4,
+    File_Mode_ApendCreate = 5,
+    File_Mode_ReadWrite = 6,
+    File_Mode_ReadWriteBinary = 7,
+    File_Mode_ReadWriteCreate = 8,
+    File_Mode_ReadWriteCreateBinary = 9,
+    File_Mode_ReadApend = 10,
+    File_Mode_ReadApendBinary = 11
+} File_Mode;
+
+const char* File_Mode_String[] = {
+    "r",
+    "rb",
+    "w",
+    "wb",
+    "a",
+    "ab",
+    "r+",
+    "rb+",
+    "w+",
+    "wb+",
+    "a+",
+    "ab+",
+};
+
+int File_Open(const char* _FilePath, File_Mode _Mode, FILE** _FilePtr);
 void File_SetPosition(FILE* _File, int _Position);
 unsigned int File_GetSize(FILE* _File);
 void File_Close(FILE* _File);
@@ -14,7 +45,7 @@ int File_Hash(FILE* _File, unsigned char _Result[16]);
 int File_GetHash(const char* _Path, unsigned char _Result[16])
 {
     FILE* f = NULL;
-    File_Open(_Path, "rb", &f);
+    File_Open(_Path, File_Mode_ReadBinary, &f);
     if(f == NULL)
         return -1;
 

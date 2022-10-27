@@ -82,13 +82,6 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, &_Payload->m_Data.m_ReadPtr[_Payload->m_Size], _Payload->m_Data.m_BytesLeft - _Payload->m_Size);
 	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, _Payload->m_Data.m_ReadPtr, _Payload->m_Size);
 
-/* 
-	if(Buffer_Copy(&_DataLayer->m_DataBuffer, &_Payload->m_Data, 0) < 0)
-	{
-		printf("Buffer copy error\n\r");
-		return -1;
-	} */
-
 	UInt8 CRC = 0;
 	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _DataLayer->m_DataBuffer.m_BytesLeft, &CRC);
 	
