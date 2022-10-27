@@ -570,6 +570,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
 
+		//TODO: #39 This only works for files
 		int success = -1;
 		if(isFile == True)
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
@@ -605,6 +606,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Append(&fullPath, (const char*)path, size);
 
 		int success = -1;
+		//TODO: #38 This only works for files
 		if(isFile == True)
 			success = Filesystem_Server_WriteFile(_Server, &fullPath, &_Message->m_Data);
 
