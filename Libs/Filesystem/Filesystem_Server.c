@@ -417,6 +417,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		printf("Move/Reanme\n\r");
 	}
+	//TODO: #38 This only works for filesQ
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
 		printf("Write\n\r");
@@ -475,6 +476,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		return 1;
 
 	}
+	//TODO: #38 This only works for filesQ
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "WriteAck") == 0)
 	{
 		printf("WriteAck\n\r");
@@ -541,6 +543,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 
 	}
+	//TODO: #38 This only works for filesQ
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
 		printf("Read\n\r");
@@ -570,7 +573,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
 
-		//TODO: #39 This only works for files
 		int success = -1;
 		if(isFile == True)
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
@@ -581,6 +583,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Dispose(&fullPath);
 		return success;
 	}
+	//TODO: #38 This only works for filesQ
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReadRespons") == 0)
 	{
 		printf("ReadRespons\n\r");
