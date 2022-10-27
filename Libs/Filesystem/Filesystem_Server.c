@@ -563,12 +563,12 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 
-		File_Open((const char*)path, File_Mode_ReadWriteBinary, &f);
+		File_Open((const char*)fullPath.m_Ptr, File_Mode_ReadBinary, &f);
 
 		if(f == NULL)
 		{
-			printf("Error with write\n\r");
-			printf("Can't write to path: %s\n\r", path);
+			printf("Error with read\n\r");
+			printf("Can't read to path: %s\n\r", fullPath.m_Ptr);
 			String_Dispose(&fullPath);
 			return 0;
 		}
