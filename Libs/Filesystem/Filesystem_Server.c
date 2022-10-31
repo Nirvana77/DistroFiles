@@ -571,15 +571,19 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		String_Append(&fullPath, (const char*)path, size);
 
-		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
-		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
-		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
-
 		int success = -1;
 		if(isFile == True)
+		{
+			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
+			_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+			_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
+		}
 		else
+		{
 			success = Filesystem_Server_ReadFolder(_Server, &fullPath, &_Message->m_Data, _Replay);
+
+		}
 		
 		if(success < 0)
 			printf("Success error: %i\n\r", success);
