@@ -48,6 +48,7 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 	return 0;
 }
 
+//TODO: #41 Need to fix message stacking
 void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 {
 	if(_DataLayer->m_NextTimeout < _MSTime)
