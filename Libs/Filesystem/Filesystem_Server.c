@@ -823,25 +823,24 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	String_Append(&filePath, filename, strlen(filename));
 
 	printf("FilePath_ %s\n\r", filePath.m_Ptr);
-	return 0;
 	
-	/*
 	FILE* f = NULL;
 	File_Open(filePath.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 	
 	printf("File path: %s\n\r", filePath.m_Ptr);
 	if(f != NULL)
 	{
+		UInt16 size = 0;
 		Buffer listData;
-		Buffer_Initialize(&listData, False, _Message->m_Data.m_BytesLeft + 8);
-		Buffer_ReadUInt16(&_Message->m_Data, &size);
+		Buffer_Initialize(&listData, False, _DataBuffer->m_BytesLeft + 8);
+		Buffer_ReadUInt16(_DataBuffer, &size);
 
 		Buffer_WriteUInt16(&listData, size);
 		
-		int written = Buffer_WriteBuffer(&listData, _Message->m_Data.m_ReadPtr, _Message->m_Data.m_BytesLeft);
+		int written = Buffer_WriteBuffer(&listData, _DataBuffer->m_ReadPtr, _DataBuffer->m_BytesLeft);
 
-		_Message->m_Data.m_ReadPtr += written;
-		_Message->m_Data.m_BytesLeft -= written;
+		_DataBuffer->m_ReadPtr += written;
+		_DataBuffer->m_BytesLeft -= written;
 
 		File_WriteAll(f, listData.m_ReadPtr, listData.m_BytesLeft);
 
@@ -851,7 +850,6 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
 	}
-	*/
 	
 	return 1;
 }
