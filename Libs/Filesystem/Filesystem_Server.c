@@ -584,12 +584,13 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		String_Append(&fullPath, (const char*)path, size);
 
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
+		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
+
 		int success = -1;
 		if(isFile == True)
 		{
-			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
-			_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
-			_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
 		}
 		else
@@ -714,22 +715,46 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 
 int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
-	UInt16 index = String_IndexOf(_FullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+
+	printf("Fullpath: %s\n\r", _FullPath->m_Ptr);
+
+	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
 	
-	if(_FullPath->m_Ptr[index] == '/')
-		index++;
-	
-	char path[_FullPath->m_Length - index + 1];
-	strcpy(path, &_FullPath->m_Ptr[index]);
+	tinydir_dir dir;
+	if(tinydir_open(&dir, _FullPath->m_Ptr) != 0)
+		return -1;
 
-	_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, strlen(path));
-	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, (unsigned char*)path, strlen(path));
+	UInt16 size = 0;
+	Buffer folderContext;
+	Buffer_Initialize(&folderContext, True, 64);
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
+			Buffer_WriteUInt16(&folderContext, strlen(file.name));
+			Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
 
-	unsigned char hash[16];
-	Folder_Hash(_FullPath->m_Ptr, hash);
-	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
+			char hash[16];
+			if(file.is_dir)
+				Folder_Hash(file.path, hash);
+			else
+				File_GetHash(file.path, hash);
 
-	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "Sync", strlen("Sync"));
+			Buffer_WriteBuffer(&folderContext, hash, 16);
+			size++;
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
+
+	Buffer_Dispose(&folderContext);
 
 	return 1;
 }
