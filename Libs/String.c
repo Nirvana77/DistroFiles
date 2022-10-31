@@ -252,6 +252,22 @@ Bool String_EndsWith(String* _Str, const char* _Exp)
 	return True;
 }
 
+Bool String_StartsWith(String* _Str, const char* _Exp)
+{
+	int length = strlen(_Exp);
+
+	if(_Str->m_Length - length < 0)
+		return False;
+
+	for (int i = 0; i < length && i < _Str->m_Length; i++)
+	{
+		if(_Str->m_Ptr[i] != _Exp[i])
+			return False;
+	}
+	
+	return True;
+}
+
 void String_Dispose(String* _Str)
 {
 	if(_Str->m_Ptr != NULL)
