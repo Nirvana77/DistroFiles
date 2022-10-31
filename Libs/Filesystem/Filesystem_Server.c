@@ -326,8 +326,21 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			File_Close(f);
 			Buffer_Dispose(&listData);
 
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+
+			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
+			{
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+			}
+			else
+			{
+				_Server->m_TempListSize--;
+
+				char hash[16];
+				Buffer_ReadBuffer(&_Server->m_TempListBuffer, hash, 16);
+
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+
+			}
 		}
 		String_Dispose(&filePath);
 	}
@@ -715,7 +728,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 	unsigned char serverHash[16];
 	Folder_Hash(_FullPath->m_Ptr, serverHash);
 
-	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
+	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
 
 	if(Filesystem_Server_HashCheck(hash, serverHash) == True)
 	{
@@ -822,12 +835,12 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	String_Append(&filePath, "temp/List_", strlen("temp/List_"));
 	String_Append(&filePath, filename, strlen(filename));
 
-	printf("FilePath_ %s\n\r", filePath.m_Ptr);
+	printf("FolderPath_ %s\n\r", filePath.m_Ptr);
 	
 	FILE* f = NULL;
 	File_Open(filePath.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 	
-	printf("File path: %s\n\r", filePath.m_Ptr);
+	printf("Folder path: %s\n\r", filePath.m_Ptr);
 	if(f != NULL)
 	{
 		UInt16 size = 0;
@@ -847,8 +860,20 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 		File_Close(f);
 		Buffer_Dispose(&listData);
 
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+		if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
+		{
+			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+		}
+		else
+		{
+			_Server->m_TempListSize--;
+
+			char hash[16];
+			Buffer_ReadBuffer(&_Server->m_TempListBuffer, hash, 16);
+
+			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+
+		}
 	}
 	
 	return 0;
@@ -883,6 +908,12 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			String_Dispose(&fullPath);
 			return;
 		}
+		int written = Buffer_WriteUInt16(&_Server->m_TempListBuffer, fullPath.m_Length);
+		written += Buffer_WriteBuffer(&_Server->m_TempListBuffer, fullPath.m_Ptr, fullPath.m_Length);
+
+		_Server->m_TempListBuffer.m_ReadPtr += written;
+		_Server->m_TempListBuffer.m_BytesLeft -= written;
+
 		String_Dispose(&fullPath);
 		
 		while (dir.has_next)
@@ -954,20 +985,17 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
 		
-		String fullPath;
-		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_Path.m_Ptr);
+		UInt16 length = 0;
 
-		if(String_EndsWith(&fullPath, "/") == False)
-			String_Append(&fullPath, "/", 1);
+		Memory_ParseUInt16(_Server->m_Buffer.m_Ptr, &length);
+		char fullPath[length + 1];
 
-		String_Append(&fullPath, "temp", strlen("temp"));
+		Memory_ParseBuffer(fullPath, _Server->m_Buffer.m_Ptr + 2, length);
 
 		tinydir_dir dir;
-		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		if(tinydir_open(&dir, fullPath) != 0)
 		{
-			printf("Fullpath error: %s\n\r", fullPath.m_Ptr);
-			String_Dispose(&fullPath);
+			printf("Fullpath error: %s\n\r", fullPath);
 			return;
 		}
 		
@@ -995,7 +1023,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		}
 
 		tinydir_close(&dir);
-		String_Dispose(&fullPath);
 	}
 	
 }
