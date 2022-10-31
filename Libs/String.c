@@ -268,6 +268,25 @@ Bool String_StartsWith(String* _Str, const char* _Exp)
 	return True;
 }
 
+int String_IndexOf(String* _Str, const char* _Exp)
+{
+	for (int i = 0; i < _Str->m_Length; i++)
+	{
+		if((char)_Str->m_Ptr[i] == _Exp[0])
+		{
+			for (int j = 1; j < strlen(_Exp); j++)
+			{
+				if((char)_Str->m_Ptr[i + j] != _Exp[j])
+					return -1;
+			}
+			return i + strlen(_Exp);
+		}
+	}
+	
+
+	return -1;
+}
+
 void String_Dispose(String* _Str)
 {
 	if(_Str->m_Ptr != NULL)

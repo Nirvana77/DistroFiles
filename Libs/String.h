@@ -37,6 +37,8 @@ Bool String_StartsWith(String* _Str, const char* _Exp);
 int String_ReadFromFile(String* _Str, const char* _Path);
 int String_SaveToFile(String* _Str, const char* _Path);
 
+int String_IndexOf(String* _Str, const char* _Exp);
+
 void String_Dispose(String* _Str);
 
 
