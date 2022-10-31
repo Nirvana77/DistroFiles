@@ -851,7 +851,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
 	}
 	
-	return 1;
+	return 0;
 }
 
 void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
