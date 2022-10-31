@@ -417,7 +417,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		printf("Move/Reanme\n\r");
 	}
-	//TODO: #38 This only works for filesQ
+	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
 		printf("Write\n\r");
@@ -476,7 +476,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		return 1;
 
 	}
-	//TODO: #38 This only works for filesQ
+	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "WriteAck") == 0)
 	{
 		printf("WriteAck\n\r");
@@ -543,7 +543,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 
 	}
-	//TODO: #38 This only works for filesQ
+	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
 		printf("Read\n\r");
@@ -583,7 +583,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Dispose(&fullPath);
 		return success;
 	}
-	//TODO: #38 This only works for filesQ
+	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReadRespons") == 0)
 	{
 		printf("ReadRespons\n\r");
@@ -619,11 +619,38 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 		else if(success == 0)
 		{
-			_Server->m_TempListSize--;
-			_Server->m_TempListBuffer.m_ReadPtr += 16;
-			_Server->m_TempListBuffer.m_BytesLeft -= 16;
+			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == True)
+			{
+				_Server->m_TempListSize--;
+				
+				unsigned char responsHash[16];
+				unsigned char fileHash[16];
 
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+				File_GetHash(fullPath.m_Ptr, responsHash);
+
+				Buffer_ReadBuffer(&_Server->m_TempListBuffer, fileHash, 16);
+
+				if(Filesystem_Server_HashCheck(responsHash, fileHash) == False)
+				{
+					printf("Wrong hash for list and respons\n\r");
+					printf("File: %s\n\r", fullPath.m_Ptr);
+					printf("responsHash: \r\n");
+					for (int i = 0; i < 16; i++)
+						printf("%x ", responsHash[i]);
+					printf("\n\r");
+					
+					printf("fileHash: \r\n");
+					for (int i = 0; i < 16; i++)
+						printf("%x ", fileHash[i]);
+					printf("\n\r");
+					
+				}
+				else
+				{
+					BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+				}
+
+			}
 		}
 
 		String_Dispose(&fullPath);
@@ -705,7 +732,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
 	   BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == False)
 	{
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
 		Buffer_Clear(&_Server->m_TempListBuffer);
 
 		
@@ -726,6 +752,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			String_Dispose(&fullPath);
 			return;
 		}
+		String_Dispose(&fullPath);
 		
 		while (dir.has_next)
 		{
@@ -739,6 +766,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				File_Open(file.path, File_Mode_ReadBinary, &f);
 
 				Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
 
 				File_Close(f);
 				break;
@@ -747,7 +775,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		}
 
 		tinydir_close(&dir);
-		String_Dispose(&fullPath);
 
 		Buffer_ReadUInt16(&_Server->m_TempListBuffer, &_Server->m_TempListSize);
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
