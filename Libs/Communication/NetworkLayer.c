@@ -151,12 +151,11 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	if(_Payload->m_Src.m_Type == Payload_Address_Type_NONE)
 		_Payload->m_Src.m_Type = Payload_Address_Type_MAC;
 	
-	UInt8 address[6];
 	if(_Payload->m_Src.m_Type == Payload_Address_Type_IP)
-		GetIP(&_Payload->m_Src.m_Address);
+		GetIP((UInt8*)&_Payload->m_Src.m_Address);
 	
 	else if(_Payload->m_Src.m_Type == Payload_Address_Type_MAC)
-		GetMAC(&_Payload->m_Src.m_Address);
+		GetMAC((UInt8*)&_Payload->m_Src.m_Address);
 	
 	success = Payload_WriteCommunicator(&_Payload->m_Src, &_Payload->m_Data);
 	if(success < 0)

@@ -274,7 +274,7 @@ int main(int argc, char* argv[])
 
 						message.m_State = Payload_State_Sending;
 						message.m_Size = strlen(str);
-						Buffer_WriteBuffer(&message.m_Data, str, strlen(str));
+						Buffer_WriteBuffer(&message.m_Data, (unsigned char*)str, strlen(str));
 
 						void* ptr = &message;
 						int length = sizeof(message);
