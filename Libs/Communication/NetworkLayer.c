@@ -115,6 +115,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 				return -1;
 
 			}
+			Payload_Copy(_Replay, &replay);
 			Payload_Dispose(&replay);
 			return 1;
 		}
@@ -131,6 +132,13 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	Buffer_Copy(&temp, &_Payload->m_Data, _Payload->m_Size);
 
 	Buffer_Clear(&_Payload->m_Data);
+
+	Byte flags = 0;
+	BitHelper_SetBit(&flags, 0, _Payload->m_Src.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 1, _Payload->m_Des.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 2, _Payload->m_Message.m_Type == Payload_Message_Type_None ? False : True);
+
+	Buffer_WriteUInt8(&_Payload->m_Data, flags);
 
 	int success = Buffer_WriteUInt8(&_Payload->m_Data, _Payload->m_Type);
 	if(success < 0)
@@ -174,7 +182,6 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	return 0;
 }
 
-//TODO #29 make the method a bit at the start
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src)
 {
 

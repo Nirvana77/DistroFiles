@@ -6,6 +6,7 @@ typedef struct T_NetworkLayer NetworkLayer;
 
 #include "Payload.h"
 #include "../Buffer.h"
+#include "../BitHelper.h"
 
 struct T_NetworkLayer
 {

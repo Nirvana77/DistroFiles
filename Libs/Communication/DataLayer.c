@@ -83,7 +83,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	
 	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
 	
-	Payload_Print(_Payload, "Datalayer");
+	Payload_Print(_Payload, "Datalayer", True);
 
 	printf("Data(W): %i\r\n", _DataLayer->m_DataBuffer.m_BytesLeft);
 	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
