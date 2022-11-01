@@ -41,24 +41,9 @@ int Payload_Initialize(Payload* _Payload)
 
 int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
 {
+
 	Buffer_WriteUInt8(_Buffer, _Communicator->m_Type);
-	switch (_Communicator->m_Type)
-	{
-		case Payload_Address_Type_IP:
-		{
-			return Buffer_WriteBuffer(_Buffer, _Communicator->m_Address.IP, 4);
-		} break;
-		case Payload_Address_Type_MAC:
-		{
-			return Buffer_WriteBuffer(_Buffer, _Communicator->m_Address.MAC, 6);
-		} break;
-		case Payload_Address_Type_NONE:
-		{
-
-		} break;
-	}
-
-	return 0;
+	return Buffer_WriteBuffer(_Buffer, &_Communicator->m_Address, sizeof(_Communicator->m_Address)) + 1;
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)

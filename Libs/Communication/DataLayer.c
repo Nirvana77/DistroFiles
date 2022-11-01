@@ -48,7 +48,6 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 	return 0;
 }
 
-//TODO: #41 Need to fix message stacking
 void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 {
 	if(_DataLayer->m_NextTimeout < _MSTime)
@@ -78,10 +77,6 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer_Clear(&_DataLayer->m_DataBuffer);
-
-
-	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, &_Payload->m_Data.m_ReadPtr[_Payload->m_Size], _Payload->m_Data.m_BytesLeft - _Payload->m_Size);
-	Buffer_WriteBuffer(&_DataLayer->m_DataBuffer, _Payload->m_Data.m_ReadPtr, _Payload->m_Size);
 
 	UInt8 CRC = 0;
 	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _DataLayer->m_DataBuffer.m_BytesLeft, &CRC);

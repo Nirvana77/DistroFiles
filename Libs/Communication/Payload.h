@@ -9,6 +9,8 @@ typedef struct T_Payload Payload;
 	#define Payload_BufferSize 256
 #endif
 
+#include "../Buffer.h"
+
 #ifdef __linux__
 
 
