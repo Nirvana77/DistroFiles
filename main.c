@@ -304,7 +304,7 @@ int main(int argc, char* argv[])
 						NetworkLayer_PayloadBuilder(NULL, &networkMessage);
 						
 						printf("NetworkLayerPayload size: %u\r\n", networkMessage.m_Data.m_BytesLeft);
-						Payload_Print(&networkMessage, "NetworkLayerPayload");
+						Payload_Print(&networkMessage, "NetworkLayerPayload", True);
 
 						Payload_Dispose(&networkMessage);
 						Payload_Dispose(&message);

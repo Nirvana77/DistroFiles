@@ -140,7 +140,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
 void Payload_Copy(Payload* _Des, Payload* _Src);
 
-static inline void Payload_Print(Payload* _Payload, const char* _Str)
+static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasFlags)
 {
 	printf("Payload(%s): %lu\n\r", _Str, _Payload->m_Time);
 	printf("State: %i\n\r", _Payload->m_State);
@@ -164,7 +164,19 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 	}
 
 	printf("Data:\r\n");
-	for (int i = 0; i < _Payload->m_Data.m_BytesLeft; i++)
+	int i = 0;
+
+	if(_HasFlags == True)
+	{
+		printf("0b");
+		for (i = 8; i >= 0; i--)
+			printf("%i", BitHelper_GetBit(&_Payload->m_Data.m_ReadPtr[0], i));
+		
+		i = 1;
+		printf(" ");
+	}
+
+	for (; i < _Payload->m_Data.m_BytesLeft; i++)
 		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
 	printf("\n\r");
 	
