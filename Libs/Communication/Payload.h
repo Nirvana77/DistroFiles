@@ -9,6 +9,8 @@ typedef struct T_Payload Payload;
 	#define Payload_BufferSize 256
 #endif
 
+#include "../Buffer.h"
+
 #ifdef __linux__
 
 
@@ -138,7 +140,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
 void Payload_Copy(Payload* _Des, Payload* _Src);
 
-static inline void Payload_Print(Payload* _Payload, const char* _Str)
+static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasFlags)
 {
 	printf("Payload(%s): %lu\n\r", _Str, _Payload->m_Time);
 	printf("State: %i\n\r", _Payload->m_State);
@@ -155,14 +157,26 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 	else
 		printf("DES: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Des.m_Address.MAC[0], _Payload->m_Des.m_Address.MAC[1], _Payload->m_Des.m_Address.MAC[2], _Payload->m_Des.m_Address.MAC[3], _Payload->m_Des.m_Address.MAC[4], _Payload->m_Des.m_Address.MAC[5]);
 
-	if(_Payload->m_Message.m_Type == Payload_Message_Type_None)
+	if(_Payload->m_Message.m_Type != Payload_Message_Type_None)
 	{
 		if(_Payload->m_Message.m_Type == Payload_Message_Type_String)
 			printf("Method(%u): %s\n\r", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
 	}
 
-	printf("Data:\r\n");
-	for (int i = 0; i < _Payload->m_Data.m_BytesLeft; i++)
+	printf("Data: %ib\r\n", _Payload->m_Data.m_BytesLeft);
+	int i = 0;
+
+	if(_HasFlags == True)
+	{
+		printf("0b");
+		for (i = 8; i >= 0; i--)
+			printf("%i", BitHelper_GetBit(&_Payload->m_Data.m_ReadPtr[0], i));
+		
+		i = 1;
+		printf(" ");
+	}
+
+	for (; i < _Payload->m_Data.m_BytesLeft; i++)
 		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
 	printf("\n\r");
 	

@@ -126,18 +126,18 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
-		Payload replay;
-		Payload_Initialize(&replay);
-		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
+		Payload* replay;
+		Payload_InitializePtr(&replay);
+		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay) == 1)
 		{
 			printf("TransportLayer_ReveicePayload_Replay\n\r");
-			SystemMonotonicMS(&replay.m_Time);
+			
+			Payload_FilCommunicator(&replay->m_Des, &_Message->m_Src);
+			LinkedList_Push(&_TransportLayer->m_Queued, replay);
 
-			Payload_Copy(_Replay, &replay);
-			Payload_Dispose(&replay);
-			return 1;
+			return 0;
 		}
-		Payload_Dispose(&replay);
+		Payload_Dispose(replay);
 	}
 
 	return 0;

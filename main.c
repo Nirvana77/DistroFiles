@@ -247,6 +247,68 @@ int main(int argc, char* argv[])
 							String_Dispose(&fullPath);
 						}
 					} break;
+
+					case 'd':
+					{
+						Payload message;
+
+						Payload_Initialize(&message);
+
+						SystemMonotonicMS(&message.m_Time);
+						
+						Payload_SetMessageType(&message, Payload_Message_Type_String, "Test", strlen("Test"));
+
+						message.m_Src.m_Type = Payload_Address_Type_IP;
+						GetIP(message.m_Src.m_Address.IP);
+
+						message.m_Des.m_Type = Payload_Address_Type_MAC;
+						message.m_Des.m_Address.MAC[0] = 0xe3;
+						message.m_Des.m_Address.MAC[1] = 0x3;
+						message.m_Des.m_Address.MAC[2] = 0xf5;
+						message.m_Des.m_Address.MAC[3] = 0xf0;
+						message.m_Des.m_Address.MAC[4] = 0x23;
+						message.m_Des.m_Address.MAC[5] = 0x2;
+
+						message.m_Type = Payload_Type_ACK;
+						const char* str = "Hellow, world";
+
+						message.m_State = Payload_State_Sending;
+						message.m_Size = strlen(str);
+						Buffer_WriteBuffer(&message.m_Data, (unsigned char*)str, strlen(str));
+
+						void* ptr = &message;
+						int length = sizeof(message);
+						unsigned char data[sizeof(message)];
+						memcpy(data, ptr, length);
+
+						printf("Payload(%u): \r\n", length);
+						for (int i = 0; i < length; i++)
+							printf("%x ", data[i]);
+						printf("\r\n");
+						
+						length = sizeof(Payload_Address);
+						memcpy(data, &message.m_Des, length);
+						printf("Payload_Address(%u): \r\n", length);
+						for (int i = 0; i < length; i++)
+							printf("%x ", data[i]);
+						printf("\r\n");
+						memcpy(data, &message.m_Src, length);
+						printf("Payload_Address(%u): \r\n", length);
+						for (int i = 0; i < length; i++)
+							printf("%x ", data[i]);
+						printf("\r\n");
+						
+						Payload networkMessage;
+						Payload_Initialize(&networkMessage);
+						Payload_Copy(&networkMessage, &message);
+						NetworkLayer_PayloadBuilder(NULL, &networkMessage);
+						
+						printf("NetworkLayerPayload size: %u\r\n", networkMessage.m_Data.m_BytesLeft);
+						Payload_Print(&networkMessage, "NetworkLayerPayload", True);
+
+						Payload_Dispose(&networkMessage);
+						Payload_Dispose(&message);
+					} break;
 				
 					default:
 					{
