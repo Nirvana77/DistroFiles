@@ -87,7 +87,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	
 	Payload_Print(_Payload, "Datalayer", True);
 
-	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_Payload->m_DataBuffer, _Payload->m_DataBuffer.m_BytesLeft);
+	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_Payload->m_Data, _Payload->m_Data.m_BytesLeft);
 	if(success < 0)
 	{
 		printf("DataLayer_SendMessage: OnWrite Error\n\r");
