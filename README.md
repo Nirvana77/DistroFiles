@@ -10,7 +10,7 @@ Easy to use, user based file shearing system. [Doc](https://www.overleaf.com/rea
 # Installation
 ```
 $ sudo apt-get update && sudo apt-get upgrade -y
-$ sudo apt-get install -y libjansson-dev gcc libcurl4-gnutls-dev git
+$ sudo apt-get install -y libjansson-dev gcc libcurl4-gnutls-dev git uuid-dev
 $ git clone https://github.com/Nirvana77/Filesystem.git
 $ cd Filesystem
 $ ./compile
