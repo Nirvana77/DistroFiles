@@ -60,6 +60,9 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
 
 	printf("NetworkLayer_ReveicePayload\n\r");
+
+	Byte flags = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&flags);
 	
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
 
@@ -107,16 +110,13 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 			printf("NetworkLayer_ReveicePayload_Replay\n\r");
 
 			Payload_FilCommunicator(&replay.m_Des, &_Message->m_Src);
+			Payload_Copy(_Replay, &replay);
 
-			int success = NetworkLayer_PayloadLinker(_NetworkLayer, _Replay, &replay);
+			int success = NetworkLayer_PayloadBuilder(_NetworkLayer, _Replay);
+			Payload_Dispose(&replay);
 			if(success != 0)
-			{
-				Payload_Dispose(&replay);
 				return -1;
 
-			}
-			Payload_Copy(_Replay, &replay);
-			Payload_Dispose(&replay);
 			return 1;
 		}
 		Payload_Dispose(&replay);
@@ -183,6 +183,13 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 
 int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payload* _Src)
 {
+
+	Byte flags = 0;
+	BitHelper_SetBit(&flags, 0, _Src->m_Src.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 1, _Src->m_Des.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 2, _Src->m_Message.m_Type == Payload_Message_Type_None ? False : True);
+	
+	Buffer_WriteUInt8(&_Dst->m_Data, flags);
 
 	int success = Buffer_WriteUInt8(&_Dst->m_Data, _Src->m_Type);
 	if(success < 0)
