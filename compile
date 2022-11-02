@@ -1,0 +1,54 @@
+#!/bin/bash
+
+clear
+
+FILENAME="main"
+
+DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
+LFLAGS="-ljansson -lcurl -luuid"
+
+echo "Cleaning up..."
+rm *.o
+
+if [ "$1" == "debug" ] || [ "$1" == "d" ]; then
+
+    echo "Compiling in debugmode"
+
+	gcc -g -c -D COMPILEDEBUG $FILENAME.c $LFLAGS $DFLAGS || exit
+
+else  
+
+	if [ "$1" == "gdb" ]; then
+		echo "Compiling for gdb"
+
+		gcc -g -D COMPILEDEBUG -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
+
+	else
+	    echo "Compiling"
+
+		gcc -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
+	fi
+fi
+
+if [ ! -f bin ]; then
+	mkdir bin
+fi
+
+echo "Removing old application..."
+rm bin/$FILENAME
+echo "Linking..."
+
+gcc -Wall -o bin/$FILENAME $FILENAME.o $LFLAGS || exit
+
+echo "Setting chmod..."
+chmod +x bin/$FILENAME
+
+echo "Cleaning up..."
+rm *.o
+
+echo "All done!"
+echo "File: bin/\"$FILENAME\" is created"
+
+if [ "$1" == "r" ] || [ "$1" == "R" ] || [ "$2" == "r" ] || [ "$2" == "R" ]; then
+	./bin/$FILENAME
+fi
