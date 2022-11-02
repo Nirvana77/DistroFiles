@@ -87,12 +87,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	
 	Payload_Print(_Payload, "Datalayer", True);
 
-	printf("Data(W): %i\r\n", _DataLayer->m_DataBuffer.m_BytesLeft);
-	for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
-		printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
-	printf("\n\r");
-
-	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, _DataLayer->m_DataBuffer.m_BytesLeft);
+	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_Payload->m_DataBuffer, _Payload->m_DataBuffer.m_BytesLeft);
 	if(success < 0)
 	{
 		printf("DataLayer_SendMessage: OnWrite Error\n\r");
