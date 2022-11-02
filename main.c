@@ -51,52 +51,59 @@ int main(int argc, char* argv[])
 	#ifdef ALLOCATOR_DEBUG
 		Allocator_Open("AllocatorDebug.txt");
 	#endif
-/* 
+	char* path = "Shared";
 	if(argc > 1)
 	{
-		if(memcmp(argv[1], "daemon", 6) == 0)
+		path = argv[1];
+		if(argc > 2)
 		{
+			/*
+			if(memcmp(argv[2], "daemon", 6) == 0)
+			{
 
 
-			printf("Starting daemon...\r\n");
-			pid_t pid, sid;
-        
-			pid = fork();
-			if (pid < 0) {
-				printf("Failed to fork!\r\n");
-				exit(EXIT_FAILURE);
-			}
-
-			if (pid > 0) {
-				printf("Stopping parent.\r\n");
-				exit(EXIT_SUCCESS);
-			}
-
-			umask(0);
-			sid = setsid();
-			if (sid < 0) {
-				printf("Failed to create SID for child process!\r\n");
-				exit(EXIT_FAILURE);
-			}
-        	
-        
-			signal(SIGUSR1, SIG_IGN);
-			signal(SIGALRM, SIG_IGN);
-
-			signal(SIGCHLD, SIG_IGN);   // A child process dies 
-			signal(SIGTSTP, SIG_IGN);   // Various TTY signals
-			signal(SIGTTOU, SIG_IGN);
-			signal(SIGTTIN, SIG_IGN);
-			signal(SIGHUP, SIG_IGN);    // Ignore hangup signal
-			signal(SIGTERM, SIG_DFL);   // Die on SIGTERM
+				printf("Starting daemon...\r\n");
+				pid_t pid, sid;
 			
+				pid = fork();
+				if (pid < 0) {
+					printf("Failed to fork!\r\n");
+					exit(EXIT_FAILURE);
+				}
 
-			freopen("/dev/null", "a", stdout);
-            freopen("/dev/null", "a", stderr);
-            freopen("Filesystem.inp", "r", stdin);
+				if (pid > 0) {
+					printf("Stopping parent.\r\n");
+					exit(EXIT_SUCCESS);
+				}
+
+				umask(0);
+				sid = setsid();
+				if (sid < 0) {
+					printf("Failed to create SID for child process!\r\n");
+					exit(EXIT_FAILURE);
+				}
+				
+			
+				signal(SIGUSR1, SIG_IGN);
+				signal(SIGALRM, SIG_IGN);
+
+				signal(SIGCHLD, SIG_IGN);   // A child process dies 
+				signal(SIGTSTP, SIG_IGN);   // Various TTY signals
+				signal(SIGTTOU, SIG_IGN);
+				signal(SIGTTIN, SIG_IGN);
+				signal(SIGHUP, SIG_IGN);    // Ignore hangup signal
+				signal(SIGTERM, SIG_DFL);   // Die on SIGTERM
+				
+
+				freopen("/dev/null", "a", stdout);
+				freopen("/dev/null", "a", stderr);
+				freopen("Filesystem.inp", "r", stdin);
+
+			}*/
 
 		}
-	} */
+		
+	}
 
 	int doExit = 1;
 	StateMachine_Initialize(&g_StateMachine);
@@ -105,14 +112,13 @@ int main(int argc, char* argv[])
 	//Folder_Remove("Shared/temp");
 	
 	Filesystem_Service* service = NULL;
-	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
+	int success = Filesystem_Service_InitializePtr(&g_StateMachine, path, &service);
 	
 	printf("Success: %i\r\n", success);
 	if(success == 0)
 	{
 		printf("Port: %u\n\r", (unsigned int)ntohs(service->m_Server->m_TCPServer.m_ServerAddr.sin_port));
 	}
-
 
 	struct timespec tim, tim2;
 	tim.tv_sec = 0;

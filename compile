@@ -49,6 +49,11 @@ rm *.o
 echo "All done!"
 echo "File: bin/\"$FILENAME\" is created"
 
-if [ "$1" == "r" ] || [ "$1" == "R" ] || [ "$2" == "r" ] || [ "$2" == "R" ]; then
-	./bin/$FILENAME
+if [ "$1" == "r" ] || [ "$1" == "R" ]; then
+	./bin/$FILENAME $2 $3
+fi
+
+if [ "$2" == "r" ] || [ "$2" == "R" ]; then
+	./bin/$FILENAME $3 $4
+
 fi

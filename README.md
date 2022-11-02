@@ -29,7 +29,7 @@ When useing the service the host `port` needs to be oppen from the firewall. [Li
 - `Path`: Is the path for the filesystem.
 
 ```
-& ./bin/main <Mode> <Path>
+& ./bin/main <Path> <Mode>
 ```
 
 # Contribute
