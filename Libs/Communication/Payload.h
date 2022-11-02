@@ -145,6 +145,10 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 	printf("Payload(%s): %lu\n\r", _Str, _Payload->m_Time);
 	printf("State: %i\n\r", _Payload->m_State);
 	printf("Type: %i\n\r", _Payload->m_Type);
+	
+	char str[37];
+	uuid_ToString(_Payload->m_UUID, str);
+	printf("UUID: %s\n\r", str);
 
 	if(_Payload->m_Src.m_Type == Payload_Address_Type_IP)
 		printf("SRC: %i.%i.%i.%i\n\r", _Payload->m_Src.m_Address.IP[0], _Payload->m_Src.m_Address.IP[1], _Payload->m_Src.m_Address.IP[2], _Payload->m_Src.m_Address.IP[3]);
