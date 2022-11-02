@@ -30,6 +30,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	_Service->m_Allocated = False;
 	_Service->m_Json = NULL;
 	_Service->m_Task = NULL;
+	_Service->m_Server = NULL;
+	_Service->m_Client = NULL;
 	_Service->m_Worker = _Worker;
 
 	int success = String_Initialize(&_Service->m_Path, 32);
