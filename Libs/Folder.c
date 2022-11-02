@@ -87,3 +87,32 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 	MD5_Final(_Result, &md5);
 	return 0;
 }
+
+int Folder_Remove(const char* _Path)
+{
+	tinydir_dir dir;
+	if(tinydir_open(&dir, _Path) != 0)
+		return -1;
+
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			if(file.is_dir)
+				Folder_Remove(file.path);
+			else
+				File_Remove(file.path);
+			
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	if(remove(_Path) == 0)
+		return 0;
+
+	return -2;
+}

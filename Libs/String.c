@@ -75,7 +75,7 @@ int String_Set(String* _Str, const char* _String)
 
 int String_Append(String* _Str, const char* _String, int _Length)
 {
-	while(_Str->m_Length + _Length > _Str->m_Size)
+	while(_Str->m_Length + _Length + 1 > _Str->m_Size)
 	{
 		if(String_ExtendBuffer(_Str) != 0)
 			return -2;
@@ -135,19 +135,14 @@ int String_Sprintf(String* _Str, const char* _String, ...)
 
 int String_Exchange(String* _Str, const char* _Exp, const char* _Value)
 {
-	if(strlen(_Exp) != strlen(_Value))
-	{
-		printf("ERROR not supported\n\r");
-		printf("%s and %s needs to be the same length\n\r", _Exp, _Value);
-		return -1;
-	}
 
 	for (int i = 0; i < _Str->m_Length; i++)
 	{
 		if(_Str->m_Ptr[i] == _Exp[0])
 		{
 			Bool willExchange = True;
-			for (int j = 1; j < strlen(_Exp); j++)
+			int j = 1;
+			for (; j < strlen(_Exp); j++)
 			{
 				if(_Str->m_Ptr[i + j] != _Exp[j])
 				{
@@ -160,11 +155,35 @@ int String_Exchange(String* _Str, const char* _Exp, const char* _Value)
 			{
 				if(strlen(_Exp) == strlen(_Value))
 				{
-					int j;
-					for (j = 0; j < strlen(_Value); j++)
-						_Str->m_Ptr[i + j] = _Value[j];
+					
+					for (int k = 0; k < strlen(_Value); k++)
+						_Str->m_Ptr[i + k] = _Value[k];
 					
 					i += j;
+				}
+				else if(strlen(_Value) == 0)
+				{
+					int k = i;
+					for (; k + j < _Str->m_Length; k++)
+					{
+						_Str->m_Ptr[k] = _Str->m_Ptr[k + j];
+						if((char)_Str->m_Ptr[k] == 0)
+							break;
+						
+					}
+					memset(&_Str->m_Ptr[k], 0, _Str->m_Length - k);
+					_Str->m_Length -= strlen(_Exp);
+				}
+				else
+				{
+					for (j = 0; j < strlen(_Value); j++)
+					{
+						printf("ERROR not supported\n\r");
+						printf("%s and %s needs to be the same length\n\r", _Exp, _Value);
+						printf("or %s needs 0 in length\n\r", _Value);
+						return -1;
+					}
+					
 				}
 			}
 			
@@ -231,6 +250,41 @@ Bool String_EndsWith(String* _Str, const char* _Exp)
 	}
 	
 	return True;
+}
+
+Bool String_StartsWith(String* _Str, const char* _Exp)
+{
+	int length = strlen(_Exp);
+
+	if(_Str->m_Length - length < 0)
+		return False;
+
+	for (int i = 0; i < length && i < _Str->m_Length; i++)
+	{
+		if(_Str->m_Ptr[i] != _Exp[i])
+			return False;
+	}
+	
+	return True;
+}
+
+int String_IndexOf(String* _Str, const char* _Exp)
+{
+	for (int i = 0; i < _Str->m_Length; i++)
+	{
+		if((char)_Str->m_Ptr[i] == _Exp[0])
+		{
+			for (int j = 1; j < strlen(_Exp); j++)
+			{
+				if((char)_Str->m_Ptr[i + j] != _Exp[j])
+					return -1;
+			}
+			return i + strlen(_Exp);
+		}
+	}
+	
+
+	return -1;
 }
 
 void String_Dispose(String* _Str)

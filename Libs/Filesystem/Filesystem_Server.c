@@ -9,7 +9,9 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
+int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
+int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -324,8 +326,21 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			File_Close(f);
 			Buffer_Dispose(&listData);
 
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+
+			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
+			{
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+			}
+			else
+			{
+				_Server->m_TempListSize--;
+
+				unsigned char hash[16];
+				Buffer_ReadBuffer(&_Server->m_TempListBuffer, hash, 16);
+
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+
+			}
 		}
 		String_Dispose(&filePath);
 	}
@@ -575,7 +590,14 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		int success = -1;
 		if(isFile == True)
+		{
 			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
+		}
+		else
+		{
+			success = Filesystem_Server_ReadFolder(_Server, &fullPath, &_Message->m_Data, _Replay);
+
+		}
 		
 		if(success < 0)
 			printf("Success error: %i\n\r", success);
@@ -609,9 +631,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Append(&fullPath, (const char*)path, size);
 
 		int success = -1;
-		//TODO: #38 This only works for files
 		if(isFile == True)
 			success = Filesystem_Server_WriteFile(_Server, &fullPath, &_Message->m_Data);
+		else
+			success = Filesystem_Server_WriteFolder(_Server, &fullPath, &_Message->m_Data);
 
 		if(success < 0)
 		{
@@ -630,7 +653,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 				Buffer_ReadBuffer(&_Server->m_TempListBuffer, fileHash, 16);
 
-				if(Filesystem_Server_HashCheck(responsHash, fileHash) == False)
+				if(Filesystem_Server_HashCheck(responsHash, fileHash) == False && isFile == True)
 				{
 					printf("Wrong hash for list and respons\n\r");
 					printf("File: %s\n\r", fullPath.m_Ptr);
@@ -690,6 +713,52 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 	return 1;
 }
 
+int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
+{
+
+	printf("Fullpath: %s\n\r", _FullPath->m_Ptr);
+
+	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
+	
+	tinydir_dir dir;
+	if(tinydir_open(&dir, _FullPath->m_Ptr) != 0)
+		return -1;
+
+	UInt16 size = 0;
+	Buffer folderContext;
+	Buffer_Initialize(&folderContext, True, 64);
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
+			Buffer_WriteUInt16(&folderContext, strlen(file.name));
+			Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
+
+			unsigned char hash[16];
+			if(file.is_dir)
+				Folder_Hash(file.path, hash);
+			else
+				File_GetHash(file.path, hash);
+
+			Buffer_WriteBuffer(&folderContext, hash, 16);
+			size++;
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
+
+	Buffer_Dispose(&folderContext);
+
+	return 1;
+}
+
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
@@ -723,6 +792,54 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 	return 0;
 }
 
+int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
+{
+	printf("Filesystem_Server_WriteFolder: %s\n\r", _FullPath->m_Ptr);
+
+	String str;
+	String_Initialize(&str, 32);
+
+	Folder_Create(_FullPath->m_Ptr);
+
+	String_Set(&str, _FullPath->m_Ptr);
+	String_Exchange(&str, _Server->m_Service->m_FilesytemPath.m_Ptr, "");
+	String_Exchange(&str, "/", "_");
+
+	char path[str.m_Length];
+	sprintf(path, "%s", str.m_Ptr);
+
+	String_Set(&str, _Server->m_Service->m_Path.m_Ptr);
+
+	if(String_EndsWith(&str, "/") == False)
+		String_Append(&str, "/", 1);
+	
+	String_Append(&str, "temp/list", strlen("temp/list"));
+
+	if(strcmp(path, "root") != 0)
+		String_Append(&str, "_root", strlen("_root"));
+
+	String_Append(&str, path, strlen(path));
+	String_Append(&str, ".data", strlen(".data"));
+
+	FILE* f = NULL;
+	File_Open(str.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
+	if(f == NULL)
+	{
+		printf("Fullpath error(Filesystem_Server_WriteFolder): %s\n\r", str.m_Ptr);
+		String_Dispose(&str);
+	}
+
+	int written = File_WriteAll(f, _DataBuffer->m_ReadPtr, _DataBuffer->m_BytesLeft);
+
+	_DataBuffer->m_ReadPtr += written;
+	_DataBuffer->m_BytesLeft -= written;
+
+	File_Close(f);
+
+	String_Dispose(&str);
+	return 0;
+}
+
 void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 {
 	TCPServer_Work(&_Server->m_TCPServer);
@@ -748,10 +865,11 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		tinydir_dir dir;
 		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
 		{
-			printf("Fullpath error: %s\n\r", fullPath.m_Ptr);
+			printf("Fullpath error(HasList): %s\n\r", fullPath.m_Ptr);
 			String_Dispose(&fullPath);
 			return;
 		}
+
 		String_Dispose(&fullPath);
 		
 		while (dir.has_next)
@@ -764,6 +882,17 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 				FILE* f = NULL;
 				File_Open(file.path, File_Mode_ReadBinary, &f);
+				
+				int written = Buffer_WriteUInt16(&_Server->m_TempListBuffer, strlen(file.path));
+				written += Buffer_WriteBuffer(&_Server->m_TempListBuffer, (unsigned char*)file.path, strlen(file.path));
+
+				_Server->m_TempListBuffer.m_ReadPtr += written;
+				_Server->m_TempListBuffer.m_BytesLeft -= written;
+
+				printf("Buffer: \n\r");
+				for (int i = 0; i < written; i++)
+					printf("%x ", _Server->m_TempListBuffer.m_Ptr[i]);
+				printf("\n\r");
 
 				Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
 				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
@@ -789,7 +918,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			return;
 		}
 		
-		printf("Buffer: \r\n");
+		printf("TempBuffer: \r\n");
 		for (int i = 0; i < _Server->m_TempListBuffer.m_BytesLeft; i++)
 			printf("%x ", _Server->m_TempListBuffer.m_ReadPtr[i]);
 		
@@ -804,18 +933,49 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		char path[size + 1];
 		Buffer_ReadBuffer(&_Server->m_TempListBuffer, (unsigned char*)path, size);
 		path[size] = 0;
+
+		String str;
+		String_Initialize(&str, 32);
 		
-		printf("Path(%u): %s\n\r", size, path);
+		UInt16 length = 0;
+		void* ptr = _Server->m_TempListBuffer.m_Ptr;
+		ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
+		char fullPath[length + 1];
+		ptr += Memory_ParseBuffer(fullPath, ptr, length);
+		fullPath[length] = 0;
+
+		int index = _Server->m_Service->m_Path.m_Length + 6 + 5;
+
+		if(strncmp(&fullPath[index], "root_", 5) == 0)
+		{
+			String_Set(&str, &fullPath[5 + index]);
+
+			str.m_Ptr[str.m_Length - 5] = 0;
+			str.m_Length -= 5;
+
+			String_Append(&str, "/", 1);
+			String_Append(&str, path, strlen(path));
+		}
+		else
+		{
+			String_Set(&str, path);
+		}
+		
+		printf("Str(%s): %s\n\r", &fullPath[index], str.m_Ptr);
+		
+		printf("Path(%u): %s\n\r", str.m_Length, str.m_Ptr);
 		
 		Payload* message = NULL;
-		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + size, &message) == 0)
+		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, &message) == 0)
 		{
+
 			Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
-			Buffer_WriteUInt16(&message->m_Data, size);
-			Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, size);
+			Buffer_WriteUInt16(&message->m_Data, str.m_Length);
+			Buffer_WriteBuffer(&message->m_Data, (unsigned char*)str.m_Ptr, str.m_Length);
 
 			Payload_SetMessageType(message, Payload_Message_Type_String, "Read", strlen("Read"));
 		}
+		String_Dispose(&str);
 	}
 	else if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear) == True)
 	{
@@ -823,48 +983,57 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
 		
-		String fullPath;
-		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_Path.m_Ptr);
+		UInt16 length = 0;
 
-		if(String_EndsWith(&fullPath, "/") == False)
-			String_Append(&fullPath, "/", 1);
+		void* ptr = _Server->m_TempListBuffer.m_Ptr;
+		ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
+		char fullPath[length + 1];
+		ptr += Memory_ParseBuffer(fullPath, ptr, length);
+		fullPath[length] = 0;
 
-		String_Append(&fullPath, "temp", strlen("temp"));
-
-		tinydir_dir dir;
-		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		if(File_Remove(fullPath) != 0)
 		{
-			printf("Fullpath error: %s\n\r", fullPath.m_Ptr);
-			String_Dispose(&fullPath);
+			printf("File error(WillClear): %s\n\r", fullPath);
 			return;
 		}
+
 		
-		Bool hasRemoved = False;
+		String tempPath;
+
+		String_Initialize(&tempPath, 64);
+		String_Set(&tempPath, _Server->m_Service->m_Path.m_Ptr);
+
+		if(String_EndsWith(&tempPath, "/") == False)
+			String_Append(&tempPath, "/", 1);
+
+		String_Append(&tempPath, "temp", strlen("temp"));
+
+		tinydir_dir dir;
+		if(tinydir_open(&dir, tempPath.m_Ptr) != 0)
+		{
+			printf("TempPath error(HasList): %s\n\r", tempPath.m_Ptr);
+			String_Dispose(&tempPath);
+			return;
+		}
+
+		String_Dispose(&tempPath);
+		
 		while (dir.has_next)
 		{
 			tinydir_file file;
 			tinydir_readfile(&dir, &file);
 			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 			{
-				if(hasRemoved == False)
-				{
-					printf("Removeing %s\n\r", file.name);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
 
-					File_Remove(file.path);
-				}
-				else
-				{
-					BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
-
-					break;
-				}
+				break;
 			}
 			tinydir_next(&dir);
 		}
 
 		tinydir_close(&dir);
-		String_Dispose(&fullPath);
+		
 	}
 	
 }
