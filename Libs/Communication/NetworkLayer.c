@@ -63,6 +63,9 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 	Byte flags = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&flags);
+
+	UInt8 UUID[UUID_DATA_SIZE];
+	Buffer_ReadBuffer(&_Message->m_Data, UUID, UUID_DATA_SIZE);
 	
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
 
@@ -139,6 +142,8 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	BitHelper_SetBit(&flags, 2, _Payload->m_Message.m_Type == Payload_Message_Type_None ? False : True);
 
 	Buffer_WriteUInt8(&_Payload->m_Data, flags);
+
+	Buffer_WriteBuffer(&_Payload->m_Data, _Payload->m_UUID, UUID_DATA_SIZE);
 
 	int success = Buffer_WriteUInt8(&_Payload->m_Data, _Payload->m_Type);
 	if(success < 0)

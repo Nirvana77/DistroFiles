@@ -181,7 +181,7 @@ int DataLayer_CalculateSize(DataLayer* _DataLayer)
 	UInt16 size = 0;
 
 	ptr += Memory_ParseUInt8(ptr, (UInt8*)&flags);
-	ptr += 1 + 8;// Trpe and time
+	ptr += UUID_DATA_SIZE + 1 + 8;// UUID, type and time
 
 	ptr += (1 + 6)*2; //Src & Des
 	

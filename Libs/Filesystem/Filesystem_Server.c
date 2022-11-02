@@ -966,7 +966,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		printf("Path(%u): %s\n\r", str.m_Length, str.m_Ptr);
 		
 		Payload* message = NULL;
-		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, &message) == 0)
+		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, 1000, &message) == 0)
 		{
 
 			Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
