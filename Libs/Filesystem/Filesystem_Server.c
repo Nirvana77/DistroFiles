@@ -834,7 +834,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 
 	File_Close(f);
 
-	String_Set
+	//String_Set
 
 	String_Dispose(&str);
 	return 0;

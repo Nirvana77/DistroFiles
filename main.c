@@ -100,6 +100,9 @@ int main(int argc, char* argv[])
 	int doExit = 1;
 	StateMachine_Initialize(&g_StateMachine);
 	
+	Folder_Remove("Shared/root");
+	Folder_Remove("Shared/temp");
+	
 	Filesystem_Service* service = NULL;
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, "Shared", &service);
 	
