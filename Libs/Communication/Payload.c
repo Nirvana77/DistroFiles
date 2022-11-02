@@ -43,7 +43,7 @@ int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
 {
 
 	Buffer_WriteUInt8(_Buffer, _Communicator->m_Type);
-	return Buffer_WriteBuffer(_Buffer, &_Communicator->m_Address, sizeof(_Communicator->m_Address)) + 1;
+	return Buffer_WriteBuffer(_Buffer, (unsigned char*)&_Communicator->m_Address, sizeof(_Communicator->m_Address)) + 1;
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
