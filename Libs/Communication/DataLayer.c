@@ -3,6 +3,8 @@
 int DataLayer_ReceiveMessage(DataLayer* _DataLayer);
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload);
 
+int DataLayer_CalculateSize(DataLayer* _DataLayer);
+
 int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr)
 {
 	DataLayer* _DataLayer = (DataLayer*)Allocator_Malloc(sizeof(DataLayer));
@@ -103,20 +105,32 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 
 int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 {
-	Buffer_Clear(&_DataLayer->m_DataBuffer);
-	int readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize);
+	int readed = 0;
+	if(_DataLayer->m_DataBuffer.m_BytesLeft != 0)
+	{
+		pritnf("Error!\r\n");
+		printf("Have not read all in buffer(DataLayer)\r\n");
+		readed = _DataLayer->m_DataBuffer.m_BytesLeft;
+	}
+	else
+	{
+		Buffer_Clear(&_DataLayer->m_DataBuffer);
+		readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize);
+	}
+	
 	if(readed > 0)
 	{
+		int size = DataLayer_CalculateSize(_DataLayer);
 
 		UInt8 CRC = 0;
 		UInt8 ownCRC = 0;
-		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_ReadPtr[readed - 1], &CRC);
+		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_ReadPtr[size - 1], &CRC);
 		
-		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, readed - 1, &ownCRC);
+		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_ReadPtr, size, &ownCRC);
 
-		printf("Data(R): %i\r\n", readed);
-		for (int i = 0; i < _DataLayer->m_DataBuffer.m_BytesLeft; i++)
-			printf("%x%s", _DataLayer->m_DataBuffer.m_ReadPtr[i], i + 1< _DataLayer->m_DataBuffer.m_BytesLeft ? " " : "");
+		printf("Data(R): %i of %i\r\n", size, readed);
+		for (int i = 0; i < size; i++)
+			printf("%x ", _DataLayer->m_DataBuffer.m_ReadPtr[i]);
 		printf("\n\r");
 
 		if(ownCRC != CRC)
@@ -131,11 +145,13 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			Payload packet;
 			Payload_Initialize(&packet);
 
-			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, readed - 1) < 0)
+			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
 			{
 				printf("Buffer copy error\n\r");
 				return -2;
 			}
+
+			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
 
 			Payload replay;
 			Payload_Initialize(&replay);
@@ -163,6 +179,34 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	}
 
 	return 0;
+}
+
+int DataLayer_CalculateSize(DataLayer* _DataLayer)
+{
+	unsigned char* ptr = _DataLayer->m_DataBuffer.m_ReadPtr;
+	Byte flags = 0;
+	UInt16 size = 0;
+
+	ptr += Memory_ParseUInt8(ptr, (UInt8*)&flags);
+	ptr += 1 + 8;// Trpe and time
+
+	if(BitHelper_GetBit(&flags, 0) == True) //Src
+		ptr += 1 + 6;
+
+	if(BitHelper_GetBit(&flags, 1) == True) //Des
+		ptr += 1 + 6;
+	
+	if(BitHelper_GetBit(&flags, 2) == True)
+	{
+		ptr++;
+		ptr += Memory_ParseUInt16(ptr, &size);
+		ptr += size;
+	}
+	
+	ptr += Memory_ParseUInt16(ptr, &size);
+	ptr += size;
+
+	return ptr - _DataLayer->m_DataBuffer.m_ReadPtr + 1;
 }
 
 void DataLayer_Dispose(DataLayer* _DataLayer)
