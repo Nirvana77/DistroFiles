@@ -119,7 +119,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		UInt8 ownCRC = 0;
 		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_ReadPtr[size - 1], &CRC);
 		
-		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_ReadPtr, size, &ownCRC);
+		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_ReadPtr, size - 1, &ownCRC);
 
 		printf("Data(R): %i of %i\r\n", size, readed);
 		for (int i = 0; i < size; i++)

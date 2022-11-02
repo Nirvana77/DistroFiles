@@ -157,7 +157,7 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 	else
 		printf("DES: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Des.m_Address.MAC[0], _Payload->m_Des.m_Address.MAC[1], _Payload->m_Des.m_Address.MAC[2], _Payload->m_Des.m_Address.MAC[3], _Payload->m_Des.m_Address.MAC[4], _Payload->m_Des.m_Address.MAC[5]);
 
-	if(_Payload->m_Message.m_Type == Payload_Message_Type_None)
+	if(_Payload->m_Message.m_Type != Payload_Message_Type_None)
 	{
 		if(_Payload->m_Message.m_Type == Payload_Message_Type_String)
 			printf("Method(%u): %s\n\r", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
