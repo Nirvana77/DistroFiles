@@ -41,7 +41,7 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 	return 0;
 }
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, Payload** _PayloadPtr)
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr)
 {
 	if(_Size == 0)
 		return -2;
@@ -54,8 +54,8 @@ int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Addres
 	LinkedList_Push(&_TransportLayer->m_Queued, _Payload);
 	
 	_Payload->m_Size = _Size;
+	_Payload->m_Timeout = _Timeout;
 
-	SystemMonotonicMS(&_Payload->m_Time);
 
 	_Payload->m_Type = _Type;
 
@@ -146,30 +146,18 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
-	if(_TransportLayer->m_CurrentNode != NULL)
+	LinkedList_Node* currentNode = _TransportLayer->m_Sented.m_Head;
+	while(currentNode != NULL)
 	{
-		/* Payload* _Payload = (Payload*) _TransportLayer->m_CurrentNode->m_Item;
-
-		int success = _TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _Payload);
-		if(success < 0)
+		Payload* _Payload = (Payload*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+		
+		if(_MSTime > _Payload->m_Timeout + _Payload->m_Time)
 		{
-			printf("TransportLayer_Work funcOut failed\n\r");
-			printf("Error code: %i\n\r", success);
-			return;
+			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
+			Payload_Dispose(_Payload);
 		}
 
-
-		_TransportLayer->m_CurrentNode = _TransportLayer->m_CurrentNode->m_Next;
-		LinkedList_RemoveItem(&_TransportLayer->m_Queued, _Payload);
-		Payload_Dispose(_Payload);
-
-		if(_TransportLayer->m_CurrentNode == NULL)
-			_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
-		 */
-	}
-	else if (_TransportLayer->m_Queued.m_Head != NULL)
-	{
-		_TransportLayer->m_CurrentNode = _TransportLayer->m_Queued.m_Head;
 	}
 	
 }

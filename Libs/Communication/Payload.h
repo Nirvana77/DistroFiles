@@ -115,6 +115,7 @@ struct T_Payload
 
 	UInt16 m_Size;
 	UInt64 m_Time;
+	UInt64 m_Timeout;
 
 	Payload_Type m_Type;
 

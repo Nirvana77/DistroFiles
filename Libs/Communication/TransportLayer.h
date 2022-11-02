@@ -15,14 +15,13 @@ struct T_TransportLayer
 	LinkedList m_Sented;
 
 	Payload_FuncOut m_FuncOut;
-	LinkedList_Node* m_CurrentNode;
 	
 };
 
 int TransportLayer_InitializePtr(TransportLayer** _TransportLayerPtr);
 int TransportLayer_Initialize(TransportLayer* _TransportLayer);
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, Payload** _PayloadPtr);
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr);
 int TransportLayer_DestroyMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 
