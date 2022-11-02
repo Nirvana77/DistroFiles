@@ -799,6 +799,8 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	String str;
 	String_Initialize(&str, 32);
 
+	Folder_Create(_FullPath->m_Ptr);
+
 	String_Set(&str, _FullPath->m_Ptr);
 	String_Exchange(&str, _Server->m_Service->m_FilesytemPath.m_Ptr, "");
 	String_Exchange(&str, "/", "_");
@@ -833,8 +835,6 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	_DataBuffer->m_BytesLeft -= written;
 
 	File_Close(f);
-
-	//String_Set
 
 	String_Dispose(&str);
 	return 0;
@@ -968,6 +968,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		Payload* message = NULL;
 		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, &message) == 0)
 		{
+
 			Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
 			Buffer_WriteUInt16(&message->m_Data, str.m_Length);
 			Buffer_WriteBuffer(&message->m_Data, (unsigned char*)str.m_Ptr, str.m_Length);
