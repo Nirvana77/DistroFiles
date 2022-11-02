@@ -10,6 +10,7 @@ typedef struct T_Payload Payload;
 #endif
 
 #include "../Buffer.h"
+#include "../uuid.h"
 
 #ifdef __linux__
 
@@ -98,9 +99,6 @@ typedef struct
 	Payload_Address_Type m_Type;
 	union
 	{
-
-		//TODO: Add UUID
-		// UInt8 UUID[UUID_DATA_SIZE];
 		UInt8 IP[4];
 		UInt8 MAC[6];
 	} m_Address;
@@ -110,6 +108,7 @@ typedef struct
 struct T_Payload
 {
 	Bool m_Allocated;
+	UInt8 m_UUID[UUID_DATA_SIZE];
 
 	Payload_State m_State;
 

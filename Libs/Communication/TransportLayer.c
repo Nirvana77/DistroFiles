@@ -56,6 +56,7 @@ int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Addres
 	_Payload->m_Size = _Size;
 	_Payload->m_Timeout = _Timeout;
 
+	uuid_generate(_Payload->m_UUID);
 
 	_Payload->m_Type = _Type;
 
@@ -154,6 +155,9 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 		
 		if(_MSTime > _Payload->m_Timeout + _Payload->m_Time)
 		{
+			char str[37];
+			uuid_ToString(_Payload->m_UUID, str);
+			printf("Removed: %s\n\r", str);
 			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
 			Payload_Dispose(_Payload);
 		}

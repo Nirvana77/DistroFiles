@@ -26,6 +26,7 @@
 
 #include "Libs/Allocator.c"
 #include "Libs/BitHelper.c"
+#include "Libs/uuid.c"
 
 #include "Libs/Communication/Payload.c"
 #include "Libs/Communication/DataLayer.c"
@@ -197,7 +198,7 @@ int main(int argc, char* argv[])
 
 						int size = 2 + strlen(path) + 16;
 
-						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, &message) == 0)
+						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
 						{
 							Buffer_WriteUInt16(&message->m_Data, strlen(path));
 							Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
@@ -234,7 +235,7 @@ int main(int argc, char* argv[])
 							int size = 1 + 2 + strlen(path) + 2 + File_GetSize(f);
 
 							Payload* message = NULL;
-							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Safe, size, &message) == 0)
+							if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Safe, size, 1000, &message) == 0)
 							{
 								Buffer_WriteUInt8(&message->m_Data, True);
 								Buffer_WriteUInt16(&message->m_Data, (UInt16)(strlen(path)));

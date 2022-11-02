@@ -5,7 +5,7 @@ clear
 FILENAME="main"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
-LFLAGS="-ljansson -lcurl"
+LFLAGS="-ljansson -lcurl -luuid"
 
 echo "Cleaning up..."
 rm *.o
@@ -21,12 +21,12 @@ else
 	if [ "$1" == "gdb" ]; then
 		echo "Compiling for gdb"
 
-		gcc -g -D COMPILEDEBUG -c $FILENAME.c -luuid -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -g -D COMPILEDEBUG -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
 
 	else
 	    echo "Compiling"
 
-		gcc -c $FILENAME.c -luuid -lcurl -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
 	fi
 fi
 
