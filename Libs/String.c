@@ -75,7 +75,7 @@ int String_Set(String* _Str, const char* _String)
 
 int String_Append(String* _Str, const char* _String, int _Length)
 {
-	while(_Str->m_Length + _Length > _Str->m_Size)
+	while(_Str->m_Length + _Length + 1 > _Str->m_Size)
 	{
 		if(String_ExtendBuffer(_Str) != 0)
 			return -2;
