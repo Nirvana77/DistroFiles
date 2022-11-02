@@ -78,12 +78,10 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
-	Buffer_Clear(&_DataLayer->m_DataBuffer);
-
 	UInt8 CRC = 0;
-	DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_Ptr, _DataLayer->m_DataBuffer.m_BytesLeft, &CRC);
+	DataLayer_GetCRC(_Payload->m_Data.m_Ptr, _Payload->m_Data.m_BytesLeft, &CRC);
 	
-	Buffer_WriteUInt8(&_DataLayer->m_DataBuffer, CRC);
+	Buffer_WriteUInt8(&_Payload->m_Data, CRC);
 	
 	Payload_Print(_Payload, "Datalayer", True);
 
@@ -185,11 +183,7 @@ int DataLayer_CalculateSize(DataLayer* _DataLayer)
 	ptr += Memory_ParseUInt8(ptr, (UInt8*)&flags);
 	ptr += 1 + 8;// Trpe and time
 
-	if(BitHelper_GetBit(&flags, 0) == True) //Src
-		ptr += 1 + 6;
-
-	if(BitHelper_GetBit(&flags, 1) == True) //Des
-		ptr += 1 + 6;
+	ptr += (1 + 6)*2; //Src & Des
 	
 	if(BitHelper_GetBit(&flags, 2) == True)
 	{

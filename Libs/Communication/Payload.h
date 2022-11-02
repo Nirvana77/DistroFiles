@@ -163,7 +163,7 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 			printf("Method(%u): %s\n\r", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
 	}
 
-	printf("Data:\r\n");
+	printf("Data: %ib\r\n", _Payload->m_Data.m_BytesLeft);
 	int i = 0;
 
 	if(_HasFlags == True)
