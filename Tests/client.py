@@ -1,4 +1,5 @@
 import socket
+import os
 
 def get_crc(array):
 	result = 0
@@ -54,16 +55,29 @@ def messag_builder(src, des, method, message):
 		for i in list(method.encode('ascii')):
 			array.append(i)
 	
-	if(message != ""):
-		length = len(message)
-		array.append(int(length/256))
-		array.append(length%256)
+	length = len(message)
+	array.append(int(length/256))
+	array.append(length%256)
+
+	if(type(message) is str):
 		for i in list(message.encode('ascii')):
 			array.append(i)
+	elif (type(message) is list):
+		array = array + message
+		
 	crc = get_crc(array)
 	array.append(crc)
 
 	return array
+
+def load_file(filename):
+	text_file = open(filename, "r")
+	lines = text_file.readlines()
+	print(lines)
+	print(len(lines))
+	text_file.close()
+
+	return lines
 
 def client_program():
 	host = socket.gethostname()  # as both code is running on same pc
@@ -72,12 +86,48 @@ def client_program():
 	client_socket = socket.socket()  # instantiate
 	client_socket.connect((host, port))  # connect to the server
 
-	method = input('method -> ')
-	message = input('message -> ')
-	arr = messag_builder("1", "", method, message)
-	print(arr)
-	
-	client_socket.send(bytearray(arr))
+	data = ""
+	method = ""
+	message = ""
+	while data != "q":
+		os.system('cls')
+		print("1) Upload file")
+		print("2) Remove file")
+		print("3) Rename file")
+
+		data = input('method -> ')
+
+		if(data == "1"):
+			method = "upload"
+			os.system('cls')
+			file = input("filename > ")
+			message = [int(len("settings.json")/256), len("settings.json")%256]
+			
+			for i in list("settings.json".encode('ascii')):
+				message.append(i)
+			
+			file_arr = load_file("/home/navanda/github/Filesystem/Shared/settings.json")
+			
+			file_str = ""
+			file_str = file_str.join(file_arr)
+			length = len(file_str)
+
+			message.append(int(length/256))
+			message.append(length%256)
+			for i in list(file_str.encode('ascii')):
+				message.append(i)
+			
+			data = "s"
+
+		elif(data != "q"):
+			data = ""
+			
+
+		if(data == "s"):
+			arr = messag_builder("1", "", method, message)
+			print(arr)
+			
+			client_socket.send(bytearray(arr))
 	
 
 	client_socket.close()  # close the connection
