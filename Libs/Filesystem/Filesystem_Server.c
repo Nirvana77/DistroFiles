@@ -672,6 +672,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	return 0;
 }
 
+
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
 	FILE* f = NULL;
@@ -771,6 +772,14 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 
 	if(Filesystem_Server_HashCheck(hash, serverHash) == False)
 	{
+		printf("Hash:\n\r");
+		for (int i = 0; i < 16; i++)
+			printf("%x ",hash[i]);
+		printf("serverHash:\n\r");
+		for (int i = 0; i < 16; i++)
+			printf("%x ",serverHash[i]);
+		
+		
 		printf("Hsh check failed!\n\r");
 	}
 
@@ -1070,6 +1079,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	}
 
 }
+
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
