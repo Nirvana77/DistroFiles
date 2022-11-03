@@ -262,7 +262,7 @@ int main(int argc, char* argv[])
 					{
 						Payload message;
 
-						Payload_Initialize(&message);
+						Payload_Initialize(&message, NULL);
 
 						SystemMonotonicMS(&message.m_Time);
 						
@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
 						printf("\r\n");
 						
 						Payload networkMessage;
-						Payload_Initialize(&networkMessage);
+						Payload_Initialize(&networkMessage, NULL);
 						Payload_Copy(&networkMessage, &message);
 						NetworkLayer_PayloadBuilder(NULL, &networkMessage);
 						

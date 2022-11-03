@@ -48,15 +48,13 @@ int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Addres
 
 	Payload* _Payload = NULL;
 
-	if(Payload_InitializePtr(&_Payload) != 0)
+	if(Payload_InitializePtr(NULL, &_Payload) != 0)
 		return -1;
 
 	LinkedList_Push(&_TransportLayer->m_Queued, _Payload);
 	
 	_Payload->m_Size = _Size;
 	_Payload->m_Timeout = _Timeout;
-
-	uuid_generate(_Payload->m_UUID);
 
 	_Payload->m_Type = _Type;
 
@@ -128,7 +126,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
 		Payload* replay;
-		Payload_InitializePtr(&replay);
+		Payload_InitializePtr(_Replay->m_UUID, &replay);
 		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay) == 1)
 		{
 			printf("TransportLayer_ReveicePayload_Replay\n\r");

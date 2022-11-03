@@ -126,8 +126,8 @@ struct T_Payload
 	Buffer m_Data;
 };
 
-int Payload_InitializePtr(Payload** _PayloadPtr);
-int Payload_Initialize(Payload* _Payload);
+int Payload_InitializePtr(UInt8 _UUID[UUID_DATA_SIZE], Payload** _PayloadPtr);
+int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE]); 
 
 int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
 int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);

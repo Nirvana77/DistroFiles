@@ -103,7 +103,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	if(_NetworkLayer->m_FuncOut.m_Receive != NULL)
 	{
 		Payload replay;
-		Payload_Initialize(&replay);
+		Payload_Initialize(&replay, _Replay->m_UUID);
 		
 		replay.m_Src.m_Type = Payload_Address_Type_IP;
 		GetIP(replay.m_Src.m_Address.IP);

@@ -1,13 +1,13 @@
 #include "Payload.h"
 
 
-int Payload_InitializePtr(Payload** _PayloadPtr)
+int Payload_InitializePtr(UInt8 _UUID[UUID_DATA_SIZE], Payload** _PayloadPtr)
 {
 	Payload* _Payload = (Payload*)Allocator_Malloc(sizeof(Payload));
 	if(_Payload == NULL)
 		return -1;
 	
-	int success = Payload_Initialize(_Payload);
+	int success = Payload_Initialize(_Payload, _UUID);
 	if(success != 0)
 	{
 		Allocator_Free(_Payload);
@@ -20,7 +20,7 @@ int Payload_InitializePtr(Payload** _PayloadPtr)
 	return 0;
 }
 
-int Payload_Initialize(Payload* _Payload)
+int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 {
 	_Payload->m_Allocated = False;
 	_Payload->m_State = Payload_State_Init;
@@ -31,6 +31,11 @@ int Payload_Initialize(Payload* _Payload)
 	_Payload->m_Type = Payload_Type_UnSafe;
 
 	Buffer_Initialize(&_Payload->m_Data, True, 64);
+
+	if(_UUID == NULL)
+		uuid_generate(_Payload->m_UUID);
+	else
+		memcpy(_Payload->m_UUID, _UUID, UUID_DATA_SIZE);
 
 	memset(&_Payload->m_Src, 0, sizeof(Payload_Address));
 	memset(&_Payload->m_Des, 0, sizeof(Payload_Address));

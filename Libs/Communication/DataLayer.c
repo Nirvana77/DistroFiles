@@ -141,7 +141,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
 		{
 			Payload packet;
-			Payload_Initialize(&packet);
+			Payload_Initialize(&packet, NULL);
 
 			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
 			{
@@ -152,7 +152,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
 
 			Payload replay;
-			Payload_Initialize(&replay);
+			Payload_Initialize(&replay, packet.m_UUID);
 			if(_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet, &replay) == 1)//Whants to send replay
 			{
 				//send message/payload
