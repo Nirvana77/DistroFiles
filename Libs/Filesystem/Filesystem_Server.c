@@ -49,7 +49,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	int success = TCPServer_Initialize(&_Server->m_TCPServer, Filesystem_Server_ConnectedSocket, _Server);
 	if(success != 0)
 	{
-		printf("Failed to initialize the TCP Server!\n\r");
+		printf("Failed to initialize the TCPServer for Server!\n\r");
 		printf("Error code: %i\n\r", success);
 		return -2;
 	}
@@ -57,7 +57,9 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	success = TCPServer_Listen(&_Server->m_TCPServer, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Host.m_Port);
 	if(success != 0)
 	{
-		printf("TCPServer_Listen error: %i\n\r", success);
+		printf("Failed to listen to port %u for server!\n\r", _Server->m_Service->m_Settings.m_Host.m_Port);
+		printf("Error code: %i\n\r", success);
+		TCPServer_Dispose(&_Server->m_TCPServer);
 		return -3;
 	}
 
@@ -146,7 +148,7 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	memset(ip, 0, sizeof(ip));
 	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
 	
-	printf("Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
+	printf("Filesystem_Server: Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
 
 	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
 	return 0;
@@ -681,7 +683,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else
 	{
-		printf("Can't handel method: %s\n\r", _Message->m_Message.m_Method.m_Str);
+		printf("Server can't handel method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 	}
 
 	return 0;
