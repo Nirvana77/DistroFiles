@@ -11,7 +11,13 @@ struct T_Filesystem_Client
 	Bool m_Allocated;
 	Filesystem_Service* m_Service;
 
-	TCPClient m_TCPClient;
+	UInt64 m_Timeout;
+	UInt64 m_NextCheck;
+
+	Buffer m_Buffer;
+	LinkedList m_Sockets;
+
+	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;
 	NetworkLayer m_NetworkLayer;
 	TransportLayer m_TransportLayer;
