@@ -194,22 +194,24 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 	if(_Server->m_Sockets.m_Size == 0)
 		return 0;
 
+	int readed = 0;
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+
+	Buffer_Clear(&_Server->m_Buffer);
 	while(currentNode != NULL)
-	{
-		Buffer_Clear(&_Server->m_Buffer);	
+	{	
 		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
 
-		int readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
-
-		if(readed > 0)
-		{
-			printf("Filesystem_Server_TCPRead\n\r");
-			Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
-			return readed;
-		}
+		readed += TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
 
 		currentNode = currentNode->m_Next;
+	}
+
+	if(readed > 0)
+	{
+		printf("Filesystem_Server_TCPRead\n\r");
+		Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
+		return readed;
 	}
 
 	return 0;
