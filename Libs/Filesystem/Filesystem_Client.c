@@ -207,7 +207,7 @@ int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 
 int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
 	printf("Filesystem_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
@@ -215,9 +215,36 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 
-	if(strcmp(_Message->m_Message.m_Method.m_Str, "test") == 0)
+	if(strcmp(_Message->m_Message.m_Method.m_Str, "upload") == 0)
 	{
-		printf("test\n\r");
+		printf("upload\n\r");
+		Bool isFile = True;
+		UInt16 size;
+
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char name[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)name, size);
+		name[size] = 0;
+
+		// ! NOTE: this will not be here
+		// ! This will be in Filesystem_Server
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+		FILE* f = NULL;
+		int success = File_Open(name, File_Mode_ReadWriteCreateBinary, &f);
+		if(f == NULL)
+		{
+			printf("Error when creating file: %s\r\n", name);
+			printf("Error code %i\r\n", success);
+		}
+
+		int written = File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
+		_Message->m_Data.m_ReadPtr += written;
+		_Message->m_Data.m_BytesLeft -= written;
+
+		File_Close(f);
+		// ! ----------------------------------------
 		
 	}
 	else
