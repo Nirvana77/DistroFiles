@@ -76,15 +76,8 @@ def client_program():
 	message = input('message -> ')
 	arr = messag_builder("1", "", method, message)
 	print(arr)
-	# data_string = pickle.dumps(arr)
-	# client_socket.send(data_string)
+	
 	client_socket.send(bytearray(arr))
-	# myArrayString = ""
-	# for item in arr:
-	#     print("item: ", item)
-	#     myArrayString= myArrayString+ str(item)
-	# print(myArrayString)
-	# client_socket.send((myArrayString).encode())
 	
 
 	client_socket.close()  # close the connection
