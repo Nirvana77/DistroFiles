@@ -42,7 +42,8 @@ def str_to_hex_array(string):
 
 	return arr
 
-def get_crc(array, result = 0):
+# TODO: #49 fix crc
+AT
 	CRC = 0b01011
 
 	for data in array:
