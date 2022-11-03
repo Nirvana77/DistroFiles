@@ -25,6 +25,9 @@ struct T_Filesystem_Server
 	LinkedList m_Sockets;
 	LinkedList_Node* m_CurrentNode;
 	Buffer m_Buffer;
+	
+	UInt64 m_NextCheck;
+	UInt64 m_Timeout;
 
 	Byte m_TempFlag;
 	Buffer m_TempListBuffer;

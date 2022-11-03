@@ -37,6 +37,8 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	_Server->m_Allocated = False;
 	_Server->m_TempFlag = 0;
 	_Server->m_TempListSize = 0;
+	_Server->m_NextCheck = 0;
+	_Server->m_Timeout = 10000;
 	_Server->m_Service = _Service;
 
 	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
@@ -1034,6 +1036,26 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		
 	}
 	
+	if(_MSTime > _Server->m_NextCheck)
+	{
+		_Server->m_NextCheck = _MSTime + _Server->m_Timeout;
+		LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+		while (currentNode != NULL)
+		{
+			TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
+			currentNode = currentNode->m_Next;
+
+			int succeess = recv(socket->m_FD,NULL,1, MSG_PEEK | MSG_DONTWAIT);
+
+			if(succeess == 0)
+			{
+				LinkedList_RemoveItem(&_Server->m_Sockets, socket);
+				TCPSocket_Dispose(socket);
+			}
+		}
+		
+	}
+
 }
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
