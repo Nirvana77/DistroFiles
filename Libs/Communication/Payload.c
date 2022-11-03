@@ -184,6 +184,8 @@ void Payload_Copy(Payload* _Des, Payload* _Src)
 	_Des->m_Type = _Src->m_Type;
 	_Des->m_State = _Src->m_State;
 
+	memcpy(_Des->m_UUID, _Src->m_UUID, UUID_DATA_SIZE);
+
 	Payload_FilCommunicator(&_Des->m_Des, &_Src->m_Des);
 	Payload_FilCommunicator(&_Des->m_Src, &_Src->m_Src);
 
