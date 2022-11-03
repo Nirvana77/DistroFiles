@@ -101,7 +101,8 @@ def client_program():
 			method = "upload"
 			os.system('cls')
 			file = input("filename > ")
-			message = [int(len("settings.json")/256), len("settings.json")%256]
+
+			message = [1, int(len("settings.json")/256), len("settings.json")%256]
 			
 			for i in list("settings.json".encode('ascii')):
 				message.append(i)
@@ -111,8 +112,6 @@ def client_program():
 			file_str = ""
 			file_str = file_str.join(file_arr)
 			length = len(file_str)
-
-			message.append(1) # Is file 1 -> True
 
 			message.append(int(length/256))
 			message.append(length%256)
