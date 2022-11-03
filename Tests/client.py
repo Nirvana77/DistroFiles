@@ -112,6 +112,8 @@ def client_program():
 			file_str = file_str.join(file_arr)
 			length = len(file_str)
 
+			message.append(1) # Is file 1 -> True
+
 			message.append(int(length/256))
 			message.append(length%256)
 			for i in list(file_str.encode('ascii')):
