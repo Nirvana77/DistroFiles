@@ -130,6 +130,11 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		{
 			printf("CRC check Failed!\n\r");
 			printf("Own CRC: %u\n\rPayloads CRC: %u\n\r", ownCRC, CRC);
+			char str[UUID_STRING_SIZE];
+			uuid_ToString(&_DataLayer->m_DataBuffer.m_ReadPtr[1], str);
+			printf("Discarding message: %s\n\r", str);
+			_DataLayer->m_DataBuffer.m_ReadPtr += size;
+			_DataLayer->m_DataBuffer.m_BytesLeft -= size;
 			return -1;
 		}
 
