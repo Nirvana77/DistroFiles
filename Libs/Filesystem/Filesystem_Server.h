@@ -16,6 +16,8 @@ struct T_Filesystem_Server
 {
 	Bool m_Allocated;
 	Filesystem_Service* m_Service;
+	
+	String m_FilesytemPath;
 
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;

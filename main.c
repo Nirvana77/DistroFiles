@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
 							Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
 
 							unsigned char hash[16];
-							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
+							Folder_Hash(service->m_Server->m_FilesytemPath.m_Ptr, hash);
 							Buffer_WriteBuffer(&message->m_Data, hash, 16);
 
 							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
 							String_Initialize(&fullPath, 8);
 							FILE* f = NULL;
 
-							String_Set(&fullPath, service->m_FilesytemPath.m_Ptr);
+							String_Set(&fullPath, service->m_Server->m_FilesytemPath.m_Ptr);
 
 							if(String_EndsWith(&fullPath, "/") == False)
 								String_Append(&fullPath, "/", 1);

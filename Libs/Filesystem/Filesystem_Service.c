@@ -65,21 +65,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		return -3;
 	}
 
-	String_Initialize(&_Service->m_FilesytemPath, 32);
-	
-	success = String_Sprintf(&_Service->m_FilesytemPath, "%s/root", _Service->m_Path.m_Ptr);
-
-	success = Folder_Create(_Service->m_FilesytemPath.m_Ptr);
-
-	if(success < 0)
-	{
-		printf("Can't create folder(%i): %s\n\r", success, _Service->m_FilesytemPath.m_Ptr);
-		String_Dispose(&_Service->m_FilesytemPath);
-		String_Dispose(&_Service->m_Path);
-
-		return -4;
-	}
-
 	//-------------Initialize------------------
 	String_Initialize(&_Service->m_Settings.m_Host.m_IP, 16);
 	String_Initialize(&_Service->m_Settings.m_Distributer.m_IP, 16);
@@ -102,7 +87,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	{
 		printf("Failed to save Filesystem Server standard settings!\r\n");
 		printf("Failed code: %i\n\r", loadSuccess);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
@@ -119,7 +103,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	{
 		printf("Failed to initialize server!\r\n");
 		printf("Failed code: %i\n\r", success);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
@@ -131,7 +114,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	{
 		printf("Failed to initialize client!\r\n");
 		printf("Failed code: %i\n\r", success);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
@@ -394,7 +376,6 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 	if(_Service->m_Json != NULL)
 		json_decref(_Service->m_Json);
 
-	String_Dispose(&_Service->m_FilesytemPath);
 	String_Dispose(&_Service->m_Path);
 
 	if(_Service->m_Allocated == True)

@@ -62,6 +62,21 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Dispose(&_Server->m_TCPServer);
 		return -3;
 	}
+	
+
+	String_Initialize(&_Server->m_FilesytemPath, 32);
+	
+	success = String_Sprintf(&_Server->m_FilesytemPath, "%s/root", _Service->m_Path.m_Ptr);
+
+	success = Folder_Create(_Server->m_FilesytemPath.m_Ptr);
+
+	if(success < 0)
+	{
+		printf("Can't create folder(%i): %s\n\r", success, _Server->m_FilesytemPath.m_Ptr);
+		String_Dispose(&_Server->m_FilesytemPath);
+
+		return -4;
+	}
 
 	success = Buffer_Initialize(&_Server->m_Buffer, True, 64);
 	if(success != 0)
@@ -78,6 +93,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Failed to initialize the Buffer!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
+		String_Dispose(&_Server->m_FilesytemPath);
 		Buffer_Dispose(&_Server->m_Buffer);
 		return -4;
 	}
@@ -90,6 +106,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Failed to initialize the DataLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
+		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Sockets);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
@@ -102,6 +119,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Failed to initialize the NetworkLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
+		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Sockets);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
@@ -115,6 +133,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Failed to initialize the TransportLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
+		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Sockets);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
@@ -152,42 +171,6 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 
 	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
 	return 0;
-	
-	/*
-	* NOTE: you dont get any information abute the sender
-	* Just the socket
-	*/
-	/*
-	Buffer data;
-	Buffer_Initialize(&data, True, 16);
-
-	Buffer_WriteUInt8(&data, Payload_Type_Safe);
-	UInt64 time = 0;
-	SystemMonotonicMS(&time);
-	Buffer_WriteUInt64(&data, time);
-	
-	Buffer_WriteUInt8(&data, Payload_Address_Type_MAC);
-	UInt8 mac[6];
-	GetMAC(mac);
-	Buffer_WriteBuffer(&data, mac, 6);
-	Buffer_WriteUInt8(&data, Payload_Address_Type_NONE);
-
-	Buffer_WriteUInt8(&data, Payload_Message_Type_String);
-	UInt16 size = strlen("Connect");
-	Buffer_WriteUInt16(&data, size);
-	Buffer_WriteBuffer(&data, "Connect", size);
-
-	Buffer_WriteUInt16(&data, 0);
-	
-	UInt8 CRC = 0;
-	DataLayer_GetCRC(data.m_Ptr, data.m_BytesLeft, &CRC);
-	Buffer_WriteUInt8(&data, CRC);
-
-	TCPSocket_Write(_TCPSocket, &data, data.m_BytesLeft);
-
-	Buffer_Dispose(&data);
-	return 1;
-	*/
 }
 
 
@@ -355,7 +338,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String fullPath;
 		String_Initialize(&fullPath, 64);
 
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
 
 		UInt16 size = 0;
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
@@ -454,7 +437,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String fullPath;
 
 		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
 
 		if(String_EndsWith(&fullPath, "/") == False)
 			String_Append(&fullPath, "/", 1);
@@ -511,7 +494,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String fullPath;
 
 		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
 
 		if(String_EndsWith(&fullPath, "/") == False)
 			String_Append(&fullPath, "/", 1);
@@ -577,7 +560,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String fullPath;
 
 		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
 
 		if(String_EndsWith(&fullPath, "/") == False)
 			String_Append(&fullPath, "/", 1);
@@ -621,7 +604,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String fullPath;
 
 		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_FilesytemPath.m_Ptr);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
 
 		if(String_EndsWith(&fullPath, "/") == False)
 			String_Append(&fullPath, "/", 1);
@@ -804,7 +787,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	Folder_Create(_FullPath->m_Ptr);
 
 	String_Set(&str, _FullPath->m_Ptr);
-	String_Exchange(&str, _Server->m_Service->m_FilesytemPath.m_Ptr, "");
+	String_Exchange(&str, _Server->m_FilesytemPath.m_Ptr, "");
 	String_Exchange(&str, "/", "_");
 
 	char path[str.m_Length];
@@ -1077,6 +1060,8 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	}
 
 	TCPServer_Dispose(&_Server->m_TCPServer);
+
+	String_Dispose(&_Server->m_FilesytemPath);
 
 	LinkedList_Dispose(&_Server->m_Sockets);
 	Buffer_Dispose(&_Server->m_TempListBuffer);

@@ -48,7 +48,6 @@ struct T_Filesystem_Service
 	json_t* m_Json;
 	
 	String m_Path;
-	String m_FilesytemPath;
 
 	Filesystem_Server* m_Server;
 	Filesystem_Client* m_Client;
