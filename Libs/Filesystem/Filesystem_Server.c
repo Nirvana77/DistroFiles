@@ -825,6 +825,34 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	return 0;
 }
 
+
+int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer)
+{
+	String fullPath;
+	String_Initialize(&fullPath, 64);
+
+	String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
+
+	if(String_EndsWith(&fullPath, "/") == False)
+		String_Append(&fullPath, "/", 1);
+	
+	String_Append(&fullPath, _Name, strlen(_Name));
+
+	int success = 0;
+	if(_IsFile == True)
+	{
+		success = Filesystem_Server_WriteFile(_Server, &fullPath, _DataBuffer);
+	}
+	else
+	{
+		printf("Fix Filesystem_Server_Write for Folders\r\n");
+		success = 1;
+	}
+	
+	String_Dispose(&fullPath);
+	return success;
+}
+
 void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 {
 	TCPServer_Work(&_Server->m_TCPServer);

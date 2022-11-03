@@ -10,6 +10,7 @@ struct T_Filesystem_Client
 {
 	Bool m_Allocated;
 	Filesystem_Service* m_Service;
+	Filesystem_Server* m_Server;
 
 	UInt64 m_Timeout;
 	UInt64 m_NextCheck;

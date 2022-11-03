@@ -32,6 +32,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	_Client->m_NextCheck = 0;
 	_Client->m_Timeout = 10000;
 	_Client->m_Service = _Service;
+	_Client->m_Server = _Service->m_Server;
 
 	int success = TCPServer_Initialize(&_Client->m_TCPServer, Filesystem_Client_ConnectedSocket, _Client);
 	if(success != 0)
@@ -207,7 +208,7 @@ int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 
 int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
-	// Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
 	printf("Filesystem_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
@@ -219,7 +220,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		printf("upload\n\r");
 		Bool isFile = True;
-		UInt16 size;
+		UInt16 size = 0;
 
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
@@ -228,23 +229,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)name, size);
 		name[size] = 0;
 
-		// ! NOTE: this will not be here
-		// ! This will be in Filesystem_Server
-		Buffer_ReadUInt16(&_Message->m_Data, &size);
-		FILE* f = NULL;
-		int success = File_Open(name, File_Mode_ReadWriteCreateBinary, &f);
-		if(f == NULL)
-		{
-			printf("Error when creating file: %s\r\n", name);
-			printf("Error code %i\r\n", success);
-		}
-
-		int written = File_WriteAll(f, _Message->m_Data.m_ReadPtr, size);
-		_Message->m_Data.m_ReadPtr += written;
-		_Message->m_Data.m_BytesLeft -= written;
-
-		File_Close(f);
-		// ! ----------------------------------------
+		Filesystem_Server_Write(_Client->m_Server, isFile, name, &_Message->m_Data);
 		
 	}
 	else

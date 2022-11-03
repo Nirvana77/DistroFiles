@@ -70,6 +70,9 @@ static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value
 	*(_Value) = value;
 }
 
+int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer);
+
+
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);
 
 #endif // Filesystem_Server_h__
