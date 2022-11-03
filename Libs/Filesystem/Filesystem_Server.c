@@ -434,7 +434,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		printf("Move/Reanme\n\r");
 	}
-	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
 		printf("Write\n\r");
@@ -493,7 +492,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		return 1;
 
 	}
-	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "WriteAck") == 0)
 	{
 		printf("WriteAck\n\r");
@@ -560,7 +558,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 
 	}
-	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
 		printf("Read\n\r");
@@ -607,7 +604,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Dispose(&fullPath);
 		return success;
 	}
-	//TODO: #38 This only works for files
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReadRespons") == 0)
 	{
 		printf("ReadRespons\n\r");

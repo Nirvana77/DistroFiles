@@ -29,7 +29,6 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	_Client->m_Allocated = False;
 	_Client->m_Service = _Service;
 
-	//TODO: Change this do not be hard coded
 	int success = TCPClient_Initialize(&_Client->m_TCPClient, _Client->m_Service->m_Settings.m_Distributer.m_IP.m_Ptr, _Client->m_Service->m_Settings.m_Distributer.m_Port);
 
 	if(success != 0)
