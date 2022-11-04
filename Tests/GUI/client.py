@@ -1,5 +1,13 @@
 import socket
 import os
+import hashlib
+import struct
+
+def connect(host, port):
+	s = socket.socket()  # instantiate
+	s.connect((host, port))  # connect to the server
+	s.settimeout(0.5)
+	return s
 
 def client_program():
 	client_socket = connect(socket.gethostname(), 8021)

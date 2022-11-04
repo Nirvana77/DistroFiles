@@ -3,6 +3,7 @@ import sys
 import socket
 from time import sleep
 import client as c
+import payload as p
 from struct import *
 
 layout = [
@@ -40,7 +41,7 @@ while True:
 		if len(msg) == 0:
 			print('orderly shutdown on server end')
 		else:
-			(uuid, src, des, method, message) = c.recive(msg)
+			(uuid, src, des, method, message) = p.recive(msg)
 			print("UUID: ", uuid)
 			print("src: ", src)
 			print("des: ", des)
@@ -52,9 +53,9 @@ while True:
 	if event == "OK" or event == sg.WIN_CLOSED:
 		break
 	elif event == "send":
-		c.send_file(s, "C:\\Users\\Navanda77\\school\\Filesystem\\Tests\\test.json", "test.json")
+		p.send_file(s, "C:\\Users\\Navanda77\\school\\Filesystem\\Tests\\test.json", "test.json")
 	elif event == "list":
-		c.get_list(s, "root")
+		p.get_list(s, "root")
 	else:
 		print("Event: ", event)
 		print("Values: ", values)

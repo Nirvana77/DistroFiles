@@ -3,6 +3,7 @@ import os
 import hashlib
 import struct
 
+
 def byte_to_Array(str):
 	arr = []
 
@@ -10,6 +11,7 @@ def byte_to_Array(str):
 		arr.append(c)
 
 	return arr
+
 
 def hash_file(filename):
    """"This function returns the SHA-1 hash
@@ -130,6 +132,93 @@ def messag_builder(src, des, method, message):
 	return array
 
 def load_file(filename):
+	text_file = open(filename, "r")
+	lines = text_file.readlines()
+	print(lines)
+	print(len(lines))
+	text_file.close()
+
+	return lines
+
+def send_file(s, filepath, filename):
+	method = "upload"
+	# file = input("filename > ")
+
+	message = [1, int(len(filename)/256), len(filename)%256]
+
+	for i in list(filename.encode('ascii')):
+		message.append(i)
+
+	file_arr = load_file(filepath)
+	file_hash_arr = str_to_hex_array(hash_file(filepath))
+
+	file_str = ""
+	file_str = file_str.join(file_arr)
+	length = len(file_str)
+
+	message.append(int(length/256))
+	message.append(length%256)
+	for i in list(file_str.encode('ascii')):
+		message.append(i)
+
+	message = message + file_hash_arr
+	arr = messag_builder("1", "", method, message)
+	print(arr)
+	
+	s.send(bytearray(arr[0]))
+
+def get_list(s, filepath):
+	method = "list"
+	message = [int(len(filepath)/256), len(filepath)%256]
+	for i in list(filepath.encode('ascii')):
+		message.append(i)
+
+	arr = messag_builder("1", "", method, message)
+	print(arr)
+	
+	s.send(bytearray(arr[0]))
+
+def recive(msg):
+	data = byte_to_Array(msg)
+	print("data: ", data)
+	i = 0
+	flag = data[0]
+	i+=1
+
+	uuid = []
+	for x in range(i, i + 16):
+		uuid.append(data[x])
+		i+=1
+	i += 1 + 8
+	
+	i += 1
+	src = []
+	for x in range(i, i + 6):
+		src.append(data[x])
+		i+=1
+	i += 1
+	des = []
+	for x in range(i, i + 6):
+		des.append(data[x])
+		i+=1
+	
+	i+=1
+	size = data[i]*256 + data[i + 1]
+	i += 2
+	method = ""
+	if flag >> 2 & 0x1 == 1:
+		for x in range(i, i + size):
+			method += chr(data[x])
+		i += size
+		size = data[i]*256 + data[i + 1]
+		i += 2
+	
+	message = []
+	if size != 0:
+		message = data[i:i + size]
+
+	return (uuid, src, des, method, message)
+
 	text_file = open(filename, "r")
 	lines = text_file.readlines()
 	print(lines)
