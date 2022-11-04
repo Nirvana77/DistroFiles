@@ -218,7 +218,6 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	if(strcmp(_Message->m_Message.m_Method.m_Str, "upload") == 0)
 	{
-		printf("upload\n\r");
 		Bool isFile = True;
 		UInt16 size = 0;
 
@@ -231,6 +230,19 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		Filesystem_Server_Write(_Client->m_Server, isFile, name, &_Message->m_Data);
 		
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "list") == 0)
+	{
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
+		path[size] = 0;
+
+		_Replay->m_Size += Filesystem_Server_GetList(_Client->m_Server, path, &_Replay->m_Data);
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "listRespons", strlen("listRespons"));
+		return 1;
 	}
 	else
 	{

@@ -834,6 +834,55 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	return 0;
 }
 
+int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer)
+{
+	String fullPath;
+	String_Initialize(&fullPath, 64);
+
+	String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
+
+	if(String_EndsWith(&fullPath, "/") == False)
+		String_Append(&fullPath, "/", 1);
+	
+	if(strcmp(_Path, "root") != 0)
+		String_Append(&fullPath, _Path, strlen(_Path));
+		
+	if(String_EndsWith(&fullPath, "/") == False)
+		String_Append(&fullPath, "/", 1);
+
+	int written = 0;
+
+	
+	tinydir_dir dir;
+	if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		return -1;
+	String_Dispose(&fullPath);
+
+	UInt16 size = 0;
+	Buffer folderContext;
+	Buffer_Initialize(&folderContext, True, 64);
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
+			Buffer_WriteUInt16(&folderContext, strlen(file.name));
+			Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
+			size++;
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	written += Buffer_WriteUInt16(_DataBuffer, size);
+	written += Buffer_WriteBuffer(_DataBuffer, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
+
+	Buffer_Dispose(&folderContext);
+	return written;
+}
 
 int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer)
 {
