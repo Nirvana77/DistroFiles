@@ -5,13 +5,14 @@ from time import sleep
 import client as c
 import payload as p
 from struct import *
+import memory as m
 
 layout = [
 	[
 		sg.Canvas(key="main", size=(1000,500))
 	],
 	[
-		sg.Button("OK"),
+		sg.Button("Exit"),
 		sg.Button("Send File", key="send"),
 		sg.Button("Get list", key="list")
 	]
@@ -23,34 +24,12 @@ s = c.connect("mc.gamingpassestime.com", 7000)
 
 # Create an event loop
 while True:
-	try:
-		msg = s.recv(4096)
-	except socket.timeout as e:
-		err = e.args[0]
-		# this next if/else is a bit redundant, but illustrates how the
-		# timeout exception is setup
-		if err == 'timed out':
-			sleep(1)
-			print('recv timed out, retry later')
-		else:
-			print(e)
-	except socket.error as e:
-		# Something else happened, handle error, exit, etc.
-		print(e)
-	else:
-		if len(msg) == 0:
-			print('orderly shutdown on server end')
-		else:
-			(uuid, src, des, method, message) = p.recive(msg)
-			print("UUID: ", uuid)
-			print("src: ", src)
-			print("des: ", des)
-			print("method: ", method)
-			print("message: ", message)
+	(method, data) = c.work(s)
+	
 	event, values = window.read()
 	# End program if user closes window or
 	# presses the OK button
-	if event == "OK" or event == sg.WIN_CLOSED:
+	if event == "Exit" or event == sg.WIN_CLOSED:
 		break
 	elif event == "send":
 		p.send_file(s, "C:\\Users\\Navanda77\\school\\Filesystem\\Tests\\test.json", "test.json")

@@ -1,7 +1,6 @@
 import socket
 import os
-import hashlib
-import struct
+import payload as p
 
 def connect(host, port):
 	s = socket.socket()  # instantiate
@@ -38,6 +37,31 @@ def client_program():
 
 	client_socket.close()  # close the connection
 
+def work(s):
+	
+	try:
+		msg = s.recv(4096)
+	except socket.timeout as e:
+		err = e.args[0]
+		# this next if/else is a bit redundant, but illustrates how the
+		# timeout exception is setup
+		if err != 'timed out':
+			print(e)
+	except socket.error as e:
+		# Something else happened, handle error, exit, etc.
+		print(e)
+	else:
+		if len(msg) == 0:
+			print('orderly shutdown on server end')
+		else:
+			(uuid, src, des, method, message) = p.recive(msg)
+			print("UUID: ", uuid)
+			print("src: ", src)
+			print("des: ", des)
+			print("method: ", method)
+			print("message: ", message)
+			return (method, message)
+	return ("", [])
 
 if __name__ == '__main__':
 	client_program()
