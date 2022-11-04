@@ -1,8 +1,6 @@
-import socket
 import os
 import hashlib
-import struct
-
+import memory as m
 
 def byte_to_Array(str):
 	arr = []
@@ -181,9 +179,7 @@ def get_list(s, filepath):
 def recive(msg):
 	data = byte_to_Array(msg)
 	print("data: ", data)
-	i = 0
-	flag = data[0]
-	i+=1
+	(i, flag) = m.get_UInt8(data, 0)
 
 	uuid = []
 	for x in range(i, i + 16):
@@ -192,26 +188,25 @@ def recive(msg):
 	i += 1 + 8
 	
 	i += 1
-	src = []
+	src = ""
 	for x in range(i, i + 6):
-		src.append(data[x])
+		src += str(data[x]) + " "
 		i+=1
 	i += 1
-	des = []
+	des = ""
 	for x in range(i, i + 6):
-		des.append(data[x])
+		des += str(data[x]) + " "
 		i+=1
 	
 	i+=1
-	size = data[i]*256 + data[i + 1]
-	i += 2
+	(i, size) = m.get_UInt16(data, i)
+	
 	method = ""
 	if flag >> 2 & 0x1 == 1:
 		for x in range(i, i + size):
 			method += chr(data[x])
 		i += size
-		size = data[i]*256 + data[i + 1]
-		i += 2
+		(i, size) = m.get_UInt16(data, i)
 	
 	message = []
 	if size != 0:
