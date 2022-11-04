@@ -1,6 +1,16 @@
 import socket
 import os
 import hashlib
+import struct
+
+def byte_to_Array(str):
+	arr = []
+
+	for c in str:
+		arr.append(c)
+
+	return arr
+
 
 def hash_file(filename):
    """"This function returns the SHA-1 hash
@@ -129,13 +139,36 @@ def load_file(filename):
 
 	return lines
 
+def send_file(s, filepath, filename):
+	method = "upload"
+	# file = input("filename > ")
+
+	message = [1, int(len(filename)/256), len(filename)%256]
+
+	for i in list(filename.encode('ascii')):
+		message.append(i)
+
+	file_arr = load_file(filepath)
+	file_hash_arr = str_to_hex_array(hash_file(filepath))
+
+	file_str = ""
+	file_str = file_str.join(file_arr)
+	length = len(file_str)
+
+	message.append(int(length/256))
+	message.append(length%256)
+	for i in list(file_str.encode('ascii')):
+		message.append(i)
+
+	message = message + file_hash_arr
+	arr = messag_builder("1", "", method, message)
+	print(arr)
+	
+	s.send(bytearray(arr[0]))
+
+
 def client_program():
-	host = socket.gethostname()  # as both code is running on same pc
-	port = 8021  # socket server port number
-
-	client_socket = socket.socket()  # instantiate
-	client_socket.connect((host, port))  # connect to the server
-
+	client_socket = connect(socket.gethostname(), 8021)
 	data = ""
 	method = ""
 	message = ""
@@ -145,34 +178,10 @@ def client_program():
 		print("2) Remove file")
 		print("3) Rename file")
 
-		data = input('method -> ')
+		data = input('-> ')
 
 		if(data == "1"):
-			method = "upload"
-			os.system('clear')
-			# file = input("filename > ")
-			file = "/home/navanda/github/Filesystem/Shared/settings.json"
-
-			message = [1, int(len("settings.json")/256), len("settings.json")%256]
-			
-			for i in list("settings.json".encode('ascii')):
-				message.append(i)
-			
-			file_arr = load_file(file)
-			file_hash_arr = str_to_hex_array(hash_file(file))
-			
-			file_str = ""
-			file_str = file_str.join(file_arr)
-			length = len(file_str)
-
-			message.append(int(length/256))
-			message.append(length%256)
-			for i in list(file_str.encode('ascii')):
-				message.append(i)
-
-			message = message + file_hash_arr
-			
-			data = "s"
+			send_file(client_socket, "setting.json")
 
 		elif(data != "q"):
 			data = ""
