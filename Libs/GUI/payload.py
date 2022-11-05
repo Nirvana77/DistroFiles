@@ -1,6 +1,76 @@
-import os
 import hashlib
 import memory as m
+
+class Payload:
+
+	def __init__(self, socket):
+		self.socket = socket
+		
+	def send_file(self, filepath, filename):
+		method = "upload"
+		# file = input("filename > ")
+
+		message = [1, int(len(filename)/256), len(filename)%256]
+
+		for i in list(filename.encode('ascii')):
+			message.append(i)
+
+		file_arr = load_file(filepath)
+		file_hash_arr = str_to_hex_array(hash_file(filepath))
+
+		file_str = ""
+		file_str = file_str.join(file_arr)
+		length = len(file_str)
+
+		message.append(int(length/256))
+		message.append(length%256)
+		for i in list(file_str.encode('ascii')):
+			message.append(i)
+
+		message = message + file_hash_arr
+		arr = messag_builder("1", "", method, message)
+		print(arr)
+		
+		self.socket.send(bytearray(arr[0]))
+
+	def get_list(self, filepath):
+		method = "list"
+		message = [int(len(filepath)/256), len(filepath)%256]
+		for i in list(filepath.encode('ascii')):
+			message.append(i)
+
+		arr = messag_builder("1", "", method, message)
+		print(arr)
+		
+		self.socket.send(bytearray(arr[0]))
+
+	def send_file(self, filepath, filename):
+		method = "upload"
+		# file = input("filename > ")
+
+		message = [1, int(len(filename)/256), len(filename)%256]
+
+		for i in list(filename.encode('ascii')):
+			message.append(i)
+
+		file_arr = load_file(filepath)
+		file_hash_arr = str_to_hex_array(hash_file(filepath))
+
+		file_str = ""
+		file_str = file_str.join(file_arr)
+		length = len(file_str)
+
+		message.append(int(length/256))
+		message.append(length%256)
+		for i in list(file_str.encode('ascii')):
+			message.append(i)
+
+		message = message + file_hash_arr
+		arr = messag_builder("1", "", method, message)
+		print(arr)
+		
+		self.socket.send(bytearray(arr[0]))
+
 
 def byte_to_Array(str):
 	arr = []
@@ -12,24 +82,24 @@ def byte_to_Array(str):
 
 
 def hash_file(filename):
-   """"This function returns the SHA-1 hash
-   of the file passed into it"""
+	""""This function returns the SHA-1 hash
+	of the file passed into it"""
 
-   # make a hash object
-   h = hashlib.md5()
+	# make a hash object
+	h = hashlib.md5()
 
-   # open file for reading in binary mode
-   with open(filename,'rb') as file:
+	# open file for reading in binary mode
+	with open(filename,'rb') as file:
 
-       # loop till the end of the file
-       chunk = 0
-       while chunk != b'':
-           # read only 1024 bytes at a time
-           chunk = file.read(1024)
-           h.update(chunk)
+		# loop till the end of the file
+		chunk = 0
+		while chunk != b'':
+			# read only 1024 bytes at a time
+			chunk = file.read(1024)
+			h.update(chunk)
 
-   # return the hex representation of digest
-   return h.hexdigest()
+	# return the hex representation of digest
+	return h.hexdigest()
 
 def str_to_hex_array(string):
 	arr = []
@@ -65,6 +135,7 @@ def get_crc(array, result = 0):
 
 	return result
 
+	# TODO: #50 make this into an bytes array
 def messag_builder(src, des, method, message):
 	array = [[]]
 	index = 0
@@ -138,44 +209,6 @@ def load_file(filename):
 
 	return lines
 
-def send_file(s, filepath, filename):
-	method = "upload"
-	# file = input("filename > ")
-
-	message = [1, int(len(filename)/256), len(filename)%256]
-
-	for i in list(filename.encode('ascii')):
-		message.append(i)
-
-	file_arr = load_file(filepath)
-	file_hash_arr = str_to_hex_array(hash_file(filepath))
-
-	file_str = ""
-	file_str = file_str.join(file_arr)
-	length = len(file_str)
-
-	message.append(int(length/256))
-	message.append(length%256)
-	for i in list(file_str.encode('ascii')):
-		message.append(i)
-
-	message = message + file_hash_arr
-	arr = messag_builder("1", "", method, message)
-	print(arr)
-	
-	s.send(bytearray(arr[0]))
-
-def get_list(s, filepath):
-	method = "list"
-	message = [int(len(filepath)/256), len(filepath)%256]
-	for i in list(filepath.encode('ascii')):
-		message.append(i)
-
-	arr = messag_builder("1", "", method, message)
-	print(arr)
-	
-	s.send(bytearray(arr[0]))
-
 def recive(msg):
 	data = byte_to_Array(msg)
 	print("data: ", data)
@@ -221,30 +254,3 @@ def recive(msg):
 	text_file.close()
 
 	return lines
-
-def send_file(s, filepath, filename):
-	method = "upload"
-	# file = input("filename > ")
-
-	message = [1, int(len(filename)/256), len(filename)%256]
-
-	for i in list(filename.encode('ascii')):
-		message.append(i)
-
-	file_arr = load_file(filepath)
-	file_hash_arr = str_to_hex_array(hash_file(filepath))
-
-	file_str = ""
-	file_str = file_str.join(file_arr)
-	length = len(file_str)
-
-	message.append(int(length/256))
-	message.append(length%256)
-	for i in list(file_str.encode('ascii')):
-		message.append(i)
-
-	message = message + file_hash_arr
-	arr = messag_builder("1", "", method, message)
-	print(arr)
-	
-	s.send(bytearray(arr[0]))
