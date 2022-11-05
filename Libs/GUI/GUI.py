@@ -23,45 +23,74 @@ class GUI:
 	def __init__(self, canvas):
 		self.canvas = canvas
 
-	def draw_Directory(self, dir):
+	def draw_Directory(self, list: list, path: str):
 		(x, y, w, h, margin) = (0, 0, 100, 100, 10) 
-		for d in dir:
-			
+		for d in list:
 			if d["isFile"]:
-				fileFolder = self.File(self.canvas, x, y, w, h, d["name"])
+				fileFolder = self.File(self.canvas, x, y, w, h, d["name"], path)
 			else:
-				fileFolder = self.Folder(self.canvas, x, y, w, h, d["name"])
-			
+				fileFolder = self.Folder(self.canvas, x, y, w, h, d["name"], path)
+				
+			if not self.map.__contains__(fileFolder):
 
-			self.map.append(fileFolder)
-			x += w + margin
-			
-		print(dir)
+				self.map.append(fileFolder)
+				x += w + margin
+			else:
+				fileFolder.destroy()
 
 	class File:
 
-		def __init__(self, canvas, x, y, w, h, name):
+		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
 			self.x = x
 			self.y = y
 			self.width = w
 			self.higth = h
 			self.name = name
+			self.path = path
+			self.canvas = canvas
 
 			self.rec = canvas.create_rectangle(x, y, w + x, h + y, fill="RED")
 			self.text = canvas.create_text(x + w / 2, y + h + 15, text=self.name)
 
+		def destroy(self):
+			self.canvas.delete(self.rec)
+			self.canvas.delete(self.text)
+
+		def __eq__(self, __o: object) -> bool:
+			if __o.__class__ is not self.__class__:
+				return False
+
+			return self.name == __o.name
+
+		def __str__(self) -> str:
+			return f"File: {self.name} at {self.path}"
+
 	class Folder:
 
-		def __init__(self, canvas, x, y, w, h, name):
+		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
 			self.x = x
 			self.y = y
 			self.width = w
 			self.higth = h
 			self.name = name
+			self.path = path
+			self.canvas = canvas
 
-			self.rec = canvas.create_rectangle(x, y, w + x, h + y, fill="BLUE")
-			self.text = canvas.create_text(x + w / 2, y + h + 15, text=self.name)
+			self.rec = self.canvas.create_rectangle(x, y, w + x, h + y, fill="BLUE")
+			self.text = self.canvas.create_text(x + w / 2, y + h + 15, text=self.name)
 	
+		def destroy(self):
+			self.canvas.delete(self.rec)
+			self.canvas.delete(self.text)
+			
+		def __eq__(self, __o: object) -> bool:
+			if __o.__class__ is not self.__class__:
+				return False
+			
+			return self.name == __o.name
+
+		def __str__(self) -> str:
+			return f"Folder: {self.name} at {self.path}"
 
 def main():
 	layout = [
@@ -101,7 +130,7 @@ def main():
 					}
 					directory.append(obj)
 				
-				gui.draw_Directory(directory)
+				gui.draw_Directory(directory, "root")
 
 			print("Data")
 		
