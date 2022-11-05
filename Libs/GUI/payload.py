@@ -42,7 +42,7 @@ class Payload:
 		arr = messag_builder("1", "", method, message)
 		print(arr)
 		
-		self.socket.send(bytearray(arr[0]))
+		self.socket.send(arr)
 
 	def send_file(self, filepath, filename):
 		method = "upload"
@@ -135,9 +135,8 @@ def get_crc(array, result = 0):
 
 	return result
 
-	# TODO: #50 make this into an bytes array
-def messag_builder(src, des, method, message):
-	array = [[]]
+def messag_builder(src, des, method, message) -> bytearray:
+	array = bytearray()
 	index = 0
 	flag = 0
 	if(method != ""):
@@ -149,54 +148,54 @@ def messag_builder(src, des, method, message):
 	if(src != ""):
 		flag += 1 << 0
 		
-	array[index] = [flag, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 0, 1,2,3,4,5,6,7,8]
+	for v in [flag, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 0, 1,2,3,4,5,6,7,8]:
+		array.append(v)
 	
 	if(src != ""):
-		array[index].append(2)
+		array.append(2)
 		for x in range(1,7):
-			array[index].append(x)
+			array.append(x)
 	else:
-		array[index].append(0)
+		array.append(0)
 		for x in range(1,7):
-			array[index].append(0)
+			array.append(0)
 
 	if(des != ""):
-		array[index].append(2)
+		array.append(2)
 		for x in range(1,7):
-			array[index].append(x)
+			array.append(x)
 	else:
-		array[index].append(0)
+		array.append(0)
 		for x in range(1,7):
-			array[index].append(0)
+			array.append(0)
 
 	if(method != ""):
-		array[index].append(1)
+		array.append(1)
 		length = len(method)
-		array[index].append(int(length/256))
-		array[index].append(length%256)
+		array.append(int(length/256))
+		array.append(length%256)
 		for i in list(method.encode('ascii')):
-			array[index].append(i)
+			array.append(i)
 	
 	length = len(message)
-	array[index].append(int(length/256))
-	array[index].append(length%256)
+	array.append(int(length/256))
+	array.append(length%256)
 
-	if(length + len(array[index]) >= 300):
+	if(length + len(array) >= 300):
 		index = index + 1
 		array.append([])
 
 	if(type(message) is str):
 		for i in list(message.encode('ascii')):
-			array[index].append(i)
+			array.append(i)
 		
 	elif (type(message) is list):
-		array[index] = array[index] + message
+		for v in message:
+			array.append(v)
 		
-	crc = 0
-	for arr in array:
-		crc = get_crc(arr, crc)
+	crc = get_crc(array)
 
-	array[index].append(crc)
+	array.append(crc)
 
 	return array
 
