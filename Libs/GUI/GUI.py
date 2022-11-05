@@ -24,7 +24,12 @@ class GUI:
 		self.canvas = canvas
 
 	def draw_Directory(self, list: list, path: str):
-		(x, y, w, h, margin) = (0, 0, 100, 100, 10) 
+		if len(self.map) > 0:
+			(x, y) = (self.map[len(self.map) - 1].x, self.map[len(self.map) - 1].y)
+		else:
+			(x, y) = (0,0)
+		(w, h, margin) = (100, 100, 10) 
+
 		for d in list:
 			if d["isFile"]:
 				fileFolder = self.File(self.canvas, x, y, w, h, d["name"], path)
