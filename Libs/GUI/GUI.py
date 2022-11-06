@@ -1,10 +1,6 @@
 import PySimpleGUI as sg
-import sys
-import socket
-from time import sleep
 import client as c
 import payload as p
-from struct import *
 import memory as m
 
 	# Canvas.create_polygon
@@ -22,6 +18,8 @@ class GUI:
 	
 	def __init__(self, canvas):
 		self.canvas = canvas
+		self.canvas.bind("<Key>", self.key)
+		self.canvas.bind("<Button-1>", self.cliecked)
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
@@ -43,18 +41,25 @@ class GUI:
 			else:
 				fileFolder.destroy()
 
-	class File:
+	def key(self, event):
+		print("pressed: ", repr(event.char))
 
-		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+	def cliecked(self, event):
+		for icon in self.map:
+			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
+				icon.click(event)
+
+	class Icon:
+
+		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str):
 			self.x = x
 			self.y = y
 			self.width = w
-			self.higth = h
+			self.heigth = h
 			self.name = name
-			self.path = path
 			self.canvas = canvas
 
-			self.rec = canvas.create_rectangle(x, y, w + x, h + y, fill="RED")
+			self.rec = canvas.create_rectangle(x, y, w + x, h + y)
 			self.text = canvas.create_text(x + w / 2, y + h + 15, text=self.name)
 
 		def destroy(self):
@@ -68,34 +73,29 @@ class GUI:
 			return self.name == __o.name
 
 		def __str__(self) -> str:
-			return f"File: {self.name} at {self.path}"
+			return f"Icon: {self.name}"
 
-	class Folder:
+		def click(self, event):
+			print("Clicked at, ", self.name)
+	
+	class File(Icon):
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
-			self.x = x
-			self.y = y
-			self.width = w
-			self.higth = h
-			self.name = name
+			super().__init__(canvas, x, y, w, h, name)
 			self.path = path
-			self.canvas = canvas
+			self.canvas.itemconfig(self.rec, fill="RED")
 
-			self.rec = self.canvas.create_rectangle(x, y, w + x, h + y, fill="BLUE")
-			self.text = self.canvas.create_text(x + w / 2, y + h + 15, text=self.name)
-	
-		def destroy(self):
-			self.canvas.delete(self.rec)
-			self.canvas.delete(self.text)
-			
-		def __eq__(self, __o: object) -> bool:
-			if __o.__class__ is not self.__class__:
-				return False
-			
-			return self.name == __o.name
+		def click(self, event):
+			print("Clicked File")
+	class Folder(Icon):
 
-		def __str__(self) -> str:
-			return f"Folder: {self.name} at {self.path}"
+		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+			super().__init__(canvas, x, y, w, h, name)
+			self.path = path
+			self.canvas.itemconfig(self.rec, fill="BLUE")
+		
+		def click(self, event):
+			print("Clicked Folder")
 
 def main():
 	layout = [
@@ -104,8 +104,10 @@ def main():
 		],
 		[
 			sg.Button("Exit"),
-			sg.Button("Send File", key="send"),
-			sg.Button("Get list", key="list")
+			sg.Text("Image File"),
+			sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+			sg.FileBrowse(),
+			sg.Button("Get list", key="list"),
 		]
 	]
 
@@ -113,13 +115,18 @@ def main():
 	# Create the window
 	window = sg.Window("GUI", layout)
 	client = c.Client("mc.gamingpassestime.com", 7000)
-	
-	window.read()
-	gui = GUI(window["main"].TKCanvas)
+	gui = None
 
 	# Create an event loop
 	while True:
+		event, values = window.read()
+
+		if gui == None and not window["main"].TKCanvas == None:
+			gui = GUI(window["main"].TKCanvas)
+
+		
 		(method, data) = client.work()
+		
 		if len(data) != 0:
 			
 			if method == "listRespons":
@@ -139,11 +146,17 @@ def main():
 
 			print("Data")
 		
-		event, values = window.read()
 		# End program if user closes window or
 		# presses the OK button
 		if event == "Exit" or event == sg.WIN_CLOSED:
 			break
+		
+		if event == "-FOLDER-":
+			file = values["-FOLDER-"]
+			print("Event: ", event)
+			print("Values: ", values)
+			print("File: ", file)
+
 		else:
 			payload = p.Payload(client.socket)
 			if event == "send":
@@ -153,7 +166,6 @@ def main():
 			else:
 				print("Event: ", event)
 				print("Values: ", values)
-				window["date"].update("mamasd")
 
 	window.close()
 
