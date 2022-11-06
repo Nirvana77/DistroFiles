@@ -117,7 +117,7 @@ def main():
 	client = c.Client("mc.gamingpassestime.com", 7000)
 	gui = None
 
-	# Create an event loop
+	# TODO: #51 Add a thred for window and client
 	while True:
 		event, values = window.read()
 
