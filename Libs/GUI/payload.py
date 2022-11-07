@@ -121,7 +121,6 @@ def str_to_hex_array(string):
 
 	return arr
 
-# TODO: #49 fix crc
 def get_crc(array, result = 0):
 	CRC = 0b01011
 
@@ -137,7 +136,6 @@ def get_crc(array, result = 0):
 
 def messag_builder(src, des, method, message) -> bytearray:
 	array = bytearray()
-	index = 0
 	flag = 0
 	if(method != ""):
 		flag += 1 << 2
@@ -185,7 +183,7 @@ def messag_builder(src, des, method, message) -> bytearray:
 		for i in list(message.encode('ascii')):
 			array.append(i)
 		
-	elif (type(message) is list):
+	elif (type(message) is list or type(message) is bytearray):
 		for v in message:
 			array.append(v)
 		
@@ -241,11 +239,3 @@ def recive(msg):
 		message = data[i:i + size]
 
 	return (uuid, src, des, method, message)
-
-	text_file = open(filename, "r")
-	lines = text_file.readlines()
-	print(lines)
-	print(len(lines))
-	text_file.close()
-
-	return lines

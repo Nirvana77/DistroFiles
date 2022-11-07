@@ -50,7 +50,11 @@ class GUI:
 	def cliecked(self, event):
 		for icon in self.map:
 			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
-				icon.click(event)
+				method, message = icon.click(event)
+				if len(message) > 0:
+					print("msg: ", message)
+					data = p.messag_builder("1", "", method, message)
+					self.client.socket.sendall(data)
 
 	def recv(self, method, data):
 		if len(data) != 0:
@@ -72,6 +76,7 @@ class GUI:
 
 	def destroy(self):
 		self.client.destroy()
+
 	class Icon:
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str):
@@ -98,8 +103,9 @@ class GUI:
 		def __str__(self) -> str:
 			return f"Icon: {self.name}"
 
-		def click(self, event):
+		def click(self, event) -> list:
 			print("Clicked at, ", self.name, " at (", event.x, ", ", event.y, ")")
+			return list()
 	
 	class File(Icon):
 
@@ -108,11 +114,27 @@ class GUI:
 			self.path = path
 			self.canvas.itemconfig(self.rec, fill="RED")
 
-		def click(self, event):
+		def click(self, event) -> list:
 			if event.num == 1:
 				print("Left Click File")
+				method = "get"
+				
+				path = self.path
+				if not path[len(path) - 1] == '/' and not path[len(path) - 1] == '\\':
+					path += "/"
+				
+				path += self.name
+
+				msg = [True, int(len(path)/256), len(path)%256]
+				for i in list(path.encode('ascii')):
+					msg.append(i)
+
+				return (method, msg)
 			elif event.num == 3:
 				print("Rigth Click File")
+
+			return list()
+
 	class Folder(Icon):
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
@@ -120,11 +142,12 @@ class GUI:
 			self.path = path
 			self.canvas.itemconfig(self.rec, fill="BLUE")
 		
-		def click(self, event):
+		def click(self, event) -> list:
 			if event.num == 1:
 				print("Left Click Folder")
 			elif event.num == 3:
 				print("Rigth Click Folder")
+			return list()
 
 def main():
 	layout = [
