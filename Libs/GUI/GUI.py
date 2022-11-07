@@ -20,6 +20,7 @@ class GUI:
 		self.canvas = canvas
 		self.canvas.bind("<Key>", self.key)
 		self.canvas.bind("<Button-1>", self.cliecked)
+		self.canvas.bind("<Button-3>", self.cliecked)
 		self.client = c.Client("mc.gamingpassestime.com", 7000, self.recv, self)
 
 	def draw_Directory(self, list: list, path: str):
@@ -108,7 +109,10 @@ class GUI:
 			self.canvas.itemconfig(self.rec, fill="RED")
 
 		def click(self, event):
-			print("Clicked File")
+			if event.num == 1:
+				print("Left Click File")
+			elif event.num == 3:
+				print("Rigth Click File")
 	class Folder(Icon):
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
@@ -117,7 +121,10 @@ class GUI:
 			self.canvas.itemconfig(self.rec, fill="BLUE")
 		
 		def click(self, event):
-			print("Clicked Folder")
+			if event.num == 1:
+				print("Left Click Folder")
+			elif event.num == 3:
+				print("Rigth Click Folder")
 
 def main():
 	layout = [
@@ -158,6 +165,7 @@ def main():
 
 			elif event == "list":
 				payload.get_list("root")
+
 			else:
 				print("Event: ", event)
 				print("Values: ", values)
@@ -183,7 +191,6 @@ def sendPath(path: str, payload: p.Payload):
 		payload.send_file(path, name)
 	else:
 		print("Extantion ", ext, " is not supported!")
-
 
 if __name__ == '__main__':
 	main()
