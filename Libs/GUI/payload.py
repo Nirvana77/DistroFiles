@@ -69,7 +69,7 @@ class Payload:
 		arr = messag_builder("1", "", method, message)
 		print(arr)
 		
-		self.socket.send(bytearray(arr[0]))
+		self.socket.send(arr)
 
 
 def byte_to_Array(str):
@@ -95,7 +95,7 @@ def hash_file(filename):
 		chunk = 0
 		while chunk != b'':
 			# read only 1024 bytes at a time
-			chunk = file.read(1024)
+			chunk = file.read(8)
 			h.update(chunk)
 
 	# return the hex representation of digest
@@ -180,10 +180,6 @@ def messag_builder(src, des, method, message) -> bytearray:
 	length = len(message)
 	array.append(int(length/256))
 	array.append(length%256)
-
-	if(length + len(array) >= 300):
-		index = index + 1
-		array.append([])
 
 	if(type(message) is str):
 		for i in list(message.encode('ascii')):

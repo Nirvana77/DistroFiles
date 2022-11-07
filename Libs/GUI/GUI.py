@@ -24,7 +24,8 @@ class GUI:
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
-			(x, y) = (self.map[len(self.map) - 1].x, self.map[len(self.map) - 1].y)
+			last = self.map[len(self.map) - 1]
+			(x, y) = (last.x + last.width + 10, last.y)
 		else:
 			(x, y) = (0,0)
 		(w, h, margin) = (100, 100, 10) 
@@ -68,7 +69,8 @@ class GUI:
 				
 				self.draw_Directory(directory, "root")
 
-			print("Data")
+	def destroy(self):
+		self.client.destroy()
 	class Icon:
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str):
@@ -96,7 +98,7 @@ class GUI:
 			return f"Icon: {self.name}"
 
 		def click(self, event):
-			print("Clicked at, ", self.name)
+			print("Clicked at, ", self.name, " at (", event.x, ", ", event.y, ")")
 	
 	class File(Icon):
 
@@ -124,9 +126,10 @@ def main():
 		],
 		[
 			sg.Button("Exit"),
-			sg.Text("Image File"),
-			sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+			sg.Text("File"),
+			sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
 			sg.FileBrowse(),
+			sg.Button("Send", key="send"),
 			sg.Button("Get list", key="list"),
 		]
 	]
@@ -134,7 +137,6 @@ def main():
 
 	# Create the window
 	gui = None
-	client = None
 	window = sg.Window("GUI", layout)
 
 	while True:
@@ -142,23 +144,18 @@ def main():
 
 		if gui == None and not window["main"].TKCanvas == None:
 			gui = GUI(window["main"].TKCanvas)
-			client = gui.client
 		
 		# End program if user closes window or
 		# presses the OK button
 		if event == "Exit" or event == sg.WIN_CLOSED:
 			break
 		
-		if event == "-FOLDER-":
-			file = values["-FOLDER-"]
-			print("Event: ", event)
-			print("Values: ", values)
-			print("File: ", file)
-
 		else:
-			payload = p.Payload(client.socket)
+			payload = p.Payload(gui.client.socket)
 			if event == "send":
-				payload.send_file("C:\\Users\\Navanda77\\school\\Filesystem\\Tests\\test.json", "test.json")
+				path = window["-TOUT-"].get()
+				sendPath(path, payload)
+
 			elif event == "list":
 				payload.get_list("root")
 			else:
@@ -166,7 +163,26 @@ def main():
 				print("Values: ", values)
 
 	window.close()
-	client.destroy()
+	gui.destroy()
+
+def sendPath(path: str, payload: p.Payload):
+	name = ""
+	ext = ""
+	
+	for i in reversed(range(0, len(path))):
+		if path[i] == '/' or path[i] == '\\':
+			break
+		else:
+			name += path[i]
+		if len(ext) == 0 or not ext[len(ext) - 1] == '.':
+			ext += path[i]
+
+	name = name[::-1]
+	ext = ext[::-1]
+	if ext == ".txt" or ext == ".json":
+		payload.send_file(path, name)
+	else:
+		print("Extantion ", ext, " is not supported!")
 
 
 if __name__ == '__main__':
