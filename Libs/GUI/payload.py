@@ -1,76 +1,35 @@
 import hashlib
 import memory as m
 
-class Payload:
+def send_file(filepath, filename):
+	# file = input("filename > ")
 
-	def __init__(self, socket):
-		self.socket = socket
-		
-	def send_file(self, filepath, filename):
-		method = "upload"
-		# file = input("filename > ")
+	message = [1, int(len(filename)/256), len(filename)%256]
 
-		message = [1, int(len(filename)/256), len(filename)%256]
+	for i in list(filename.encode('ascii')):
+		message.append(i)
 
-		for i in list(filename.encode('ascii')):
-			message.append(i)
+	file_arr = load_file(filepath)
+	file_hash_arr = str_to_hex_array(hash_file(filepath))
 
-		file_arr = load_file(filepath)
-		file_hash_arr = str_to_hex_array(hash_file(filepath))
+	file_str = ""
+	file_str = file_str.join(file_arr)
+	length = len(file_str)
 
-		file_str = ""
-		file_str = file_str.join(file_arr)
-		length = len(file_str)
+	message.append(int(length/256))
+	message.append(length%256)
+	for i in list(file_str.encode('ascii')):
+		message.append(i)
 
-		message.append(int(length/256))
-		message.append(length%256)
-		for i in list(file_str.encode('ascii')):
-			message.append(i)
+	message = message + file_hash_arr
+	return message
 
-		message = message + file_hash_arr
-		arr = messag_builder("1", "", method, message)
-		print(arr)
-		
-		self.socket.send(bytearray(arr[0]))
+def get_list(filepath) -> list:
+	message = [int(len(filepath)/256), len(filepath)%256]
+	for i in list(filepath.encode('ascii')):
+		message.append(i)
 
-	def get_list(self, filepath):
-		method = "list"
-		message = [int(len(filepath)/256), len(filepath)%256]
-		for i in list(filepath.encode('ascii')):
-			message.append(i)
-
-		arr = messag_builder("1", "", method, message)
-		print(arr)
-		
-		self.socket.send(arr)
-
-	def send_file(self, filepath, filename):
-		method = "upload"
-		# file = input("filename > ")
-
-		message = [1, int(len(filename)/256), len(filename)%256]
-
-		for i in list(filename.encode('ascii')):
-			message.append(i)
-
-		file_arr = load_file(filepath)
-		file_hash_arr = str_to_hex_array(hash_file(filepath))
-
-		file_str = ""
-		file_str = file_str.join(file_arr)
-		length = len(file_str)
-
-		message.append(int(length/256))
-		message.append(length%256)
-		for i in list(file_str.encode('ascii')):
-			message.append(i)
-
-		message = message + file_hash_arr
-		arr = messag_builder("1", "", method, message)
-		print(arr)
-		
-		self.socket.send(arr)
-
+	return message
 
 def byte_to_Array(str):
 	arr = []

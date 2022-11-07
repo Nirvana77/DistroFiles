@@ -145,6 +145,16 @@ class GUI:
 		def click(self, event) -> list:
 			if event.num == 1:
 				print("Left Click Folder")
+				
+				path = self.path
+				if not path[len(path) - 1] == '/' and not path[len(path) - 1] == '\\':
+					path += "/"
+				
+				path += self.name
+				
+				msg = p.get_list(path)
+
+				return ("list", msg)
 			elif event.num == 3:
 				print("Rigth Click Folder")
 			return list()
@@ -181,13 +191,13 @@ def main():
 			break
 		
 		else:
-			payload = p.Payload(gui.client.socket)
 			if event == "send":
 				path = window["-TOUT-"].get()
-				sendPath(path, payload)
+				sendPath(path, gui)
 
 			elif event == "list":
-				payload.get_list("root")
+				msg = p.get_list("root")
+				gui.client.socket.sendall(p.messag_builder("1", "", "list", msg))
 
 			else:
 				print("Event: ", event)
@@ -196,7 +206,7 @@ def main():
 	window.close()
 	gui.destroy()
 
-def sendPath(path: str, payload: p.Payload):
+def sendPath(path: str, gui: GUI):
 	name = ""
 	ext = ""
 	
@@ -211,7 +221,8 @@ def sendPath(path: str, payload: p.Payload):
 	name = name[::-1]
 	ext = ext[::-1]
 	if ext == ".txt" or ext == ".json":
-		payload.send_file(path, name)
+		msg = p.send_file(path, name)
+		gui.client.socket.sendall(p.messag_builder("1", "", "upload", msg))
 	else:
 		print("Extantion ", ext, " is not supported!")
 
