@@ -20,6 +20,7 @@ class GUI:
 		self.canvas = canvas
 		self.canvas.bind("<Key>", self.key)
 		self.canvas.bind("<Button-1>", self.cliecked)
+		self.client = c.Client("mc.gamingpassestime.com", 7000, self.recv, self)
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
@@ -49,6 +50,25 @@ class GUI:
 			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
 				icon.click(event)
 
+	def recv(self, method, data):
+		if len(data) != 0:
+
+			if method == "listRespons":
+				(i, size) = m.get_UInt16(data, 0)
+				directory = []
+				for x in range(0, size):
+					(i, isFile) = m.get_UInt8(data, i)
+					(i, size) = m.get_UInt16(data, i)
+					(i, name) = m.get_Seting(data, i, size)
+					obj = {
+						"isFile": isFile == 1,
+						"name": name,
+					}
+					directory.append(obj)
+				
+				self.draw_Directory(directory, "root")
+
+			print("Data")
 	class Icon:
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str):
@@ -113,38 +133,16 @@ def main():
 
 
 	# Create the window
-	window = sg.Window("GUI", layout)
-	client = c.Client("mc.gamingpassestime.com", 7000)
 	gui = None
+	client = None
+	window = sg.Window("GUI", layout)
 
-	# TODO: #51 Add a thred for window and client
 	while True:
 		event, values = window.read()
 
 		if gui == None and not window["main"].TKCanvas == None:
 			gui = GUI(window["main"].TKCanvas)
-
-		
-		(method, data) = client.work()
-		
-		if len(data) != 0:
-			
-			if method == "listRespons":
-				(i, size) = m.get_UInt16(data, 0)
-				directory = []
-				for x in range(0, size):
-					(i, isFile) = m.get_UInt8(data, i)
-					(i, size) = m.get_UInt16(data, i)
-					(i, name) = m.get_Seting(data, i, size)
-					obj = {
-						"isFile": isFile == 1,
-						"name": name,
-					}
-					directory.append(obj)
-				
-				gui.draw_Directory(directory, "root")
-
-			print("Data")
+			client = gui.client
 		
 		# End program if user closes window or
 		# presses the OK button
@@ -168,6 +166,7 @@ def main():
 				print("Values: ", values)
 
 	window.close()
+	client.destroy()
 
 
 if __name__ == '__main__':
