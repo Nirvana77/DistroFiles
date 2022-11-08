@@ -220,7 +220,7 @@ def sendPath(path: str, gui: GUI):
 
 	name = name[::-1]
 	ext = ext[::-1]
-	if ext == ".txt" or ext == ".json":
+	if ext == ".txt" or ext == ".json" or ext == ".zip":
 		msg = p.send_file(path, name)
 		gui.client.socket.sendall(p.messag_builder("1", "", "upload", msg))
 	else:
