@@ -21,7 +21,7 @@ class GUI:
 		self.canvas.bind("<Key>", self.key)
 		self.canvas.bind("<Button-1>", self.cliecked)
 		self.canvas.bind("<Button-3>", self.cliecked)
-		self.client = c.Client("133.92.147.203", 8021, self.recv)
+		self.client = c.Client("133.92.147.203", 8121, self.recv)
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
