@@ -14,6 +14,9 @@ def send_file(filepath, filename):
 	file_hash_arr = str_to_hex_array(hash_file(filepath))
 
 	length = len(file_arr)
+
+	if length > 256*256 - 1:
+		raise Exception("To bit of file, implement chuncking!")
 	
 	print(file_arr)
 
