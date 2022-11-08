@@ -193,7 +193,7 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 	FILE* f = NULL;
 	File_Open("payload_dump.txt", File_Mode_ApendCreate, &f);
 	
-	File_WriteAll(f, str.m_Ptr, str.m_Length);
+	File_WriteAll(f, (const unsigned char*)str.m_Ptr, str.m_Length);
 
 	File_Close(f);
 	String_Dispose(&str);
