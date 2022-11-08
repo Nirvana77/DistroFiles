@@ -751,6 +751,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 	return 1;
 }
 
+//TODO: #53 This returns Can't write to path: Shared/root/RocketcharCodes.txt
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
