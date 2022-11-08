@@ -52,7 +52,7 @@ int File_Hash(FILE* _File, unsigned char _Result[16])
 
 	int bytesLeft = totalSize;
 	char buffer[8];
-	printf("File data:\r\n");
+	
 	while(bytesLeft > 0)
 	{
 		int bytesToRead = sizeof(buffer);
@@ -62,15 +62,10 @@ int File_Hash(FILE* _File, unsigned char _Result[16])
 		int bytesRead = fread(buffer, 1, bytesToRead, _File);
 		if(bytesRead > 0)
 		{
-			for (int i = 0; i < bytesRead; i++)
-				printf("%x ", buffer[i]);
-			
-			
 			MD5_Update(&md5, buffer, bytesRead);
 			bytesLeft -= bytesRead;
 		}
 	}
-	printf("\r\n");
 
 	MD5_Final(_Result, &md5);
 	return 0;
