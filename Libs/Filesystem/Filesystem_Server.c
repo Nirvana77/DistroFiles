@@ -196,7 +196,6 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 
 	if(readed > 0)
 	{
-		printf("Filesystem_Server_TCPRead\n\r");
 		Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
 		return readed;
 	}
@@ -209,7 +208,6 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Filesystem_Server_TCPWrite\n\r");
 
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
 	while (currentNode != NULL)
@@ -254,9 +252,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
+	{
+		printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 		return 0;
+	}
 
 	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 
@@ -959,11 +959,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 				_Server->m_TempListBuffer.m_ReadPtr += written;
 				_Server->m_TempListBuffer.m_BytesLeft -= written;
-
-				printf("Buffer: \n\r");
-				for (int i = 0; i < written; i++)
-					printf("%x ", _Server->m_TempListBuffer.m_Ptr[i]);
-				printf("\n\r");
 
 				Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
 				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);

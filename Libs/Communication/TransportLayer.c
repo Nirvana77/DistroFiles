@@ -95,13 +95,13 @@ int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 	{
 		if(_TransportLayer->m_FuncOut.m_Send(_TransportLayer->m_FuncOut.m_Context, _PaylodePtr) == 1)
 		{
-			printf("TransportLayer_SendPayload\n\r");
+			printf("TransportLayer_SendPayload error\n\r");
+			printf("Not implemented\r\n");
 			return 1;
 		}
 	}
 	else if(_TransportLayer->m_Queued.m_Size > 0)
 	{
-		printf("TransportLayer_SendPayload\n\r");
 		Payload* p = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
 		p->m_State = Payload_State_Sending;
 		SystemMonotonicMS(&p->m_Time);
@@ -121,7 +121,6 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
-	printf("TransportLayer_ReveicePayload\n\r");
 
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
@@ -129,7 +128,6 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		Payload_InitializePtr(_Replay->m_UUID, &replay);
 		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay) == 1)
 		{
-			printf("TransportLayer_ReveicePayload_Replay\n\r");
 			
 			Payload_FilCommunicator(&replay->m_Des, &_Message->m_Src);
 			LinkedList_Push(&_TransportLayer->m_Queued, replay);

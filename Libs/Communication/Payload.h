@@ -182,6 +182,9 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 
 	for (; i < _Payload->m_Data.m_BytesLeft; i++)
 		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
+		
+	printf("\n\r");
+	printf("\n\r");
 	printf("\n\r");
 	
 }
