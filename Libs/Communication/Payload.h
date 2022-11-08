@@ -177,14 +177,14 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 	{
 		String_Sprintf(&str, "0b");
 		for (i = 8; i >= 0; i--)
-			String_Sprintf(&str, "%i", BitHelper_GetBit(&_Payload->m_Data.m_ReadPtr[0], i));
+			String_Sprintf(&str, "%i", BitHelper_GetBit(&_Payload->m_Data.m_Ptr[0], i));
 		
 		i = 1;
 		String_Sprintf(&str, " ");
 	}
 
-	for (; i < _Payload->m_Data.m_BytesLeft; i++)
-		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
+	for (; i < _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr; i++)
+		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1< _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr ? " " : "");
 		
 	String_Sprintf(&str, "\n");
 	String_Sprintf(&str, "\n");

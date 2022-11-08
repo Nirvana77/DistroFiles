@@ -98,6 +98,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
 
+	Payload_Print(_Message, "ReveicePayload", True);
+
 	if(_NetworkLayer->m_FuncOut.m_Receive != NULL)
 	{
 		Payload replay;
