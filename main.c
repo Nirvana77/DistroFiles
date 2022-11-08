@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
 	
 	Folder_Remove("Shared/root");
 	Folder_Remove("Shared/temp");
+	File_Remove("payload_dump.txt");
 	
 	Filesystem_Service* service = NULL;
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, path, &service);
