@@ -156,12 +156,22 @@ def load_file(filename):
 	file = open(filename,'rb')
 	lines = file.read()
 	file.close()
-	i = 0
-	for v in lines:
-		if v == 0xd:
-			lines = lines[:i] + lines[i+1:]
-			i -= 1
-		i += 1
+	ext = ""
+
+	for i in reversed(range(0, len(filename))):
+		
+		if len(ext) == 0 or not ext[len(ext) - 1] == '.':
+			ext += filename[i]
+		elif ext[len(ext) - 1] == '.':
+			break
+	
+	if ext == ".txt" or ext == ".json":
+		i = 0
+		for v in lines:
+			if v == 0xd:
+				lines = lines[:i] + lines[i+1:]
+				i -= 1
+			i += 1
 	
 	return lines
 
