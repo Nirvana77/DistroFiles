@@ -75,17 +75,29 @@ def str_to_hex_array(string):
 
 	return arr
 
-def get_crc(array, result = 0):
+def get_crc(array, result = 0) -> int:
 	CRC = 0b01011
 
 	for data in array:
-		result = result + (data << 4)
-		for j in reversed(range(5, 12)):
-			bit = result >> j
-			result = result  & ~(0x1 << j)
+		if data > 0xff:
+			print(data)
+
+		result = result + ((data & 0xff) << 4)
+		for j in reversed(range(4, 12)):
+			bit = (result >> j) & 0x1 
+
+			if bit > 1:
+				print("Bit error")
+
+			result = result & ~(0x1 << j)
 			if(bit == 1):
 				result = result ^ (CRC << (j - 4))
+		if result > 0xf:
+			print("result error")
 
+	if not result == 0x8:
+		print("error")
+	
 	return result
 
 def messag_builder(src, des, method, message) -> bytearray:
