@@ -8,12 +8,17 @@ class Client:
 	def __init__(self, host, port, callback) -> None:
 		self.socket = socket.socket()  # instantiate
 		self.socket.settimeout(0.5)
-		self.socket.connect((host, port))  # connect to the server
 		self.thread = Thread(target=self.work)
 		self.callback = callback
 		self.willStop = False
+		self.host = host
+		self.port = port
+		self.connect()
 
 		self.thread.start()
+
+	def connect(self):
+		self.socket.connect((self.host, self.port))  # connect to the server
 		
 	def work(self):
 		while (not self.willStop):
