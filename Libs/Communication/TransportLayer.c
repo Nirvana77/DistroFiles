@@ -41,7 +41,7 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 	return 0;
 }
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr)
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr)
 {
 	if(_Size == 0)
 		return -2;
