@@ -163,24 +163,32 @@ int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 	if(_Client->m_Sockets.m_Size == 0)
 		return 0;
 
-	int readed = 0;
+	int totalReaded = 0;
 	LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
 
 	Buffer_Clear(&_Client->m_Buffer);
 	while(currentNode != NULL)
-	{	
+	{
+		int readed = 0;
 		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
+		readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
+		totalReaded += readed;
 
-		readed += TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
+		while (readed == 1024)
+		{
+			readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
+			totalReaded += readed;
+		}
+		
 
 		currentNode = currentNode->m_Next;
 	}
 
-	if(readed > 0)
+	if(totalReaded > 0)
 	{
 		printf("Filesystem_Client_TCPRead\n\r");
 		Buffer_Copy(_Buffer, &_Client->m_Buffer, _Client->m_Buffer.m_BytesLeft);
-		return readed;
+		return totalReaded;
 	}
 
 	return 0;
@@ -243,6 +251,20 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Filesystem_Server_GetList(_Client->m_Server, path, &_Replay->m_Data);
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "listRespons", strlen("listRespons"));
 		return 1;
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "get") == 0)
+	{
+		Bool isFile = True;
+		UInt16 size = 0;
+
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
+		path[size] = 0;
+
+		printf("Path: %s\r\n", path);
 	}
 	else
 	{
