@@ -21,7 +21,7 @@ class GUI:
 		self.canvas.bind("<Key>", self.key)
 		self.canvas.bind("<Button-1>", self.cliecked)
 		self.canvas.bind("<Button-3>", self.cliecked)
-		self.client = c.Client("mc.gamingpassestime.com", 7000, self.recv, self)
+		self.client = c.Client("133.92.147.203", 8021, self.recv)
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
@@ -51,10 +51,10 @@ class GUI:
 		for icon in self.map:
 			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
 				method, message = icon.click(event)
-				if len(message) > 0:
+				""" if len(message) > 0:
 					print("msg: ", message)
 					data = p.messag_builder("1", "", method, message)
-					self.client.socket.sendall(data)
+					self.client.socket.sendall(data) """
 
 	def recv(self, method, data):
 		if len(data) != 0:

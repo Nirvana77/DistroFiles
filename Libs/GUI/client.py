@@ -5,13 +5,12 @@ from threading import Thread
 
 class Client:
 
-	def __init__(self, host, port, callback, context) -> None:
+	def __init__(self, host, port, callback) -> None:
 		self.socket = socket.socket()  # instantiate
-		self.socket.connect((host, port))  # connect to the server
 		self.socket.settimeout(0.5)
+		self.socket.connect((host, port))  # connect to the server
 		self.thread = Thread(target=self.work)
 		self.callback = callback
-		self.context = context
 		self.willStop = False
 
 		self.thread.start()

@@ -1,5 +1,6 @@
 import hashlib
 import memory as m
+import struct
 
 def send_file(filepath, filename):
 	# file = input("filename > ")
@@ -12,13 +13,11 @@ def send_file(filepath, filename):
 	file_arr = load_file(filepath)
 	file_hash_arr = str_to_hex_array(hash_file(filepath))
 
-	file_str = ""
-	file_str = file_str.join(file_arr)
-	length = len(file_str)
+	length = len(file_arr)
 
 	message.append(int(length/256))
 	message.append(length%256)
-	for i in list(file_str.encode('ascii')):
+	for i in file_arr:
 		message.append(i)
 
 	message = message + file_hash_arr
@@ -47,6 +46,12 @@ def hash_file(filename):
 	# make a hash object
 	h = hashlib.md5()
 
+	file_bytes = load_file(filename)
+
+	for i in range(0, len(file_bytes), 8):
+		chunk = file_bytes[i:i + 8]
+		h.update(chunk)
+	return h.hexdigest()
 	# open file for reading in binary mode
 	with open(filename,'rb') as file:
 
@@ -153,13 +158,28 @@ def messag_builder(src, des, method, message) -> bytearray:
 	return array
 
 def load_file(filename):
-	text_file = open(filename, "r")
+	""" text_file = open(filename, "r")
 	lines = text_file.readlines()
 	print(lines)
 	print(len(lines))
-	text_file.close()
-
+	text_file.close() """
+	file = open(filename,'rb')
+	lines = file.read()
+	file.close()
+	i = 0
+	for v in lines:
+		if v == 0xd:
+			lines = lines[:i] + lines[i+1:]
+			i -= 1
+		i += 1
+	
+	print(lines)
+	
 	return lines
+
+def remove_bytes(buffer, start, end):
+    fmt = '%ds %dx %ds' % (start, end-start, len(buffer)-end)  # 3 way split
+    return b''.join(struct.unpack(fmt, buffer))
 
 def recive(msg):
 	data = byte_to_Array(msg)
