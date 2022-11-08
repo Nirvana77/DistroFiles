@@ -161,6 +161,8 @@ def messag_builder(src, des, method, message) -> bytearray:
 
 	array.append(crc)
 
+	print(array)
+
 	return array
 
 def load_file(filename):
