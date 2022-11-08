@@ -32,6 +32,7 @@ class Client:
 			else:
 				if len(msg) == 0:
 					print('orderly shutdown on server end')
+					
 				else:
 					(uuid, src, des, method, message) = p.recive(msg)
 					print("UUID: ", uuid)

@@ -50,8 +50,9 @@ def hash_file(filename):
 
 	file_bytes = load_file(filename)
 
-	for i in range(0, len(file_bytes), 8):
-		chunk = file_bytes[i:i + 8]
+	# TODO: Optimised this
+	for i in range(0, len(file_bytes), 1024):
+		chunk = file_bytes[i:i + 1024]
 		h.update(chunk)
 	return h.hexdigest()
 
