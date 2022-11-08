@@ -320,6 +320,20 @@ int main(int argc, char* argv[])
 						Payload_Dispose(&networkMessage);
 						Payload_Dispose(&message);
 					} break;
+
+					case 'b':
+					{
+						printf("CRC: ");
+						for (int i = 0; i < 0xff + 1; i++)
+						{
+							UInt8 crc = 0;
+							DataLayer_GetCRC(&i, 1, &crc);
+							printf("%i ", crc);
+							
+						}
+						printf("\r\n");
+						
+					} break;
 				
 					default:
 					{
