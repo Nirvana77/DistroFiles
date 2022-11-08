@@ -14,6 +14,8 @@ def send_file(filepath, filename):
 	file_hash_arr = str_to_hex_array(hash_file(filepath))
 
 	length = len(file_arr)
+	
+	print(file_arr)
 
 	message.append(int(length/256))
 	message.append(length%256)
@@ -51,18 +53,6 @@ def hash_file(filename):
 	for i in range(0, len(file_bytes), 8):
 		chunk = file_bytes[i:i + 8]
 		h.update(chunk)
-	return h.hexdigest()
-	# open file for reading in binary mode
-	with open(filename,'rb') as file:
-
-		# loop till the end of the file
-		chunk = 0
-		while chunk != b'':
-			# read only 1024 bytes at a time
-			chunk = file.read(8)
-			h.update(chunk)
-
-	# return the hex representation of digest
 	return h.hexdigest()
 
 def str_to_hex_array(string):
@@ -172,8 +162,6 @@ def load_file(filename):
 			lines = lines[:i] + lines[i+1:]
 			i -= 1
 		i += 1
-	
-	print(lines)
 	
 	return lines
 
