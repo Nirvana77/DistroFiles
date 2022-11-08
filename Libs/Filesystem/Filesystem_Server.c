@@ -176,32 +176,40 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
-	if(_Server->m_Sockets.m_Size == 0)
+	if(_Client->m_Sockets.m_Size == 0)
 		return 0;
 
-	int readed = 0;
-	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	int totalReaded = 0;
+	LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
 
-	Buffer_Clear(&_Server->m_Buffer);
+	Buffer_Clear(&_Client->m_Buffer);
 	while(currentNode != NULL)
-	{	
+	{
+		int readed = 0;
 		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
+		readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
+		totalReaded += readed;
 
-		readed += TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
+		while (readed == 1024)
+		{
+			readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
+			totalReaded += readed;
+		}
+		
 
 		currentNode = currentNode->m_Next;
 	}
 
-	if(readed > 0)
+	if(totalReaded > 0)
 	{
-		Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
-		return readed;
+		printf("Filesystem_Client_TCPRead\n\r");
+		Buffer_Copy(_Buffer, &_Client->m_Buffer, _Client->m_Buffer.m_BytesLeft);
+		return totalReaded;
 	}
-
+	
 	return 0;
-
 }
 
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
@@ -779,6 +787,8 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		
 		
 		printf("\n\rHash check failed!\n\r");
+		File_Remove(_FullPath->m_Ptr);
+		return 1;
 	}
 
 	return 0;
@@ -896,7 +906,30 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Nam
 	int success = 0;
 	if(_IsFile == True)
 	{
+		void* ptr = _DataBuffer->m_ReadPtr;
 		success = Filesystem_Server_WriteFile(_Server, &fullPath, _DataBuffer);
+		if(success == 0)
+		{
+			
+			UInt16 fileSize = 0;
+			ptr += Memory_ParseUInt16(ptr, &fileSize);
+			UInt16 size = 1 + 2 + strlen(_Name) + 2 + fileSize + 16;
+
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
+			{
+				Buffer_WriteUInt8(&message->m_Data, (UInt8)_IsFile);
+				
+				Buffer_WriteUInt16(&message->m_Data, (UInt16)strlen(_Name));
+				Buffer_WriteBuffer(&message->m_Data, (unsigned char*)_Name, (UInt16)strlen(_Name));
+
+				Buffer_WriteUInt16(&message->m_Data, fileSize);
+				Buffer_WriteBuffer(&message->m_Data, ptr, fileSize + 16);
+
+				Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
+			}
+
+		}
 	}
 	else
 	{
