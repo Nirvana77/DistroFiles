@@ -366,6 +366,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
 		{
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
+			String_Dispose(&fullPath);
 			return 1;
 		}
 		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
@@ -374,8 +375,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, (unsigned char*)path, size);
 		
 		tinydir_dir dir;
-		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		if(tinydir_open(&dir, fullPath.m_Ptr) != 0) {
+			String_Dispose(&fullPath);
 			return -1;
+		}
+		String_Dispose(&fullPath);
 
 		size = 0;
 		Buffer folderContext;
@@ -407,7 +411,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
 
 		Buffer_Dispose(&folderContext);
-		String_Dispose(&fullPath);
 		return 1;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
