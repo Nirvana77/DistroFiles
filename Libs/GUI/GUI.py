@@ -129,8 +129,7 @@ class GUI:
 					self.client.socket.sendall(p.messag_builder("1", "", "list", msg))
 
 				else:
-					print("Event: ", event)
-					print("Values: ", values)
+					self.onEvent(self, event, values)
 
 		self.window.close()
 
@@ -237,22 +236,27 @@ class GUI:
 				print("Rigth Click Folder")
 			return list()
 
-
-
 def main():
-	os.remove("file_dump.txt")
+	try:
+		os.remove("file_dump.txt")
+	except os.error as e:
+		err = e.args[0]
+		if not err == 2:
+			print(e)
+	
 	GUI(onOpen, onClose, onEvent)
 
 def onOpen(gui: GUI, window: sg.Window):
 	print("onOpen")
-	return
+	
 def onClose(gui: GUI, event: str, values: list):
 	print("onClose")
 	gui.destroy()
-	return
+	
 def onEvent(gui: GUI, event: str, values: list):
 	print("onEvent")
-	return
+	print("Event: ", event)
+	print("Values: ", values)
 
 if __name__ == '__main__':
 	main()

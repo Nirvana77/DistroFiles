@@ -156,7 +156,14 @@ def messag_builder(src, des, method, message, willPrint = False) -> bytearray:
 	array.append(crc)
 
 	if willPrint:
-		dump_print("Sending: " + str(array))
+		string = "Sending\n"
+		string += "Data: " + str(array) + "\n"
+		string += "UUID: " + str((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) + "\n"
+		string += "src: " + str(src) + "\n"
+		string += "des: " + str(des) + "\n"
+		string += "method: "+ method + "\n"
+		string += "message: " + str(message)
+		dump_print(string)
 
 	return array
 
