@@ -285,6 +285,22 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
 		path[size] = 0;
 
+		if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
+		   BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == True)
+		{
+			void* ptr = _Server->m_TempListBuffer.m_Ptr;
+			UInt16 pathSize = 0;
+			ptr += Memory_ParseUInt16(ptr, &pathSize);
+			
+			char workingPath[pathSize + 1];
+			ptr += Memory_ParseBuffer(workingPath, ptr, pathSize);
+			workingPath[pathSize - 5] = 0;
+
+			if(strcmp(&workingPath[17], path) == 0)
+				return 0;
+
+		}
+
 		String filePath;
 		String_Initialize(&filePath, 64);
 		String_Append(&filePath, path, strlen(path));
@@ -456,6 +472,24 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Append(&fullPath, (const char*)path, size);
 
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
+		if(File_Exist(fullPath.m_Ptr) == True)
+		{
+			unsigned char fileHash[16] = "";
+			unsigned char bufferHash[16] = "";
+			
+			File_GetHash(fullPath.m_Ptr, fileHash);
+			Memory_ParseBuffer(bufferHash, _Message->m_Data.m_ReadPtr + size, 16);
+
+			if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
+				File_Remove(fullPath.m_Ptr);
+			else
+			{
+				printf("Write check OK\r\n");
+				String_Dispose(&fullPath);
+				return 0;
+			}
+		}
+
 
 		FILE* f = NULL;
 		printf("Writing: %s\n\r", fullPath.m_Ptr);
@@ -752,7 +786,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 	return 1;
 }
 
-//TODO: #53 This returns Can't write to path: Shared/root/RocketcharCodes.txt
+//TODO: #56 Fix that the message will only send to the reciprocal syncAck
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
@@ -765,7 +799,6 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		
 		File_GetHash(_FullPath->m_Ptr, fileHash);
 		Memory_ParseBuffer(bufferHash, _DataBuffer->m_ReadPtr + size, 16);
-
 
 		if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
 			File_Remove(_FullPath->m_Ptr);
@@ -804,6 +837,8 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		File_Remove(_FullPath->m_Ptr);
 		return 1;
 	}
+
+
 
 	return 0;
 }
