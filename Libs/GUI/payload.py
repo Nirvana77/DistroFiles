@@ -17,8 +17,6 @@ def send_file(filepath, filename):
 
 	if length > 256*256 - 1:
 		raise Exception("To bit of file, implement chuncking!")
-	
-	print(file_arr)
 
 	message.append(int(length/256))
 	message.append(length%256)
@@ -44,9 +42,7 @@ def byte_to_Array(str):
 	return arr
 
 
-def hash_file(filename):
-	""""This function returns the SHA-1 hash
-	of the file passed into it"""
+def hash_file(filename) -> str:
 
 	# make a hash object
 	h = hashlib.md5()
@@ -57,9 +53,10 @@ def hash_file(filename):
 	for i in range(0, len(file_bytes), 1024):
 		chunk = file_bytes[i:i + 1024]
 		h.update(chunk)
+	
 	return h.hexdigest()
 
-def str_to_hex_array(string):
+def str_to_hex_array(string) -> list:
 	arr = []
 
 	string_arr = list(string.encode('ascii'))
@@ -98,13 +95,10 @@ def get_crc(array, result = 0) -> int:
 				result = result ^ (CRC << (j - 4))
 		if result > 0xf:
 			print("result error")
-
-	if not result == 0x8:
-		print("error")
 	
 	return result
 
-def messag_builder(src, des, method, message) -> bytearray:
+def messag_builder(src, des, method, message, willPrint = False) -> bytearray:
 	array = bytearray()
 	flag = 0
 	if(method != ""):
@@ -161,16 +155,12 @@ def messag_builder(src, des, method, message) -> bytearray:
 
 	array.append(crc)
 
-	print(array)
+	if willPrint:
+		dump_print("Sending: " + str(array))
 
 	return array
 
-def load_file(filename):
-	""" text_file = open(filename, "r")
-	lines = text_file.readlines()
-	print(lines)
-	print(len(lines))
-	text_file.close() """
+def load_file(filename) -> bytes:
 	file = open(filename,'rb')
 	lines = file.read()
 	file.close()
@@ -197,9 +187,9 @@ def remove_bytes(buffer, start, end):
     fmt = '%ds %dx %ds' % (start, end-start, len(buffer)-end)  # 3 way split
     return b''.join(struct.unpack(fmt, buffer))
 
-def recive(msg):
+def recive(msg, willPrint = False):
 	data = byte_to_Array(msg)
-	print("data: ", data)
+
 	(i, flag) = m.get_UInt8(data, 0)
 
 	uuid = []
@@ -233,4 +223,24 @@ def recive(msg):
 	if size != 0:
 		message = data[i:i + size]
 
+	if willPrint:
+		string = "Resived\n"
+		string += "Data: " + str(data) + "\n"
+		string += "UUID: " + str(uuid) + "\n"
+		string += "src: " + str(src) + "\n"
+		string += "des: " + str(des) + "\n"
+		string += "method: "+ method + "\n"
+		string += "message: " + str(message)
+		dump_print(string)
+
 	return (uuid, src, des, method, message)
+
+def dump_print(string: str):
+	file = open("file_dump.txt", "ab+")
+
+	string += "\n\n\n"
+
+	data = bytes(string.encode("ascii"))
+	file.write(data)
+
+	file.close()

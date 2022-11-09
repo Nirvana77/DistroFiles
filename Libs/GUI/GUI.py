@@ -1,7 +1,9 @@
 import PySimpleGUI as sg
+import os
 import client as c
 import payload as p
 import memory as m
+from threading import Thread
 
 	# Canvas.create_polygon
 	# Canvas.create_oval
@@ -13,15 +15,38 @@ import memory as m
 	# Canvas.create_text
 	# Canvas.create_window
 class GUI:
+	layout = [
+		[
+			sg.Canvas(key="main", size=(1000,500))
+		],
+		[
+			sg.Button("Exit"),
+			sg.Text("File"),
+			sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
+			sg.FileBrowse(),
+			sg.Button("Send", key="send"),
+			sg.Button("Get list", key="list"),
+		]
+	]
 
 	map = []
 	
-	def __init__(self, canvas):
-		self.canvas = canvas
-		self.canvas.bind("<Key>", self.key)
-		self.canvas.bind("<Button-1>", self.cliecked)
-		self.canvas.bind("<Button-3>", self.cliecked)
+	def __init__(self, onOpen = None, onClose = None, onEvent = None):
+		self.onOpen = onOpen
+		self.onClose = onClose
+		self.onEvent = onEvent
+		self.thread = Thread(target=self.work)
+		self.willStop = False
+		self.canvas = None
+		
 		self.client = c.Client("133.92.147.203", 8121, self.recv)
+
+		# Create the window
+		self.window = sg.Window("GUI", self.layout)
+		if not self.onOpen == None:
+			self.onOpen(self, self.window)
+		
+		self.thread.start()
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.map) > 0:
@@ -76,6 +101,59 @@ class GUI:
 
 	def destroy(self):
 		self.client.destroy()
+		self.willStop = True
+
+	def work(self):
+		while not self.willStop:
+			event, values = self.window.read()
+
+			if self.canvas == None and not self.window["main"].TKCanvas == None:
+				self.canvas = self.window["main"].TKCanvas
+				self.canvas.bind("<Key>", self.key)
+				self.canvas.bind("<Button-1>", self.cliecked)
+				self.canvas.bind("<Button-3>", self.cliecked)
+				
+			# End program if user closes window or
+			# presses the OK button
+			if event == "Exit" or event == sg.WIN_CLOSED:
+				self.onClose(self, event, values)
+				break
+			
+			else:
+				if event == "send":
+					path = self.window["-TOUT-"].get()
+					self.sendPath(path)
+
+				elif event == "list":
+					msg = p.get_list("root")
+					self.client.socket.sendall(p.messag_builder("1", "", "list", msg))
+
+				else:
+					print("Event: ", event)
+					print("Values: ", values)
+
+		self.window.close()
+
+	def sendPath(self, path: str):
+		name = ""
+		ext = ""
+		
+		for i in reversed(range(0, len(path))):
+			if path[i] == '/' or path[i] == '\\':
+				break
+			else:
+				name += path[i]
+			if len(ext) == 0 or not ext[len(ext) - 1] == '.':
+				ext += path[i]
+
+		name = name[::-1]
+		ext = ext[::-1]
+		if ext == ".txt" or ext == ".json" or ext == ".zip":
+			msg = p.send_file(path, name)
+			self.client.socket.sendall(p.messag_builder("1", "", "upload", msg))
+		else:
+			print("Extantion ", ext, " is not supported!")
+
 
 	class Icon:
 
@@ -159,72 +237,22 @@ class GUI:
 				print("Rigth Click Folder")
 			return list()
 
+
+
 def main():
-	layout = [
-		[
-			sg.Canvas(key="main", size=(1000,500))
-		],
-		[
-			sg.Button("Exit"),
-			sg.Text("File"),
-			sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
-			sg.FileBrowse(),
-			sg.Button("Send", key="send"),
-			sg.Button("Get list", key="list"),
-		]
-	]
+	os.remove("file_dump.txt")
+	GUI(onOpen, onClose, onEvent)
 
-
-	# Create the window
-	gui = None
-	window = sg.Window("GUI", layout)
-
-	while True:
-		event, values = window.read()
-
-		if gui == None and not window["main"].TKCanvas == None:
-			gui = GUI(window["main"].TKCanvas)
-		
-		# End program if user closes window or
-		# presses the OK button
-		if event == "Exit" or event == sg.WIN_CLOSED:
-			break
-		
-		else:
-			if event == "send":
-				path = window["-TOUT-"].get()
-				sendPath(path, gui)
-
-			elif event == "list":
-				msg = p.get_list("root")
-				gui.client.socket.sendall(p.messag_builder("1", "", "list", msg))
-
-			else:
-				print("Event: ", event)
-				print("Values: ", values)
-
-	window.close()
+def onOpen(gui: GUI, window: sg.Window):
+	print("onOpen")
+	return
+def onClose(gui: GUI, event: str, values: list):
+	print("onClose")
 	gui.destroy()
-
-def sendPath(path: str, gui: GUI):
-	name = ""
-	ext = ""
-	
-	for i in reversed(range(0, len(path))):
-		if path[i] == '/' or path[i] == '\\':
-			break
-		else:
-			name += path[i]
-		if len(ext) == 0 or not ext[len(ext) - 1] == '.':
-			ext += path[i]
-
-	name = name[::-1]
-	ext = ext[::-1]
-	if ext == ".txt" or ext == ".json" or ext == ".zip":
-		msg = p.send_file(path, name)
-		gui.client.socket.sendall(p.messag_builder("1", "", "upload", msg))
-	else:
-		print("Extantion ", ext, " is not supported!")
+	return
+def onEvent(gui: GUI, event: str, values: list):
+	print("onEvent")
+	return
 
 if __name__ == '__main__':
 	main()

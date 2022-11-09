@@ -1,5 +1,4 @@
 import socket
-import os
 import payload as p
 from threading import Thread
 
@@ -25,6 +24,9 @@ class Client:
 		
 			try:
 				msg = self.socket.recv(4096)
+				while len(msg) % 4096 == 0:
+					msg = msg + self.socket.recv(4096)
+					
 			except socket.timeout as e:
 				err = e.args[0]
 				# this next if/else is a bit redundant, but illustrates how the
@@ -39,14 +41,10 @@ class Client:
 					print('orderly shutdown on server end')
 					
 				else:
-					(uuid, src, des, method, message) = p.recive(msg)
-					print("UUID: ", uuid)
-					print("src: ", src)
-					print("des: ", des)
-					print("method: ", method)
-					print("message: ", message)
+					(uuid, src, des, method, message) = p.recive(msg, willPrint = True)
 					self.callback(method, message)
+					
+		self.socket.close()
 	
 	def destroy(self):
 		self.willStop = True
-		self.thread.join()
