@@ -142,48 +142,61 @@ void Payload_Copy(Payload* _Des, Payload* _Src);
 
 static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasFlags)
 {
-	printf("Payload(%s): %lu\n\r", _Str, _Payload->m_Time);
-	printf("State: %i\n\r", _Payload->m_State);
-	printf("Type: %i\n\r", _Payload->m_Type);
+	String str;
+	String_Initialize(&str, 128);
+
+	String_Sprintf(&str, "Payload(%s): %lu\n", _Str, _Payload->m_Time);
+	String_Sprintf(&str, "State: %i\n", _Payload->m_State);
+	String_Sprintf(&str, "Type: %i\n", _Payload->m_Type);
 	
-	char str[37];
-	uuid_ToString(_Payload->m_UUID, str);
-	printf("UUID: %s\n\r", str);
+	char uuid_str[37];
+	uuid_ToString(_Payload->m_UUID, uuid_str);
+	String_Sprintf(&str, "UUID: %s\n", uuid_str);
 
 	if(_Payload->m_Src.m_Type == Payload_Address_Type_IP)
-		printf("SRC: %i.%i.%i.%i\n\r", _Payload->m_Src.m_Address.IP[0], _Payload->m_Src.m_Address.IP[1], _Payload->m_Src.m_Address.IP[2], _Payload->m_Src.m_Address.IP[3]);
+		String_Sprintf(&str, "SRC: %i.%i.%i.%i\n", _Payload->m_Src.m_Address.IP[0], _Payload->m_Src.m_Address.IP[1], _Payload->m_Src.m_Address.IP[2], _Payload->m_Src.m_Address.IP[3]);
 	else
-		printf("SRC: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Src.m_Address.MAC[0], _Payload->m_Src.m_Address.MAC[1], _Payload->m_Src.m_Address.MAC[2], _Payload->m_Src.m_Address.MAC[3], _Payload->m_Src.m_Address.MAC[4], _Payload->m_Src.m_Address.MAC[5]);
+		String_Sprintf(&str, "SRC: %x-%x-%x-%x-%x-%x\n", _Payload->m_Src.m_Address.MAC[0], _Payload->m_Src.m_Address.MAC[1], _Payload->m_Src.m_Address.MAC[2], _Payload->m_Src.m_Address.MAC[3], _Payload->m_Src.m_Address.MAC[4], _Payload->m_Src.m_Address.MAC[5]);
 		
 
 	if(_Payload->m_Des.m_Type == Payload_Address_Type_IP)
-		printf("DES: %i.%i.%i.%i\n\r", _Payload->m_Des.m_Address.IP[0], _Payload->m_Des.m_Address.IP[1], _Payload->m_Des.m_Address.IP[2], _Payload->m_Des.m_Address.IP[3]);
+		String_Sprintf(&str, "DES: %i.%i.%i.%i\n", _Payload->m_Des.m_Address.IP[0], _Payload->m_Des.m_Address.IP[1], _Payload->m_Des.m_Address.IP[2], _Payload->m_Des.m_Address.IP[3]);
 	else
-		printf("DES: %x-%x-%x-%x-%x-%x\n\r", _Payload->m_Des.m_Address.MAC[0], _Payload->m_Des.m_Address.MAC[1], _Payload->m_Des.m_Address.MAC[2], _Payload->m_Des.m_Address.MAC[3], _Payload->m_Des.m_Address.MAC[4], _Payload->m_Des.m_Address.MAC[5]);
+		String_Sprintf(&str, "DES: %x-%x-%x-%x-%x-%x\n", _Payload->m_Des.m_Address.MAC[0], _Payload->m_Des.m_Address.MAC[1], _Payload->m_Des.m_Address.MAC[2], _Payload->m_Des.m_Address.MAC[3], _Payload->m_Des.m_Address.MAC[4], _Payload->m_Des.m_Address.MAC[5]);
 
 	if(_Payload->m_Message.m_Type != Payload_Message_Type_None)
 	{
 		if(_Payload->m_Message.m_Type == Payload_Message_Type_String)
-			printf("Method(%u): %s\n\r", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
+			String_Sprintf(&str, "Method(%u): %s\n", _Payload->m_Message.m_Size, _Payload->m_Message.m_Method.m_Str);
 	}
 
-	printf("Data: %ib\r\n", _Payload->m_Data.m_BytesLeft);
+	String_Sprintf(&str, "Data: %ib\n", _Payload->m_Data.m_BytesLeft);
 	int i = 0;
 
 	if(_HasFlags == True)
 	{
-		printf("0b");
+		String_Sprintf(&str, "0b");
 		for (i = 8; i >= 0; i--)
-			printf("%i", BitHelper_GetBit(&_Payload->m_Data.m_ReadPtr[0], i));
+			String_Sprintf(&str, "%i", BitHelper_GetBit(&_Payload->m_Data.m_Ptr[0], i));
 		
 		i = 1;
-		printf(" ");
+		String_Sprintf(&str, " ");
 	}
 
-	for (; i < _Payload->m_Data.m_BytesLeft; i++)
-		printf("%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1< _Payload->m_Data.m_BytesLeft ? " " : "");
-	printf("\n\r");
+	for (; i < _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr; i++)
+		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1< _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr ? " " : "");
+		
+	String_Sprintf(&str, "\n");
+	String_Sprintf(&str, "\n");
+	String_Sprintf(&str, "\n");
 	
+	FILE* f = NULL;
+	File_Open("payload_dump.txt", File_Mode_ApendCreate, &f);
+	
+	File_WriteAll(f, (const unsigned char*)str.m_Ptr, str.m_Length);
+
+	File_Close(f);
+	String_Dispose(&str);
 }
 
 static inline void Payload_SetMessageType(Payload* _Payload, Payload_Message_Type _Type, void* _Value, int _Size)

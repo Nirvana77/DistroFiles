@@ -46,6 +46,8 @@ int kbhit(void);
 
 StateMachine g_StateMachine;
 
+
+//TODO: #54 LinkedList is not disposed correctly
 int main(int argc, char* argv[])
 {
 	#ifdef ALLOCATOR_DEBUG
@@ -108,8 +110,9 @@ int main(int argc, char* argv[])
 	int doExit = 1;
 	StateMachine_Initialize(&g_StateMachine);
 	
-	//Folder_Remove("Shared/root");
-	//Folder_Remove("Shared/temp");
+	Folder_Remove("Shared/root");
+	Folder_Remove("Shared/temp");
+	File_Remove("payload_dump.txt");
 	
 	Filesystem_Service* service = NULL;
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, path, &service);
@@ -318,6 +321,20 @@ int main(int argc, char* argv[])
 
 						Payload_Dispose(&networkMessage);
 						Payload_Dispose(&message);
+					} break;
+
+					case 'b':
+					{
+						printf("CRC: ");
+						for (int i = 0; i < 0xff + 1; i++)
+						{
+							UInt8 crc = 0;
+							DataLayer_GetCRC((unsigned char*)&i, 1, &crc);
+							printf("%i ", crc);
+							
+						}
+						printf("\r\n");
+						
 					} break;
 				
 					default:

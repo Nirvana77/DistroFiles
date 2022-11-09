@@ -181,35 +181,41 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 	if(_Server->m_Sockets.m_Size == 0)
 		return 0;
 
-	int readed = 0;
+	int totalReaded = 0;
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
 
 	Buffer_Clear(&_Server->m_Buffer);
 	while(currentNode != NULL)
-	{	
+	{
+		int readed = 0;
 		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
+		readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
+		totalReaded += readed;
 
-		readed += TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
+		while (readed == 1024)
+		{
+			readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
+			totalReaded += readed;
+		}
+		
 
 		currentNode = currentNode->m_Next;
 	}
 
-	if(readed > 0)
+	if(totalReaded > 0)
 	{
 		printf("Filesystem_Server_TCPRead\n\r");
 		Buffer_Copy(_Buffer, &_Server->m_Buffer, _Server->m_Buffer.m_BytesLeft);
-		return readed;
+		return totalReaded;
 	}
 
 	return 0;
-
 }
 
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Filesystem_Server_TCPWrite\n\r");
 
 	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
 	while (currentNode != NULL)
@@ -254,9 +260,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
+	{
+		printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 		return 0;
+	}
 
 	printf("Method: %s\n\r", _Message->m_Message.m_Method.m_Str);
 
@@ -296,7 +304,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		FILE* f = NULL;
 		File_Open(filePath.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 		
-		printf("File path: %s\n\r", filePath.m_Ptr);
+		printf("SyncAck path: %s\n\r", filePath.m_Ptr);
 		if(f != NULL)
 		{
 			Buffer listData;
@@ -354,8 +362,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 			String_Append(&fullPath, path, strlen(path));
 		}
-
-		printf("Fullpath: %s\n\r", fullPath.m_Ptr);
 		
 		unsigned char hash[16];
 		Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
@@ -368,6 +374,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
 		{
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
+			String_Dispose(&fullPath);
 			return 1;
 		}
 		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
@@ -376,8 +383,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, (unsigned char*)path, size);
 		
 		tinydir_dir dir;
-		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		if(tinydir_open(&dir, fullPath.m_Ptr) != 0) {
+			String_Dispose(&fullPath);
 			return -1;
+		}
+		String_Dispose(&fullPath);
 
 		size = 0;
 		Buffer folderContext;
@@ -409,7 +419,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
 
 		Buffer_Dispose(&folderContext);
-		String_Dispose(&fullPath);
 		return 1;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
@@ -423,7 +432,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
-		printf("Write\n\r");
 
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
@@ -702,8 +710,6 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
 
-	printf("Fullpath: %s\n\r", _FullPath->m_Ptr);
-
 	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
 	
 	tinydir_dir dir;
@@ -745,6 +751,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 	return 1;
 }
 
+//TODO: #53 This returns Can't write to path: Shared/root/RocketcharCodes.txt
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
@@ -780,7 +787,9 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 			printf("%x ",serverHash[i]);
 		
 		
-		printf("Hsh check failed!\n\r");
+		printf("\n\rHash check failed!\n\r");
+		File_Remove(_FullPath->m_Ptr);
+		return 1;
 	}
 
 	return 0;
@@ -788,7 +797,6 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 
 int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
-	printf("Filesystem_Server_WriteFolder: %s\n\r", _FullPath->m_Ptr);
 
 	String str;
 	String_Initialize(&str, 32);
@@ -834,6 +842,55 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	return 0;
 }
 
+int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer)
+{
+	String fullPath;
+	String_Initialize(&fullPath, 64);
+
+	String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
+
+	if(String_EndsWith(&fullPath, "/") == False)
+		String_Append(&fullPath, "/", 1);
+	
+	if(strcmp(_Path, "root") != 0)
+		String_Append(&fullPath, _Path, strlen(_Path));
+		
+	if(String_EndsWith(&fullPath, "/") == False)
+		String_Append(&fullPath, "/", 1);
+
+	int written = 0;
+
+	
+	tinydir_dir dir;
+	if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		return -1;
+	String_Dispose(&fullPath);
+
+	UInt16 size = 0;
+	Buffer folderContext;
+	Buffer_Initialize(&folderContext, True, 64);
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
+			Buffer_WriteUInt16(&folderContext, strlen(file.name));
+			Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
+			size++;
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	written += Buffer_WriteUInt16(_DataBuffer, size);
+	written += Buffer_WriteBuffer(_DataBuffer, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
+
+	Buffer_Dispose(&folderContext);
+	return written;
+}
 
 int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer)
 {
@@ -850,7 +907,30 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Nam
 	int success = 0;
 	if(_IsFile == True)
 	{
+		void* ptr = _DataBuffer->m_ReadPtr;
 		success = Filesystem_Server_WriteFile(_Server, &fullPath, _DataBuffer);
+		if(success == 0)
+		{
+			
+			UInt16 fileSize = 0;
+			ptr += Memory_ParseUInt16(ptr, &fileSize);
+			UInt16 size = 1 + 2 + strlen(_Name) + 2 + fileSize + 16;
+
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
+			{
+				Buffer_WriteUInt8(&message->m_Data, (UInt8)_IsFile);
+				
+				Buffer_WriteUInt16(&message->m_Data, (UInt16)strlen(_Name));
+				Buffer_WriteBuffer(&message->m_Data, (unsigned char*)_Name, (UInt16)strlen(_Name));
+
+				Buffer_WriteUInt16(&message->m_Data, fileSize);
+				Buffer_WriteBuffer(&message->m_Data, ptr, fileSize + 16);
+
+				Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
+			}
+
+		}
 	}
 	else
 	{
@@ -900,8 +980,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			tinydir_readfile(&dir, &file);
 			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 			{
-				printf("Working with %s\n\r", file.name);
-
 				FILE* f = NULL;
 				File_Open(file.path, File_Mode_ReadBinary, &f);
 				
@@ -910,11 +988,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 				_Server->m_TempListBuffer.m_ReadPtr += written;
 				_Server->m_TempListBuffer.m_BytesLeft -= written;
-
-				printf("Buffer: \n\r");
-				for (int i = 0; i < written; i++)
-					printf("%x ", _Server->m_TempListBuffer.m_Ptr[i]);
-				printf("\n\r");
 
 				Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
 				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
@@ -939,12 +1012,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, True);
 			return;
 		}
-		
-		printf("TempBuffer: \r\n");
-		for (int i = 0; i < _Server->m_TempListBuffer.m_BytesLeft; i++)
-			printf("%x ", _Server->m_TempListBuffer.m_ReadPtr[i]);
-		
-		printf("\n\r");
 
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Server->m_TempListBuffer, (UInt8*)&isFile);
@@ -982,10 +1049,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		{
 			String_Set(&str, path);
 		}
-		
-		printf("Str(%s): %s\n\r", &fullPath[index], str.m_Ptr);
-		
-		printf("Path(%u): %s\n\r", str.m_Length, str.m_Ptr);
 		
 		Payload* message = NULL;
 		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, 1000, &message) == 0)

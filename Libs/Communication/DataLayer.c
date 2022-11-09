@@ -137,11 +137,6 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 		
 		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_ReadPtr, size - 1, &ownCRC);
 
-		printf("Data(R): %i of %i\r\n", size, readed);
-		for (int i = 0; i < size; i++)
-			printf("%x ", _DataLayer->m_DataBuffer.m_ReadPtr[i]);
-		printf("\n\r");
-
 		if(ownCRC != CRC)
 		{
 			printf("CRC check Failed!\n\r");

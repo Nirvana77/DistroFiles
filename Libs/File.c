@@ -52,6 +52,7 @@ int File_Hash(FILE* _File, unsigned char _Result[16])
 
 	int bytesLeft = totalSize;
 	char buffer[8];
+	
 	while(bytesLeft > 0)
 	{
 		int bytesToRead = sizeof(buffer);
