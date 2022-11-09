@@ -1,6 +1,7 @@
 import hashlib
 import memory as m
 import struct
+import uuid
 
 def send_file(filepath, filename):
 	# file = input("filename > ")
@@ -98,7 +99,7 @@ def get_crc(array, result = 0) -> int:
 	
 	return result
 
-def messag_builder(src, des, method, message, willPrint = False) -> bytearray:
+def messag_builder(des, method, message, willPrint = False) -> bytearray:
 	array = bytearray()
 	flag = 0
 	if(method != ""):
@@ -107,20 +108,21 @@ def messag_builder(src, des, method, message, willPrint = False) -> bytearray:
 	if(des != ""):
 		flag += 1 << 1
 
-	if(src != ""):
-		flag += 1 << 0
+	flag += 1 << 0 # src
+
+	UUID = uuid.uuid4()
+
+	array.append(flag)
+
+	array = array + uuid.uuid4().bytes
 		
-	for v in [flag, 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16, 0, 1,2,3,4,5,6,7,8]:
+	for v in [0, 1,2,3,4,5,6,7,8]:
 		array.append(v)
 	
-	if(src != ""):
-		array.append(2)
-		for x in range(1,7):
-			array.append(x)
-	else:
-		array.append(0)
-		for x in range(1,7):
-			array.append(0)
+	array.append(2)
+	src = bytearray.fromhex(hex(uuid.getnode())[2:])
+	for i in src:
+		array.append(i)
 
 	if(des != ""):
 		array.append(2)
@@ -158,7 +160,7 @@ def messag_builder(src, des, method, message, willPrint = False) -> bytearray:
 	if willPrint:
 		string = "Sending\n"
 		string += "Data: " + str(array) + "\n"
-		string += "UUID: " + str((1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)) + "\n"
+		string += "UUID: " + str(UUID) + "\n"
 		string += "src: " + str(src) + "\n"
 		string += "des: " + str(des) + "\n"
 		string += "method: "+ method + "\n"
@@ -199,10 +201,8 @@ def recive(msg, willPrint = False):
 
 	(i, flag) = m.get_UInt8(data, 0)
 
-	uuid = []
-	for x in range(i, i + 16):
-		uuid.append(data[x])
-		i+=1
+	UUID = uuid.UUID(bytes=bytes(data[i:i + 16]))
+	i += 16
 	i += 1 + 8
 	
 	i += 1
@@ -233,14 +233,14 @@ def recive(msg, willPrint = False):
 	if willPrint:
 		string = "Resived\n"
 		string += "Data: " + str(data) + "\n"
-		string += "UUID: " + str(uuid) + "\n"
+		string += "UUID: " + str(UUID) + "\n"
 		string += "src: " + str(src) + "\n"
 		string += "des: " + str(des) + "\n"
 		string += "method: "+ method + "\n"
 		string += "message: " + str(message)
 		dump_print(string)
 
-	return (uuid, src, des, method, message)
+	return (UUID, src, des, method, message)
 
 def dump_print(string: str):
 	file = open("file_dump.txt", "ab+")

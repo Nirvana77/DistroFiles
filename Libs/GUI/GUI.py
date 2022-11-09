@@ -4,6 +4,7 @@ import client as c
 import payload as p
 import memory as m
 from threading import Thread
+import uuid
 
 	# Canvas.create_polygon
 	# Canvas.create_oval
@@ -78,7 +79,7 @@ class GUI:
 				method, message = icon.click(event)
 				""" if len(message) > 0:
 					print("msg: ", message)
-					data = p.messag_builder("1", "", method, message)
+					data = p.messag_builder("", method, message)
 					self.client.socket.sendall(data) """
 
 	def recv(self, method, data):
@@ -126,7 +127,7 @@ class GUI:
 
 				elif event == "list":
 					msg = p.get_list("root")
-					self.client.socket.sendall(p.messag_builder("1", "", "list", msg))
+					self.client.socket.sendall(p.messag_builder("", "list", msg))
 
 				else:
 					self.onEvent(self, event, values)
@@ -149,7 +150,7 @@ class GUI:
 		ext = ext[::-1]
 		if ext == ".txt" or ext == ".json" or ext == ".zip":
 			msg = p.send_file(path, name)
-			self.client.socket.sendall(p.messag_builder("1", "", "upload", msg))
+			self.client.socket.sendall(p.messag_builder("", "upload", msg))
 		else:
 			print("Extantion ", ext, " is not supported!")
 
