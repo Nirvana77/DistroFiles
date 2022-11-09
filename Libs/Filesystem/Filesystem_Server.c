@@ -190,7 +190,8 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 		int readed = 0;
 		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
 		readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
-		totalReaded += readed;
+		if(readed != -1)
+			totalReaded += readed;
 
 		while (readed == 1024)
 		{
