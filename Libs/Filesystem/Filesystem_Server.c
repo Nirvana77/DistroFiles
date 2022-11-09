@@ -458,7 +458,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		FILE* f = NULL;
 		printf("Writing: %s\n\r", fullPath.m_Ptr);
-		File_Open((const char*)fullPath.m_Ptr, File_Mode_ReadWriteBinary, &f);
+		File_Open((const char*)fullPath.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 
 		if(f == NULL)
 		{
@@ -755,6 +755,20 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
+	UInt16 size = 0;
+	Buffer_ReadUInt16(_DataBuffer, &size);
+
+	if(File_Exist(_FullPath->m_Ptr) == True) {
+		unsigned char fileHash[16] = "";
+		unsigned char bufferHash[16] = "";
+		
+		File_GetHash(_FullPath->m_Ptr, fileHash);
+		Memory_ParseBuffer(bufferHash, _DataBuffer->m_ReadPtr + size, 16);
+
+
+		if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
+			File_Remove(_FullPath->m_Ptr);
+	}
 
 	File_Open(_FullPath->m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 
@@ -764,8 +778,6 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		printf("Can't write to path: %s\n\r", _FullPath->m_Ptr);
 		return -1;
 	}
-	UInt16 size = 0;
-	Buffer_ReadUInt16(_DataBuffer, &size);
 	int written = File_WriteAll(f, _DataBuffer->m_ReadPtr, size);
 	_DataBuffer->m_ReadPtr += written;
 	_DataBuffer->m_BytesLeft -= written;

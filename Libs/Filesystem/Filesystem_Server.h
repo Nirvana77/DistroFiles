@@ -6,6 +6,7 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 
 #include "Filesystem_Service.h"
 #include "../BitHelper.h"
+#include "../Memory.h"
 
 #define Filesystem_Server_TempFlag_HasList 0
 #define Filesystem_Server_TempFlag_WorkonList 1
