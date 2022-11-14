@@ -157,13 +157,14 @@ class GUI:
 
 	class Icon:
 
-		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str):
+		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
 			self.x = x
 			self.y = y
 			self.width = w
 			self.heigth = h
 			self.name = name
 			self.canvas = canvas
+			self.path = path
 
 			self.rec = canvas.create_rectangle(x, y, w + x, h + y)
 			self.text = canvas.create_text(x + w / 2, y + h + 15, text=self.name)
@@ -188,8 +189,7 @@ class GUI:
 	class File(Icon):
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
-			super().__init__(canvas, x, y, w, h, name)
-			self.path = path
+			super().__init__(canvas, x, y, w, h, name, path)
 			self.canvas.itemconfig(self.rec, fill="RED")
 
 		def click(self, event) -> list:
@@ -216,8 +216,7 @@ class GUI:
 	class Folder(Icon):
 
 		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
-			super().__init__(canvas, x, y, w, h, name)
-			self.path = path
+			super().__init__(canvas, x, y, w, h, name, path)
 			self.canvas.itemconfig(self.rec, fill="BLUE")
 		
 		def click(self, event) -> list:
