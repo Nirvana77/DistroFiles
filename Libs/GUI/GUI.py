@@ -10,7 +10,7 @@ import uuid
 	# Canvas.create_oval
 	# Canvas.create_line
 	# Canvas.create_image
-	# Canvas.create_bitmap
+	# Canvas.create_biticons
 	# Canvas.create_arc
 	# Canvas.create_rectangle
 	# Canvas.create_text
@@ -30,7 +30,7 @@ class GUI:
 		]
 	]
 
-	map = []
+	icons = list()
 	
 	def __init__(self, onOpen = None, onClose = None, onEvent = None):
 		self.onOpen = onOpen
@@ -41,6 +41,7 @@ class GUI:
 		self.canvas = None
 		
 		self.client = c.Client("133.92.147.203", 8121, self.recv)
+		# self.client = c.Client("mc.gamingpassestime.com", 7000, self.recv)
 
 		# Create the window
 		self.window = sg.Window("GUI", self.layout)
@@ -50,12 +51,16 @@ class GUI:
 		self.thread.start()
 
 	def draw_Directory(self, list: list, path: str):
-		if len(self.map) > 0:
-			last = self.map[len(self.map) - 1]
+		if len(self.icons) > 0:
+			last = self.Icon(self.icons[len(self.icons) - 1])
 			(x, y) = (last.x + last.width + 10, last.y)
 		else:
 			(x, y) = (0,0)
-		(w, h, margin) = (100, 100, 10) 
+		(w, h, margin) = (100, 100, 10)
+
+		for i in self.icons:
+			i = self.Icon(i)
+			i.marked = False
 
 		for d in list:
 			if d["isFile"]:
@@ -63,18 +68,28 @@ class GUI:
 			else:
 				fileFolder = self.Folder(self.canvas, x, y, w, h, d["name"], path)
 				
-			if not self.map.__contains__(fileFolder):
-
-				self.map.append(fileFolder)
+			if not self.icons.__contains__(fileFolder):
+				self.icons.append(fileFolder)
 				x += w + margin
 			else:
 				fileFolder.destroy()
+				for i in self.icons:
+					i = self.Icon(i)
+					if fileFolder.path == i.path and fileFolder.name == i.name:
+						i.marked = True
+		
+		for i in self.icons:
+			i = self.Icon(i)
+			if not i.marked:
+				i.destroy()
+				self.icons.remove(i)
 
 	def key(self, event):
 		print("pressed: ", repr(event.char))
 
 	def cliecked(self, event):
-		for icon in self.map:
+		for icon in self.icons:
+			icon = self.Icon(icon)
 			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
 				method, message = icon.click(event)
 				""" if len(message) > 0:
@@ -101,6 +116,11 @@ class GUI:
 				self.draw_Directory(directory, "root")
 
 	def destroy(self):
+		for i in self.icons:
+			i = self.Icon(i)
+			i.destroy()
+			self.icons.remove(i)
+
 		self.client.destroy()
 		self.willStop = True
 
@@ -165,6 +185,7 @@ class GUI:
 			self.name = name
 			self.canvas = canvas
 			self.path = path
+			self.marked = True
 
 			self.rec = canvas.create_rectangle(x, y, w + x, h + y)
 			self.text = canvas.create_text(x + w / 2, y + h + 15, text=self.name)
