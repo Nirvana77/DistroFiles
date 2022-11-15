@@ -71,6 +71,39 @@ static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value
 	*(_Value) = value;
 }
 
+static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
+{
+	Payload* message = NULL;
+	char* path = "root";
+
+	int size = 2 + strlen(path) + 16;
+
+	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
+	{
+		Buffer_WriteUInt16(&message->m_Data, strlen(path));
+		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
+
+		unsigned char hash[16];
+		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
+
+		Filesystem_Server_PrintHash("Sync Hash", hash);
+		Buffer_WriteBuffer(&message->m_Data, hash, 16);
+
+		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+	}
+}
+
+static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char _Result[16])
+{
+
+	printf("%s: ", _Name);
+
+	for (int i = 0; i < 16; i++)
+		printf("%x", _Result[i]);
+	
+	printf("\r\n");
+}
+
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
 int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer);
 
