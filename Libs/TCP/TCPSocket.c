@@ -56,12 +56,9 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 	return 0;
 }
 
-int TCPSocket_Read(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _BufferSize)
+int TCPSocket_Read(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
-	char buffer[_BufferSize];
-	memset(buffer, 0, sizeof(buffer));
-
-	int bytesRead = recv(_TCPSocket->m_FD, buffer, _BufferSize, 0);
+	int bytesRead = recv(_TCPSocket->m_FD, _Buffer, _BufferSize, 0);
 
 	if(bytesRead < 0)
 	{
@@ -75,12 +72,12 @@ int TCPSocket_Read(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _BufferS
 	}
 	else
 	{
-		return Buffer_WriteBuffer(_Buffer, (UInt8*)buffer, bytesRead);
+		return bytesRead;
 	}
 
 }
 
-int TCPSocket_Write(TCPSocket* _TCPSocket, Buffer* _Buffer, unsigned int _BufferSize)
+int TCPSocket_Write(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
 	char buffer[_BufferSize];
 	memset(buffer, 0, sizeof(buffer));

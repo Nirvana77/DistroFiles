@@ -206,7 +206,7 @@ int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	{
 		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
 		Buffer_ResetReadPtr(_Buffer);
-		TCPSocket_Write(socket, _Buffer, _Size);
+		TCPSocket_Write(socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
 
 		currentNode = currentNode->m_Next;
 	}
