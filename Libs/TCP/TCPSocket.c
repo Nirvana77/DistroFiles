@@ -79,12 +79,7 @@ int TCPSocket_Read(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _
 
 int TCPSocket_Write(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
-	char buffer[_BufferSize];
-	memset(buffer, 0, sizeof(buffer));
-
-	Buffer_ReadBuffer(_Buffer, (UInt8*)buffer, _BufferSize);
-
-	int bytesSent = send(_TCPSocket->m_FD, buffer, _BufferSize, MSG_NOSIGNAL);
+	int bytesSent = send(_TCPSocket->m_FD, _Buffer, _BufferSize, MSG_NOSIGNAL);
 	if (errno == EWOULDBLOCK)
 	{
 		return 0;
