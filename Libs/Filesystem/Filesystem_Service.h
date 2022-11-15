@@ -57,6 +57,8 @@ struct T_Filesystem_Service
 
 	Filesystem_Server* m_Server;
 	Filesystem_Client* m_Client;
+	
+	Buffer m_Buffer;
 
 	Filesystem_ServiceSettings m_Settings;
 
@@ -65,6 +67,8 @@ struct T_Filesystem_Service
 int Filesystem_Service_InitializePtr(StateMachine* _Worker, const char* _Path, Filesystem_Service** _ServicePtr);
 int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _Worker, const char* _Path);
 
+int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size);
+int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size);
 
 void Filesystem_Service_Dispose(Filesystem_Service* _Service);
 #endif // Filesystem_Service_h__

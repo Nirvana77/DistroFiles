@@ -50,16 +50,8 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		TCPServer_Dispose(&_Client->m_TCPServer);
 		return -3;
 	}
-
-	success = Buffer_Initialize(&_Client->m_Buffer, True, 64);
-	if(success != 0)
-	{
-		printf("Failed to initialize the Buffer!\n\r");
-		printf("Error code: %i\n\r", success);
-		TCPServer_Disconnect(&_Client->m_TCPServer);
-		return -4;
-	}
-	LinkedList_Initialize(&_Client->m_Sockets);
+	
+	LinkedList_Initialize(&_Client->m_Connections);
 
 
 	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Filesystem_Client_TCPRead, Filesystem_Client_TCPWrite, NULL, _Client, 100);
@@ -68,8 +60,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the DataLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Sockets);
-		Buffer_Dispose(&_Client->m_Buffer);
+		LinkedList_Dispose(&_Client->m_Connections);
 		return -5;
 	}
 
@@ -79,8 +70,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the NetworkLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Sockets);
-		Buffer_Dispose(&_Client->m_Buffer);
+		LinkedList_Dispose(&_Client->m_Connections);
 		DataLayer_Dispose(&_Client->m_DataLayer);
 		return -6;
 	}
@@ -91,8 +81,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the TransportLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Sockets);
-		Buffer_Dispose(&_Client->m_Buffer);
+		LinkedList_Dispose(&_Client->m_Connections);
 		DataLayer_Dispose(&_Client->m_DataLayer);
 		NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 		return -6;
@@ -115,103 +104,26 @@ int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	
 	printf("Filesystem_Client: Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
 
-	LinkedList_Push(&_Client->m_Sockets, _TCPSocket);
+	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+
+	connection->m_Socket = _TCPSocket;
+	memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
+
+	LinkedList_Push(&_Client->m_Connections, connection);
 	return 0;
-	
-	/*
-	* NOTE: you dont get any information abute the sender
-	* Just the socket
-	*/
-	/*
-	Buffer data;
-	Buffer_Initialize(&data, True, 16);
-
-	Buffer_WriteUInt8(&data, Payload_Type_Safe);
-	UInt64 time = 0;
-	SystemMonotonicMS(&time);
-	Buffer_WriteUInt64(&data, time);
-	
-	Buffer_WriteUInt8(&data, Payload_Address_Type_MAC);
-	UInt8 mac[6];
-	GetMAC(mac);
-	Buffer_WriteBuffer(&data, mac, 6);
-	Buffer_WriteUInt8(&data, Payload_Address_Type_NONE);
-
-	Buffer_WriteUInt8(&data, Payload_Message_Type_String);
-	UInt16 size = strlen("Connect");
-	Buffer_WriteUInt16(&data, size);
-	Buffer_WriteBuffer(&data, "Connect", size);
-
-	Buffer_WriteUInt16(&data, 0);
-	
-	UInt8 CRC = 0;
-	DataLayer_GetCRC(data.m_Ptr, data.m_BytesLeft, &CRC);
-	Buffer_WriteUInt8(&data, CRC);
-
-	TCPSocket_Write(_TCPSocket, &data, data.m_BytesLeft);
-
-	Buffer_Dispose(&data);
-	return 1;
-	*/
 }
 
 
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-
-	if(_Client->m_Sockets.m_Size == 0)
-		return 0;
-
-	int totalReaded = 0;
-	LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
-
-	Buffer_Clear(&_Client->m_Buffer);
-	while(currentNode != NULL)
-	{
-		int readed = 0;
-		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
-		readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
-		totalReaded += readed;
-
-		while (readed == 1024)
-		{
-			readed = TCPSocket_Read(socket, &_Client->m_Buffer, 1024);
-			totalReaded += readed;
-		}
-		
-
-		currentNode = currentNode->m_Next;
-	}
-
-	if(totalReaded > 0)
-	{
-		printf("Filesystem_Client_TCPRead\n\r");
-		Buffer_Copy(_Buffer, &_Client->m_Buffer, _Client->m_Buffer.m_BytesLeft);
-		return totalReaded;
-	}
-
-	return 0;
-
+	return Filesystem_Service_TCPRead(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
 }
 
 int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-
-	printf("Filesystem_Client_TCPWrite\n\r");
-
-	LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
-	while (currentNode != NULL)
-	{
-		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
-		Buffer_ResetReadPtr(_Buffer);
-		TCPSocket_Write(socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
-
-		currentNode = currentNode->m_Next;
-	}
-
-	return 0;
+	return Filesystem_Service_TCPWrite(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
 }
 
 int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
@@ -283,18 +195,19 @@ void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 	if(_MSTime > _Client->m_NextCheck)
 	{
 		_Client->m_NextCheck = _MSTime + _Client->m_Timeout;
-		LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
+		LinkedList_Node* currentNode = _Client->m_Connections.m_Head;
 		while (currentNode != NULL)
 		{
-			TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
+			Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
 			currentNode = currentNode->m_Next;
 
-			int succeess = recv(socket->m_FD,NULL,1, MSG_PEEK | MSG_DONTWAIT);
+			int succeess = recv(connection->m_Socket->m_FD,NULL,1, MSG_PEEK | MSG_DONTWAIT);
 
 			if(succeess == 0)
 			{
-				LinkedList_RemoveItem(&_Client->m_Sockets, socket);
-				TCPSocket_Dispose(socket);
+				LinkedList_RemoveItem(&_Client->m_Connections, connection);
+				TCPSocket_Dispose(connection->m_Socket);
+				Allocator_Free(connection);
 			}
 		}
 		
@@ -308,20 +221,20 @@ void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 	NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 	DataLayer_Dispose(&_Client->m_DataLayer);
 
-	LinkedList_Node* currentNode = _Client->m_Sockets.m_Head;
+	LinkedList_Node* currentNode = _Client->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
-		TCPSocket* TCPSocket = currentNode->m_Item;
+		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
-		TCPSocket_Dispose(TCPSocket);
-		LinkedList_RemoveFirst(&_Client->m_Sockets);
+		LinkedList_RemoveFirst(&_Client->m_Connections);
+		TCPSocket_Dispose(connection->m_Socket);
+		Allocator_Free(connection);
 	}
 
 	TCPServer_Dispose(&_Client->m_TCPServer);
 
-	LinkedList_Dispose(&_Client->m_Sockets);
-	Buffer_Dispose(&_Client->m_Buffer);
+	LinkedList_Dispose(&_Client->m_Connections);
 
 	if(_Client->m_Allocated == True)
 		Allocator_Free(_Client);

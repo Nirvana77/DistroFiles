@@ -26,7 +26,6 @@ struct T_Filesystem_Server
 	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Connections;
-	Buffer m_Buffer;
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
