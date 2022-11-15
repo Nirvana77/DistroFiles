@@ -169,6 +169,7 @@ int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 			currentNode->m_Privios->m_Next = currentNode->m_Next;
 			currentNode->m_Next->m_Privios = currentNode->m_Privios;
 			_List->m_Size--;
+			Allocator_Free(currentNode);
 			
 			return 0;
 		}
