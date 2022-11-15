@@ -252,11 +252,18 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	while (currentNode != NULL)
 	{
 		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
 
 		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperMAC(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
 			TCPSocket_Write(connection->m_Socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
+		
+		if(connection->m_Socket->m_Status == TCPSocket_Status_Closed)
+		{
+			LinkedList_RemoveItem(&_Server->m_Connections, connection);
+			TCPSocket_Dispose(connection->m_Socket);
+			Allocator_Free(connection);
+		}
 
-		currentNode = currentNode->m_Next;
 	}
 
 	return 0;
