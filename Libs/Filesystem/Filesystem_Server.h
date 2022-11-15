@@ -71,6 +71,17 @@ static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value
 	*(_Value) = value;
 }
 
+static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char _Result[16])
+{
+
+	printf("%s: ", _Name);
+
+	for (int i = 0; i < 16; i++)
+		printf("%x", _Result[i]);
+	
+	printf("\r\n");
+}
+
 static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
 {
 	Payload* message = NULL;
@@ -91,17 +102,6 @@ static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
 
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
 	}
-}
-
-static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char _Result[16])
-{
-
-	printf("%s: ", _Name);
-
-	for (int i = 0; i < 16; i++)
-		printf("%x", _Result[i]);
-	
-	printf("\r\n");
 }
 
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
