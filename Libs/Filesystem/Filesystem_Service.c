@@ -436,7 +436,7 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 
 	if(_Service->m_Server != NULL)
 	{
-		Filesystem_Service_Dispose(_Service->m_Server);
+		Filesystem_Server_Dispose(_Service->m_Server);
 		_Service->m_Server = NULL;
 	}
 
