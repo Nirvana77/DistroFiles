@@ -259,9 +259,15 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 		
 		if(connection->m_Socket->m_Status == TCPSocket_Status_Closed)
 		{
+			printf("want to remove connection ");
+
+			for (int i = 0; i < sizeof(connection->m_Addrass.m_Address); i++)
+				printf("%x.", connection->m_Addrass.m_Address.MAC[i]);
+			/*
 			LinkedList_RemoveItem(&_Server->m_Connections, connection);
 			TCPSocket_Dispose(connection->m_Socket);
 			Allocator_Free(connection);
+			*/
 		}
 
 	}
@@ -460,13 +466,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				Buffer_WriteUInt8(&folderContext, file.is_dir ? False : True);
 				Buffer_WriteUInt16(&folderContext, strlen(file.name));
 				Buffer_WriteBuffer(&folderContext, (unsigned char*)file.name, strlen(file.name));
-
-				if(file.is_dir)
-					Folder_Hash(file.path, hash);
-				else
-					File_GetHash(file.path, hash);
-
-				Buffer_WriteBuffer(&folderContext, hash, 16);
 				size++;
 			}
 			tinydir_next(&dir);
@@ -476,6 +475,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
+
+		Payload_Print(_Replay, "SyncAck list data: ", False);
 
 		Buffer_Dispose(&folderContext);
 		return 1;
@@ -715,33 +716,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == True)
 			{
 				_Server->m_TempListSize--;
-				
-				unsigned char responsHash[16];
-				unsigned char fileHash[16];
-
-				File_GetHash(fullPath.m_Ptr, responsHash);
-
-				Buffer_ReadBuffer(&_Server->m_TempListBuffer, fileHash, 16);
-
-				if(Filesystem_Server_HashCheck(responsHash, fileHash) == False && isFile == True)
-				{
-					printf("Wrong hash for list and respons\n\r");
-					printf("File: %s\n\r", fullPath.m_Ptr);
-					printf("responsHash: \r\n");
-					for (int i = 0; i < 16; i++)
-						printf("%x ", responsHash[i]);
-					printf("\n\r");
-					
-					printf("fileHash: \r\n");
-					for (int i = 0; i < 16; i++)
-						printf("%x ", fileHash[i]);
-					printf("\n\r");
-					
-				}
-				else
-				{
-					BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
-				}
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
 
 			}
 		}
@@ -844,6 +819,8 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 
 		if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
 			File_Remove(_FullPath->m_Ptr);
+		else
+			return 0;
 	}
 
 	File_Open(_FullPath->m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
@@ -877,7 +854,7 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		
 		printf("\n\rHash check failed!\n\r");
 		File_Remove(_FullPath->m_Ptr);
-		return 1;
+		return -1;
 	}
 
 
@@ -920,6 +897,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 		printf("Fullpath error(Filesystem_Server_WriteFolder): %s\n\r", str.m_Ptr);
 		String_Dispose(&str);
 	}
+
 
 	int written = File_WriteAll(f, _DataBuffer->m_ReadPtr, _DataBuffer->m_BytesLeft);
 
