@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 	int doExit = 1;
 	StateMachine_Initialize(&g_StateMachine);
 	
-	Folder_Remove("Shared/root");
+	//Folder_Remove("Shared/root");
 	Folder_Remove("Shared/temp");
 	File_Remove("payload_dump.txt");
 	
@@ -336,6 +336,18 @@ int main(int argc, char* argv[])
 						printf("\r\n");
 						
 					} break;
+				
+					case 'l':
+					{
+						String str;
+						String_Initialize(&str, 32);
+
+						String_Set(&str, "tree ");
+						String_Append(&str, service->m_Server->m_FilesytemPath.m_Ptr, service->m_Server->m_FilesytemPath.m_Length);
+
+						system(str.m_Ptr);
+
+					}break;
 				
 					default:
 					{
