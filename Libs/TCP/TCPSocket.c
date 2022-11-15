@@ -80,25 +80,28 @@ int TCPSocket_Read(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _
 int TCPSocket_Write(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
 	int bytesSent = send(_TCPSocket->m_FD, _Buffer, _BufferSize, MSG_NOSIGNAL);
-	if (errno == EWOULDBLOCK)
+	if(bytesSent < 0)
 	{
-		return 0;
-	}
-	else if(errno == 0)
-	{
-		_TCPSocket->m_Status = TCPSocket_Status_Connected;
-		return 0;
-	}
-	else if(errno == 32)
-	{
-		_TCPSocket->m_Status = TCPSocket_Status_Closed;
-		return -2;
-	}
-	else 
-	{
-		printf("TCPSocket Error %i\r\n", errno);
-		_TCPSocket->m_Status = TCPSocket_Status_Failed;
-		return -1;
+		if (errno == EWOULDBLOCK)
+		{
+			return 0;
+		}
+		else if(errno == 0)
+		{
+			_TCPSocket->m_Status = TCPSocket_Status_Connected;
+			return 0;
+		}
+		else if(errno == 32)
+		{
+			_TCPSocket->m_Status = TCPSocket_Status_Closed;
+			return -2;
+		}
+		else 
+		{
+			printf("TCPSocket Error %i\r\n", errno);
+			_TCPSocket->m_Status = TCPSocket_Status_Failed;
+			return -1;
+		}
 	}
 
 	return bytesSent;
