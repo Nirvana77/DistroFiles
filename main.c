@@ -347,6 +347,7 @@ int main(int argc, char* argv[])
 
 						system(str.m_Ptr);
 
+						String_Dispose(&str);
 					}break;
 				
 					default:
