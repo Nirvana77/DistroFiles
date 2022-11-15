@@ -97,7 +97,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		Buffer_Dispose(&_Server->m_Buffer);
 		return -4;
 	}
-	LinkedList_Initialize(&_Server->m_Sockets);
+	LinkedList_Initialize(&_Server->m_Connections);
 
 
 	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, 100);
@@ -107,7 +107,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Sockets);
+		LinkedList_Dispose(&_Server->m_Connections);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		return -5;
@@ -120,7 +120,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Sockets);
+		LinkedList_Dispose(&_Server->m_Connections);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
@@ -134,7 +134,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Sockets);
+		LinkedList_Dispose(&_Server->m_Connections);
 		Buffer_Dispose(&_Server->m_Buffer);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
@@ -169,7 +169,12 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	
 	printf("Filesystem_Server: Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
 
-	LinkedList_Push(&_Server->m_Sockets, _TCPSocket);
+	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+
+	connection->m_Socket = _TCPSocket;
+	memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
+
+	LinkedList_Push(&_Server->m_Connections, connection);
 	return 0;
 }
 
@@ -178,27 +183,39 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	if(_Server->m_Sockets.m_Size == 0)
+	if(_Server->m_Connections.m_Size == 0)
 		return 0;
 
 	int totalReaded = 0;
-	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
-
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+	unsigned char buffer[1024];
 	Buffer_Clear(&_Server->m_Buffer);
 	while(currentNode != NULL)
 	{
 		int readed = 0;
-		TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
-		readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
-		if(readed != -1)
-			totalReaded += readed;
+		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
+		if(readed > 0) {
+			totalReaded += Buffer_WriteBuffer(&_Server->m_Buffer, buffer, readed);
+			if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE)
+			{
+				UInt8 flag = 0;
+				void* ptr = buffer;
+				ptr += Memory_ParseUInt8(ptr, &flag);
+				if(BitHelper_GetBit(&flag, 0) == True) {
+					ptr += 16 + 1 + 8;
+					ptr += Memory_ParseUInt8(ptr, (UInt8*)&connection->m_Addrass.m_Type);
+					ptr += Memory_ParseBuffer(&connection->m_Addrass.m_Address, ptr, sizeof(connection->m_Addrass.m_Address));
+				}
+			}
+
+		}
 
 		while (readed == 1024)
 		{
-			readed = TCPSocket_Read(socket, &_Server->m_Buffer, 1024);
-			totalReaded += readed;
+			readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
+			totalReaded += Buffer_WriteBuffer(&_Server->m_Buffer, buffer, readed);
 		}
-		
 
 		currentNode = currentNode->m_Next;
 	}
@@ -217,13 +234,27 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
+	void* ptr = _Buffer->m_ReadPtr;
+	UInt8 flags = 0;
+	ptr += Memory_ParseUInt8(ptr, &flags);
+	ptr += 16 + 1 + 8 + 1 + 6;
 
-	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	Payload_Address des;
+	UInt8 type = 0;
+	ptr += Memory_ParseUInt8(ptr, &type);
+	des.m_Type = (Payload_Address_Type)type;
+
+	if(des.m_Type != Payload_Address_Type_NONE)
+		ptr += Memory_ParseBuffer(&des.m_Address, ptr, sizeof(des.m_Address));
+
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+	Buffer_ResetReadPtr(_Buffer);
 	while (currentNode != NULL)
 	{
-		TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
-		Buffer_ResetReadPtr(_Buffer);
-		TCPSocket_Write(socket, _Buffer, _Size);
+		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+
+		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperMAC(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
+			TCPSocket_Write(connection->m_Socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
 
 		currentNode = currentNode->m_Next;
 	}
@@ -249,7 +280,11 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		TCPSocket* socket = NULL;
 		if(TCPSocket_InitializePtr(charVal, port, NULL, &socket) == 0)
 		{
-			LinkedList_Push(&_Server->m_Sockets, socket);
+			Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+
+			connection->m_Socket = socket;
+			memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
+			LinkedList_Push(&_Server->m_Connections, connection);
 		}
 		
 	}
@@ -1172,7 +1207,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	if(_MSTime > _Server->m_NextCheck)
 	{
 		_Server->m_NextCheck = _MSTime + _Server->m_Timeout;
-		LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 		while (currentNode != NULL)
 		{
 			TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
@@ -1182,7 +1217,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 			if(succeess == 0)
 			{
-				LinkedList_RemoveItem(&_Server->m_Sockets, socket);
+				LinkedList_RemoveItem(&_Server->m_Connections, socket);
 				TCPSocket_Dispose(socket);
 			}
 		}
@@ -1198,21 +1233,22 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 	DataLayer_Dispose(&_Server->m_DataLayer);
 
-	LinkedList_Node* currentNode = _Server->m_Sockets.m_Head;
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
-		TCPSocket* TCPSocket = currentNode->m_Item;
+		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
-		TCPSocket_Dispose(TCPSocket);
-		LinkedList_RemoveFirst(&_Server->m_Sockets);
+		TCPSocket_Dispose(connection->m_Socket);
+		Allocator_Free(connection);
+		LinkedList_RemoveFirst(&_Server->m_Connections);
 	}
 
 	TCPServer_Dispose(&_Server->m_TCPServer);
 
 	String_Dispose(&_Server->m_FilesytemPath);
 
-	LinkedList_Dispose(&_Server->m_Sockets);
+	LinkedList_Dispose(&_Server->m_Connections);
 	Buffer_Dispose(&_Server->m_TempListBuffer);
 	Buffer_Dispose(&_Server->m_Buffer);
 

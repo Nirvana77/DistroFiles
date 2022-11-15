@@ -47,7 +47,6 @@ int kbhit(void);
 StateMachine g_StateMachine;
 
 
-//TODO: #54 LinkedList is not disposed correctly
 int main(int argc, char* argv[])
 {
 	#ifdef ALLOCATOR_DEBUG

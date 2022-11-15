@@ -39,6 +39,12 @@ typedef struct
 
 } Filesystem_ServiceSettings;
 
+typedef struct
+{
+	Payload_Address m_Addrass;
+	TCPSocket* m_Socket;
+} Filesystem_Connection;
+
 struct T_Filesystem_Service
 {
 	Bool m_Allocated;

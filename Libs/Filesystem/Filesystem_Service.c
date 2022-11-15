@@ -278,7 +278,7 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	
 		char tempStr[126];
 		char ip[17];
-		LinkedList_Node* currentNode = _Service->m_Server->m_Sockets.m_Head;
+		LinkedList_Node* currentNode = _Service->m_Server->m_Connections.m_Head;
 		while (currentNode != NULL)
 		{
 			TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
