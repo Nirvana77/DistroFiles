@@ -430,6 +430,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			else
 			{
 				printf("Write check OK\r\n");
+				Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, path, fileHash);
 				String_Dispose(&fullPath);
 				return 0;
 			}
@@ -464,6 +465,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
 
 		String_Dispose(&fullPath);
+
+		Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, path, hash);
+
 		return 1;
 
 	}
@@ -512,24 +516,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			for (int i = 0; i < 16; i++)
 				printf("%x", hash[i]);
 			printf("\n\r");
-			/*
-			Payload* p = NULL;
-			size = 1 + 2 + strlen((const char*)path) + 1 + 2 + File_GetSize(f);
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, size, &p) == 0)
-			{
-				Payload_FilCommunicator(&p->m_Des, &_Message->m_Src);
-				Payload_SetMessageType(p, Payload_Message_Type_String, "Write", strlen("Write"));
-
-				Buffer_WriteUInt8(&p->m_Data, (UInt8)isFile);
-				
-				Buffer_WriteUInt16(&p->m_Data, (UInt16)(strlen((const char*)path) + 1));
-				Buffer_WriteBuffer(&p->m_Data, (UInt8*)path, strlen((const char*)path) + 1);
-				
-				Buffer_WriteUInt16(&p->m_Data, (UInt16)File_GetSize(f));
-				Buffer_ReadFromFile(&p->m_Data, f);
-
-			}
-			*/
 		}
 
 	}
@@ -911,6 +897,43 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Nam
 	String_Dispose(&fullPath);
 	return success;
 }
+
+int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, const char* _Path, unsigned char _Hash[16])
+{
+	Payload message;
+	Payload_Initialize(&message, NULL);
+
+	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen(_Path));
+	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Path, strlen(_Path));
+	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Hash, 16);
+
+	Payload_SetMessageType(&message, Payload_Message_Type_String, "writeCheck", strlen("writeCheck"));
+
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		if (Payload_ComperAddresses(&connection->m_Addrass, _IgnoreAddress) == False)
+		{
+			Payload* msg = NULL;
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, message.m_Size, 1000, &msg) == 0)
+			{
+				message.m_Time = msg->m_Time;
+				message.m_State = msg->m_State;
+				Payload_Copy(msg, &message);
+				Payload_FilAddress(&msg->m_Des, &connection->m_Addrass);
+
+			}
+		}
+		
+
+	}
+	
+	return 0;
+}
+
 
 void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 {
