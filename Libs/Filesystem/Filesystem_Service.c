@@ -330,7 +330,6 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 }
 
 
-//TODO: #58 This overwrites the buffer some how
 int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)

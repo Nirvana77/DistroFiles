@@ -192,7 +192,7 @@ int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File)
 {
 	int size = File_GetSize(_File);
 	
-	if(_Buffer->m_Size - _Buffer->m_BytesLeft < size)
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + size)
 	{
 		if(Buffer_ExtendBy(_Buffer, size) != 0)
 			return -1;
