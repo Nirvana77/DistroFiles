@@ -12,6 +12,7 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
 int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
+int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, const char* _Path, unsigned char _Hash[16]);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -337,6 +338,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Folder_Hash(fullPath.m_Ptr, serverHash);
 
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
+		_Replay->m_Type = Payload_Type_Respons;
 
 		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
 		{
@@ -456,6 +458,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		File_GetHash(fullPath.m_Ptr, hash);
 		
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "WriteAck", strlen("WriteAck"));
+		_Replay->m_Type = Payload_Type_Respons;
 
 		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)isFile);
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, strlen((const char*)path));
@@ -518,6 +521,42 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			printf("\n\r");
 		}
 
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "writeCheck") == 0)
+	{
+		
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		unsigned char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, path, size);
+		path[size] = 0;
+		String fullPath;
+
+		String_Initialize(&fullPath, 64);
+		String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
+
+		if(String_EndsWith(&fullPath, "/") == False)
+			String_Append(&fullPath, "/", 1);
+
+		String_Append(&fullPath, (const char*)path, size);
+
+		unsigned char hash[16] = "";
+		unsigned char serverHash[16] = "";
+		Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
+
+		File_GetHash(fullPath.m_Ptr, serverHash);
+
+		if(Filesystem_Server_HashCheck(serverHash, hash) == True)
+			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
+		else
+			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
+			
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "writeCheckAck", strlen("writeCheckAck"));
+		_Replay->m_Type = Payload_Type_Respons;
+		
+		String_Dispose(&fullPath);
+		return 1;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
@@ -643,6 +682,7 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 	_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, hash, 16);
 
 	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
+	_Replay->m_Type = Payload_Type_Respons;
 
 	return 1;
 }
@@ -651,6 +691,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 {
 
 	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
+	_Replay->m_Type = Payload_Type_Respons;
 	
 	tinydir_dir dir;
 	if(tinydir_open(&dir, _FullPath->m_Ptr) != 0)
@@ -931,6 +972,8 @@ int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* 
 
 	}
 	
+
+	Payload_Dispose(&message);
 	return 0;
 }
 
