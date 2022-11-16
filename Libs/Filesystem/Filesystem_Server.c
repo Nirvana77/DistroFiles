@@ -8,11 +8,13 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
+int Filesystem_Server_SpawnWriteCheck(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Server_WriteCheck** _WriteCheckPtr);
+int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr);
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
 int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
 int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
 int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
-int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, const char* _Path, unsigned char _Hash[16]);
+int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, unsigned char* _Path, unsigned char _Hash[16]);
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -41,6 +43,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	_Server->m_NextCheck = 0;
 	_Server->m_Timeout = 10000;
 	_Server->m_Service = _Service;
+	_Server->m_State = Filesystem_Server_State_Init;
 
 	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
 	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
@@ -89,6 +92,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -4;
 	}
 	LinkedList_Initialize(&_Server->m_Connections);
+	LinkedList_Initialize(&_Server->m_WriteChecked);
 
 
 	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, 100);
@@ -99,6 +103,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
+		LinkedList_Dispose(&_Server->m_WriteChecked);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		return -5;
 	}
@@ -111,6 +116,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
+		LinkedList_Dispose(&_Server->m_WriteChecked);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		return -6;
@@ -124,6 +130,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
+		LinkedList_Dispose(&_Server->m_WriteChecked);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		NetworkLayer_Dispose(&_Server->m_NetworkLayer);
@@ -141,8 +148,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 
 	if(Folder_IsEmpty(tempPath) == False)
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
-
-	Filesystem_Server_LoadServer(_Server);
 
 	return 0;
 }
@@ -175,7 +180,74 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-	return Filesystem_Service_TCPWrite(_Server->m_Service, &_Server->m_Connections, _Buffer, _Size);
+	LinkedList list;
+	LinkedList_Initialize(&list);
+	if(_Server->m_State == Filesystem_Server_State_ReSyncing)
+	{
+		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+		while (currentNode != NULL)
+		{
+			Bool isAllowed = True;
+			Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+			LinkedList_Node* node = _Server->m_WriteChecked.m_Head;
+			while (node != NULL)
+			{
+				Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*) node->m_Item;
+
+				if(writeCheck->m_IsUsed == False)
+				{
+					node = NULL;
+				}
+				else if(connection == writeCheck->m_Connection)
+				{
+					if(writeCheck->m_IsOk != 0)
+						isAllowed = False;
+					
+					node = NULL;
+				}
+				else
+				{
+					node = node->m_Next;
+				}
+			}
+
+			if(isAllowed == True)
+			{
+				LinkedList_Node* node = currentNode;
+				currentNode = currentNode->m_Next;
+				LinkedList_UnlinkNode(&_Server->m_Connections, node);
+				LinkedList_LinkFirst(&list, node);
+			}
+			else
+			{
+				currentNode = currentNode->m_Next;
+			}
+			
+		}
+
+	}
+	else
+	{
+		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+		while (currentNode != NULL)
+		{
+			currentNode = currentNode->m_Next;
+			LinkedList_LinkFirst(&list, LinkedList_UnlinkFirst(&_Server->m_Connections));
+		}
+	}
+
+	int success = Filesystem_Service_TCPWrite(_Server->m_Service, &list, _Buffer, _Size);
+
+	LinkedList_Node* currentNode = list.m_Head;
+	while (currentNode != NULL)
+	{
+		currentNode = currentNode->m_Next;
+		LinkedList_LinkFirst(&_Server->m_Connections, LinkedList_UnlinkFirst(&list));
+	}
+	
+
+	LinkedList_Dispose(&list);
+	return success;
 }
 
 int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
@@ -205,6 +277,7 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		
 	}
 	
+	_Server->m_State = Filesystem_Server_State_Idel;
 	return 0;
 }
 
@@ -226,8 +299,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		Buffer_ReadUInt8(&_Message->m_Data, &isOk);
 
-		if(isOk == 0)
+		if(isOk == 0) {
+			SystemMonotonicMS(&_Server->m_LastSynced);
+			_Server->m_State = Filesystem_Server_State_Synced;
 			return 0;
+		}
 
 		UInt16 size = 0;
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
@@ -524,7 +600,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "writeCheck") == 0)
 	{
-		
+		_Server->m_State = Filesystem_Server_State_WriteCheck;
 		UInt16 size = 0;
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
@@ -563,6 +639,32 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		
 		String_Dispose(&fullPath);
 		return 1;
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "writeCheckAck") == 0)
+	{
+		Filesystem_Server_WriteCheck* writeCheck = NULL;
+		if(Filesystem_Server_SpawnWriteCheck(_Server, &_Message->m_Src, &writeCheck) == 1)
+			return 0;
+		
+		// Buffer_ReadUInt8(&_Message->m_Data, &writeCheck->m_IsOk);
+		writeCheck->m_IsOk = 1;
+		
+		if(Filesystem_Server_GetConnection(_Server, &_Message->m_Src, &writeCheck->m_Connection) != 0)
+		{
+			writeCheck->m_IsUsed = False;
+			writeCheck->m_Connection = NULL;
+
+			LinkedList_Node* node = NULL;
+			LinkedList_UnlinkItem(&_Server->m_WriteChecked, writeCheck, &node);
+			LinkedList_LinkLast(&_Server->m_WriteChecked, node);
+			printf("Error with: \r\n");
+			for (int i = 0; i < sizeof(_Message->m_Src.m_Address); i++)
+				printf("%x ", _Message->m_Src.m_Address.MAC[i]);
+			printf("\r\n");
+			return 0;
+		}
+		
+		return 0;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
@@ -665,6 +767,78 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	return 0;
 }
 
+void Filesystem_Server_ClearWriteCheckList(Filesystem_Server* _Server)
+{
+	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*)currentNode->m_Item;
+
+		if(writeCheck->m_IsUsed == False)
+			return;
+		
+		writeCheck->m_IsUsed = False;
+		writeCheck->m_Connection = NULL;
+		currentNode = currentNode->m_Next;
+	}
+}
+
+int Filesystem_Server_SpawnWriteCheck(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Server_WriteCheck** _WriteCheckPtr)
+{
+	if(_WriteCheckPtr == NULL)
+		return -1;
+
+	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*)currentNode->m_Item;
+
+		if(writeCheck->m_IsUsed == False)
+		{
+			writeCheck->m_IsUsed = True;
+			writeCheck->m_Connection = NULL;
+			LinkedList_UnlinkNode(&_Server->m_WriteChecked, currentNode);
+			LinkedList_LinkFirst(&_Server->m_WriteChecked, currentNode);
+			*(_WriteCheckPtr) = writeCheck;
+			return 0;
+		}
+		else if(Payload_ComperAddresses(&writeCheck->m_Connection->m_Addrass, _Address) == True)
+		{
+			*(_WriteCheckPtr) = writeCheck;
+			return 1;
+		}
+		currentNode = currentNode->m_Next;
+	}
+	
+	Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*) Allocator_Malloc(sizeof(Filesystem_Server_WriteCheck));
+
+	writeCheck->m_Connection = NULL;
+	writeCheck->m_IsUsed = True;
+
+	LinkedList_AddFirst(&_Server->m_WriteChecked, writeCheck);	
+	*(_WriteCheckPtr) = writeCheck;
+	return 0;
+}
+
+int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr)
+{
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		if(Payload_ComperAddresses(&connection->m_Addrass, _Address) == True)
+		{
+			if(_ConnectionPtr != NULL)
+				*(_ConnectionPtr) = connection;
+			return 0;
+		}
+
+	}
+	
+	return 1;
+}
 
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
@@ -945,13 +1119,13 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Nam
 	return success;
 }
 
-int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, const char* _Path, unsigned char _Hash[16])
+int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, unsigned char* _Path, unsigned char _Hash[16])
 {
 	Payload message;
 	Payload_Initialize(&message, NULL);
 
-	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen(_Path));
-	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Path, strlen(_Path));
+	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen((const char*)_Path));
+	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Path, strlen((const char*)_Path));
 	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Hash, 16);
 
 	Payload_SetMessageType(&message, Payload_Message_Type_String, "writeCheck", strlen("writeCheck"));
@@ -990,176 +1164,246 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	DataLayer_Work(_MSTime, &_Server->m_DataLayer);
 	TransportLayer_Work(_MSTime, &_Server->m_TransportLayer);
 
-	if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
-	   BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == False)
+	switch (_Server->m_State)
 	{
-		Buffer_Clear(&_Server->m_TempListBuffer);
-
-		
-		String fullPath;
-
-		String_Initialize(&fullPath, 64);
-		String_Set(&fullPath, _Server->m_Service->m_Path.m_Ptr);
-
-		if(String_EndsWith(&fullPath, "/") == False)
-			String_Append(&fullPath, "/", 1);
-
-		String_Append(&fullPath, "temp", strlen("temp"));
-
-		tinydir_dir dir;
-		if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+		case Filesystem_Server_State_Init:
 		{
-			printf("Fullpath error(HasList): %s\n\r", fullPath.m_Ptr);
-			String_Dispose(&fullPath);
-			return;
-		}
+			
+			_Server->m_State = Filesystem_Server_State_Connecting;
+			Filesystem_Server_LoadServer(_Server);
+		}break;
 
-		String_Dispose(&fullPath);
-		
-		while (dir.has_next)
+		case Filesystem_Server_State_ReSyncing:
+		case Filesystem_Server_State_Syncing:
 		{
-			tinydir_file file;
-			tinydir_readfile(&dir, &file);
-			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+
+			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
+			BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == False)
 			{
-				FILE* f = NULL;
-				File_Open(file.path, File_Mode_ReadBinary, &f);
+				Buffer_Clear(&_Server->m_TempListBuffer);
+
 				
-				int written = Buffer_WriteUInt16(&_Server->m_TempListBuffer, strlen(file.path));
-				written += Buffer_WriteBuffer(&_Server->m_TempListBuffer, (unsigned char*)file.path, strlen(file.path));
+				String fullPath;
 
-				_Server->m_TempListBuffer.m_ReadPtr += written;
-				_Server->m_TempListBuffer.m_BytesLeft -= written;
+				String_Initialize(&fullPath, 64);
+				String_Set(&fullPath, _Server->m_Service->m_Path.m_Ptr);
 
-				Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
+				if(String_EndsWith(&fullPath, "/") == False)
+					String_Append(&fullPath, "/", 1);
 
-				File_Close(f);
-				break;
+				String_Append(&fullPath, "temp", strlen("temp"));
+
+				tinydir_dir dir;
+				if(tinydir_open(&dir, fullPath.m_Ptr) != 0)
+				{
+					printf("Fullpath error(HasList): %s\n\r", fullPath.m_Ptr);
+					String_Dispose(&fullPath);
+					return;
+				}
+
+				String_Dispose(&fullPath);
+				
+				while (dir.has_next)
+				{
+					tinydir_file file;
+					tinydir_readfile(&dir, &file);
+					if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+					{
+						FILE* f = NULL;
+						File_Open(file.path, File_Mode_ReadBinary, &f);
+						
+						int written = Buffer_WriteUInt16(&_Server->m_TempListBuffer, strlen(file.path));
+						written += Buffer_WriteBuffer(&_Server->m_TempListBuffer, (unsigned char*)file.path, strlen(file.path));
+
+						_Server->m_TempListBuffer.m_ReadPtr += written;
+						_Server->m_TempListBuffer.m_BytesLeft -= written;
+
+						Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
+						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
+
+						File_Close(f);
+						break;
+					}
+					tinydir_next(&dir);
+				}
+
+				tinydir_close(&dir);
+
+				Buffer_ReadUInt16(&_Server->m_TempListBuffer, &_Server->m_TempListSize);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
 			}
-			tinydir_next(&dir);
-		}
-
-		tinydir_close(&dir);
-
-		Buffer_ReadUInt16(&_Server->m_TempListBuffer, &_Server->m_TempListSize);
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
-	}
-	else if (BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend) == True)
-	{
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, False);
-
-		if(_Server->m_TempListSize == 0)
-		{
-			BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, True);
-			return;
-		}
-
-		Bool isFile = True;
-		Buffer_ReadUInt8(&_Server->m_TempListBuffer, (UInt8*)&isFile);
-
-		UInt16 size = 0;
-		Buffer_ReadUInt16(&_Server->m_TempListBuffer, &size);
-		
-		char path[size + 1];
-		Buffer_ReadBuffer(&_Server->m_TempListBuffer, (unsigned char*)path, size);
-		path[size] = 0;
-
-		String str;
-		String_Initialize(&str, 32);
-		
-		UInt16 length = 0;
-		void* ptr = _Server->m_TempListBuffer.m_Ptr;
-		ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
-		char fullPath[length + 1];
-		ptr += Memory_ParseBuffer(fullPath, ptr, length);
-		fullPath[length] = 0;
-
-		int index = _Server->m_Service->m_Path.m_Length + 6 + 5;
-
-		if(strncmp(&fullPath[index], "root_", 5) == 0)
-		{
-			String_Set(&str, &fullPath[5 + index]);
-
-			str.m_Ptr[str.m_Length - 5] = 0;
-			str.m_Length -= 5;
-
-			String_Append(&str, "/", 1);
-			String_Append(&str, path, strlen(path));
-		}
-		else
-		{
-			String_Set(&str, path);
-		}
-		
-		Payload* message = NULL;
-		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, 1000, &message) == 0)
-		{
-
-			Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
-			Buffer_WriteUInt16(&message->m_Data, str.m_Length);
-			Buffer_WriteBuffer(&message->m_Data, (unsigned char*)str.m_Ptr, str.m_Length);
-
-			Payload_SetMessageType(message, Payload_Message_Type_String, "Read", strlen("Read"));
-		}
-		String_Dispose(&str);
-	}
-	else if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear) == True)
-	{
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
-		
-		UInt16 length = 0;
-
-		void* ptr = _Server->m_TempListBuffer.m_Ptr;
-		ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
-		char fullPath[length + 1];
-		ptr += Memory_ParseBuffer(fullPath, ptr, length);
-		fullPath[length] = 0;
-
-		if(File_Remove(fullPath) != 0)
-		{
-			printf("File error(WillClear): %s\n\r", fullPath);
-			return;
-		}
-
-		
-		String tempPath;
-
-		String_Initialize(&tempPath, 64);
-		String_Set(&tempPath, _Server->m_Service->m_Path.m_Ptr);
-
-		if(String_EndsWith(&tempPath, "/") == False)
-			String_Append(&tempPath, "/", 1);
-
-		String_Append(&tempPath, "temp", strlen("temp"));
-
-		tinydir_dir dir;
-		if(tinydir_open(&dir, tempPath.m_Ptr) != 0)
-		{
-			printf("TempPath error(HasList): %s\n\r", tempPath.m_Ptr);
-			String_Dispose(&tempPath);
-			return;
-		}
-
-		String_Dispose(&tempPath);
-		
-		while (dir.has_next)
-		{
-			tinydir_file file;
-			tinydir_readfile(&dir, &file);
-			if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+			else if (BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend) == True)
 			{
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, False);
 
-				break;
+				if(_Server->m_TempListSize == 0)
+				{
+					BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, True);
+					return;
+				}
+
+				Bool isFile = True;
+				Buffer_ReadUInt8(&_Server->m_TempListBuffer, (UInt8*)&isFile);
+
+				UInt16 size = 0;
+				Buffer_ReadUInt16(&_Server->m_TempListBuffer, &size);
+				
+				char path[size + 1];
+				Buffer_ReadBuffer(&_Server->m_TempListBuffer, (unsigned char*)path, size);
+				path[size] = 0;
+
+				String str;
+				String_Initialize(&str, 32);
+				
+				UInt16 length = 0;
+				void* ptr = _Server->m_TempListBuffer.m_Ptr;
+				ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
+				char fullPath[length + 1];
+				ptr += Memory_ParseBuffer(fullPath, ptr, length);
+				fullPath[length] = 0;
+
+				int index = _Server->m_Service->m_Path.m_Length + 6 + 5;
+
+				if(strncmp(&fullPath[index], "root_", 5) == 0)
+				{
+					String_Set(&str, &fullPath[5 + index]);
+
+					str.m_Ptr[str.m_Length - 5] = 0;
+					str.m_Length -= 5;
+
+					String_Append(&str, "/", 1);
+					String_Append(&str, path, strlen(path));
+				}
+				else
+				{
+					String_Set(&str, path);
+				}
+				
+				Payload* message = NULL;
+				if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, 1000, &message) == 0)
+				{
+
+					Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
+					Buffer_WriteUInt16(&message->m_Data, str.m_Length);
+					Buffer_WriteBuffer(&message->m_Data, (unsigned char*)str.m_Ptr, str.m_Length);
+
+					Payload_SetMessageType(message, Payload_Message_Type_String, "Read", strlen("Read"));
+				}
+				String_Dispose(&str);
 			}
-			tinydir_next(&dir);
-		}
+			else if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear) == True)
+			{
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
+				
+				UInt16 length = 0;
 
-		tinydir_close(&dir);
+				void* ptr = _Server->m_TempListBuffer.m_Ptr;
+				ptr += Memory_ParseUInt16(_Server->m_TempListBuffer.m_Ptr, &length);
+				char fullPath[length + 1];
+				ptr += Memory_ParseBuffer(fullPath, ptr, length);
+				fullPath[length] = 0;
+
+				if(File_Remove(fullPath) != 0)
+				{
+					printf("File error(WillClear): %s\n\r", fullPath);
+					return;
+				}
+
+				
+				String tempPath;
+
+				String_Initialize(&tempPath, 64);
+				String_Set(&tempPath, _Server->m_Service->m_Path.m_Ptr);
+
+				if(String_EndsWith(&tempPath, "/") == False)
+					String_Append(&tempPath, "/", 1);
+
+				String_Append(&tempPath, "temp", strlen("temp"));
+
+				tinydir_dir dir;
+				if(tinydir_open(&dir, tempPath.m_Ptr) != 0)
+				{
+					printf("TempPath error(HasList): %s\n\r", tempPath.m_Ptr);
+					String_Dispose(&tempPath);
+					return;
+				}
+
+				String_Dispose(&tempPath);
+				
+				while (dir.has_next)
+				{
+					tinydir_file file;
+					tinydir_readfile(&dir, &file);
+					if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+					{
+						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
+						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+
+						break;
+					}
+					tinydir_next(&dir);
+				}
+
+				tinydir_close(&dir);
+
+				if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
+					_Server->m_State = Filesystem_Server_State_Synced;
+				
+				
+			}
+	
+
+		} break;
+
+		case Filesystem_Server_State_Synced:
+		{
+			SystemMonotonicMS(&_Server->m_LastSynced);
+			_Server->m_State = Filesystem_Server_State_Idel;
+			
+		} break;
+
+		case Filesystem_Server_State_WriteCheck:
+		{
+			int size = 0;
+			int oks = 0;
+			LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
+			while (currentNode != NULL)
+			{
+				Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*) currentNode->m_Item;
+
+				if(writeCheck->m_IsUsed == False)
+					break;
+
+				if(writeCheck->m_IsOk == 0)
+					oks++;
+
+				size++;
+				currentNode = currentNode->m_Next;
+			}
+			
+			if(size != _Server->m_Connections.m_Size - 1)
+				return;
+
+			float ratio = oks / size * 100;
+			if(ratio < 50)
+				_Server->m_State = Filesystem_Server_State_ReSync;
+			else
+			{
+				_Server->m_State = Filesystem_Server_State_Synced;
+				Filesystem_Server_ClearWriteCheckList(_Server);
+			}
+
+		} break;
+
+		case Filesystem_Server_State_ReSync:
+		{
+			Filesystem_Server_Sync(_Server);
+			_Server->m_State = Filesystem_Server_State_ReSyncing;
+		} break;
+
+		default: {} break;
 		
 	}
 	
@@ -1192,7 +1436,18 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 	DataLayer_Dispose(&_Server->m_DataLayer);
 
-	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
+	while(currentNode != NULL)
+	{
+		Filesystem_Server_WriteCheck* writeCheck = (Filesystem_Server_WriteCheck*)currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		writeCheck->m_Connection = NULL;
+		Allocator_Free(writeCheck);
+		LinkedList_RemoveFirst(&_Server->m_WriteChecked);
+	}
+
+	currentNode = _Server->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
 		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
@@ -1207,6 +1462,7 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 
 	String_Dispose(&_Server->m_FilesytemPath);
 
+	LinkedList_Dispose(&_Server->m_WriteChecked);
 	LinkedList_Dispose(&_Server->m_Connections);
 	Buffer_Dispose(&_Server->m_TempListBuffer);
 

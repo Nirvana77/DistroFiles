@@ -13,10 +13,32 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #define Filesystem_Server_TempFlag_WillSend 2
 #define Filesystem_Server_TempFlag_WillClear 3
 
+typedef enum
+{
+	Filesystem_Server_State_Init = 0, // Initializeing
+	Filesystem_Server_State_Idel = 1, // Ideling
+	Filesystem_Server_State_Connecting = 2, // Connecting to servers
+	Filesystem_Server_State_WriteCheck = 3, // Checking if the write is good or not. Success < 50% do ReSync else Synced
+	Filesystem_Server_State_Synced = 4, // Synced with  servers
+	Filesystem_Server_State_Syncing = 5, // Syncing with servers
+	Filesystem_Server_State_ReSync = 6, // Sends sync message.
+	Filesystem_Server_State_ReSyncing = 7, // Sends sync message.
+} Filesystem_Server_State;
+
+typedef struct
+{
+	Bool m_IsUsed;
+	Filesystem_Connection* m_Connection;
+	UInt8 m_IsOk;
+
+} Filesystem_Server_WriteCheck;
+
 struct T_Filesystem_Server
 {
 	Bool m_Allocated;
 	Filesystem_Service* m_Service;
+	Filesystem_Server_State m_State;
+	UInt64 m_LastSynced;
 	
 	String m_FilesytemPath;
 
@@ -26,6 +48,7 @@ struct T_Filesystem_Server
 	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Connections;
+	LinkedList m_WriteChecked;
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
@@ -89,6 +112,7 @@ static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
 
 	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
 	{
+		_Server->m_State = Filesystem_Server_State_Syncing;
 		Buffer_WriteUInt16(&message->m_Data, strlen(path));
 		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
 
