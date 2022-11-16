@@ -413,6 +413,8 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 
 			for (int i = 0; i < sizeof(connection->m_Addrass.m_Address); i++)
 				printf("%x.", connection->m_Addrass.m_Address.MAC[i]);
+
+			printf("\r\n");
 			
 			LinkedList_RemoveItem(_List, connection);
 			TCPSocket_Dispose(connection->m_Socket);
