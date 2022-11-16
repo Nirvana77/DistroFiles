@@ -25,7 +25,6 @@ int Folder_Create(const char* _Path)
 	return check;
 }
 
-//TODO #57 Fix hash on folders
 int Folder_Hash(const char* _Path, unsigned char _Result[16])
 {
 	tinydir_dir dir;
@@ -47,16 +46,6 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 			unsigned int totalSize = File_GetSize(f);
 			
 			char buffer[16];
-			int i = 0;
-			do
-			{
-				int length = strlen(file.name) - i;
-				int bytesRead = strlen(strncpy(buffer, &file.name[i], length < 16 ? length : 16));
-				MD5_Update(&md5, buffer, bytesRead);
-				i += bytesRead;
-			} while (i < strlen(file.name));
-			
-			
 			if(totalSize != 0)
 			{
 				int bytesLeft = totalSize;
