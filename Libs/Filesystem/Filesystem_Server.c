@@ -646,8 +646,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(Filesystem_Server_SpawnWriteCheck(_Server, &_Message->m_Src, &writeCheck) == 1)
 			return 0;
 		
-		// Buffer_ReadUInt8(&_Message->m_Data, &writeCheck->m_IsOk);
-		writeCheck->m_IsOk = 1;
+		Buffer_ReadUInt8(&_Message->m_Data, &writeCheck->m_IsOk);
 		
 		if(Filesystem_Server_GetConnection(_Server, &_Message->m_Src, &writeCheck->m_Connection) != 0)
 		{
