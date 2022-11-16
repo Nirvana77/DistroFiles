@@ -1,5 +1,4 @@
 #include "LinkedList.h"
-int LinkedList_CreateNode(void* _Item, LinkedList_Node** _ElementPtr);
 
 int LinkedList_InitializePtr(LinkedList** _ListPtr)
 {
@@ -30,59 +29,49 @@ int LinkedList_Initialize(LinkedList* _List)
 	return 0;
 }
 
-int LinkedList_AddFirst(LinkedList* _List, void* _Item)
+int LinkedList_LinkFirst(LinkedList* _List, LinkedList_Node* _Node)
 {
-	LinkedList_Node* element = NULL;
-	if(LinkedList_CreateNode(_Item, &element) != 0)
-		return -1;
-	
-
 	if(_List->m_Size == 0)
 	{
-		_List->m_Head = element;
-		_List->m_Tail = element;
+		_List->m_Head = _Node;
+		_List->m_Tail = _Node;
 		_List->m_Size = 1;
 		return 0;
 	}
 
-	_List->m_Head->m_Privios = element;
-	element->m_Next = _List->m_Head;
-	_List->m_Head = element;
+	_List->m_Head->m_Privios = _Node;
+	_Node->m_Next = _List->m_Head;
+	_List->m_Head = _Node;
 	_List->m_Size++;
 
 	return 0;
 }
 
-int LinkedList_AddLast(LinkedList* _List, void* _Item)
+int LinkedList_LinkLast(LinkedList* _List, LinkedList_Node* _Node)
 {
-	LinkedList_Node* element = NULL;
-	if(LinkedList_CreateNode(_Item, &element) != 0)
-		return -1;
 
 	if(_List->m_Size == 0)
 	{
-		_List->m_Head = element;
-		_List->m_Tail = element;
+		_List->m_Head = _Node;
+		_List->m_Tail = _Node;
 		_List->m_Size = 1;
 		return 0;
 	}
 	
-	_List->m_Tail->m_Next = element;
-	element->m_Privios = _List->m_Tail;
-	_List->m_Tail = element;
+	_List->m_Tail->m_Next = _Node;
+	_Node->m_Privios = _List->m_Tail;
+	_List->m_Tail = _Node;
 	_List->m_Size++;
 
 	return 0;
 }
 
-void* LinkedList_RemoveFirst(LinkedList* _List)
+LinkedList_Node* LinkedList_UnlinkFirst(LinkedList* _List)
 {
 	LinkedList_Node* head = _List->m_Head;
 
 	if(_List->m_Size == 0)
 		return NULL;
-
-	void* item = head->m_Item;
 
 	if(_List->m_Size == 1)
 	{
@@ -98,28 +87,31 @@ void* LinkedList_RemoveFirst(LinkedList* _List)
 	}
 
 	_List->m_Size--;
+	
+	head->m_Next = NULL;
+	head->m_Privios = NULL;
 
-	Allocator_Free(head);
-	return item;
+	return head;
 }
 
-int LinkedList_RemoveAt(LinkedList* _List, int _Index, void** _ItemPtr)
+int LinkedList_UnlinkAt(LinkedList* _List, int _Index, LinkedList_Node** _NodePtr)
 {
 	if(_Index < 0 || _Index >= _List->m_Size)
 		return -1;
 
+	if(_NodePtr == NULL)
+		return -2;
+
 	if(_Index == 0)
 	{
-		void* item = LinkedList_RemoveFirst(_List);
-		if(_ItemPtr != NULL)
-			*(_ItemPtr) = item;
+		LinkedList_Node* item = LinkedList_UnlinkFirst(_List);
+		*(_NodePtr) = item;
 		return 0;
 	}
 	else if(_Index == _List->m_Size - 1)
 	{
-		void* item = LinkedList_RemoveLast(_List);
-		if(_ItemPtr != NULL)
-			*(_ItemPtr) = item;
+		LinkedList_Node* item = LinkedList_UnlinkLast(_List);
+		*(_NodePtr) = item;
 		return 0;
 	}
 	
@@ -129,13 +121,16 @@ int LinkedList_RemoveAt(LinkedList* _List, int _Index, void** _ItemPtr)
 	{
 		if(_Index == index)
 		{
-			if(_ItemPtr != NULL)
-				*(_ItemPtr) = currentNode->m_Item;
 			
 
 			currentNode->m_Privios->m_Next = currentNode->m_Next;
 			currentNode->m_Next->m_Privios = currentNode->m_Privios;
 			_List->m_Size--;
+
+			currentNode->m_Next = NULL;
+			currentNode->m_Privios = NULL;
+			
+			*(_NodePtr) = currentNode;
 			
 			return 0;
 		}
@@ -143,11 +138,13 @@ int LinkedList_RemoveAt(LinkedList* _List, int _Index, void** _ItemPtr)
 		index++;
 	}
 
-	return -2;//This will never happen!
+	return -3;//This will never happen!
 }
 
-int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
+int LinkedList_UnlinkItem(LinkedList* _List, void* _Item, LinkedList_Node** _NodePtr)
 {
+	if(_NodePtr == NULL)
+		return -1;
 
 	LinkedList_Node* currentNode = _List->m_Head;
 	while(currentNode != NULL)
@@ -156,12 +153,14 @@ int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 		{
 			if(currentNode == _List->m_Head)
 			{
-				LinkedList_RemoveFirst(_List);
+				LinkedList_Node* node = LinkedList_UnlinkFirst(_List);
+				*(_NodePtr) = node;
 				return 0;
 			}
 			else if(currentNode == _List->m_Tail)
 			{
-				LinkedList_RemoveLast(_List);
+				LinkedList_Node* node = LinkedList_UnlinkLast(_List);
+				*(_NodePtr) = node;
 				return 0;
 			}
 			
@@ -169,6 +168,10 @@ int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 			currentNode->m_Privios->m_Next = currentNode->m_Next;
 			currentNode->m_Next->m_Privios = currentNode->m_Privios;
 			_List->m_Size--;
+
+			currentNode->m_Next = NULL;
+			currentNode->m_Privios = NULL;
+			*(_NodePtr) = currentNode;
 			
 			return 0;
 		}
@@ -178,7 +181,7 @@ int LinkedList_RemoveItem(LinkedList* _List, void* _Item)
 	return 1;
 }
 
-void* LinkedList_RemoveLast(LinkedList* _List)
+LinkedList_Node* LinkedList_UnlinkLast(LinkedList* _List)
 {
 	LinkedList_Node* tail = _List->m_Tail;
 
@@ -186,52 +189,57 @@ void* LinkedList_RemoveLast(LinkedList* _List)
 		return NULL;
 
 	if(_List->m_Size == 1)
-		return LinkedList_RemoveFirst(_List);
-	
-	void* item = tail->m_Item;
+		return LinkedList_UnlinkFirst(_List);
 
 	_List->m_Tail = tail->m_Privios;
 	_List->m_Tail->m_Next = NULL;
 	_List->m_Size--;
 
-	Allocator_Free(tail);
-	return item;
+	tail->m_Next = NULL;
+	tail->m_Privios = NULL;
+
+	return tail;
 }
 
-void* LinkedList_RemoveNode(LinkedList* _List, LinkedList_Node* _Node)
+void LinkedList_UnlinkNode(LinkedList* _List, LinkedList_Node* _Node)
 {
 	if(_List->m_Head == _Node)
-		return LinkedList_RemoveFirst(_List);
+	{
+		LinkedList_UnlinkFirst(_List);
+		return;
+	}
 
 	else if(_List->m_Tail == _Node)
-		return LinkedList_RemoveLast(_List);
+	{
+		LinkedList_UnlinkLast(_List);
+		return;
+	}
 
-	void* item = _Node->m_Item;
 	_Node->m_Privios->m_Next = _Node->m_Next;
 	_Node->m_Next->m_Privios = _Node->m_Privios;
 
+	_Node->m_Next = NULL;
+	_Node->m_Privios = NULL;
+
 	_List->m_Size--;
 	
-	Allocator_Free(_Node);
-	
-	return item;
 }
 
-int LinkedList_CreateNode(void* _Item, LinkedList_Node** _ElementPtr)
+int LinkedList_CreateNode(void* _Item, LinkedList_Node** _NodePtr)
 {
-	if(_ElementPtr == NULL)
+	if(_NodePtr == NULL)
 		return -2;
 
-	LinkedList_Node* _Element = (LinkedList_Node*) Allocator_Malloc(sizeof(LinkedList_Node));
+	LinkedList_Node* _Node = (LinkedList_Node*) Allocator_Malloc(sizeof(LinkedList_Node));
 
-	if(_Element == NULL)
+	if(_Node == NULL)
 		return -1;
 
-	_Element->m_Item = _Item;
-	_Element->m_Next = NULL;		
-	_Element->m_Privios = NULL;
+	_Node->m_Item = _Item;
+	_Node->m_Next = NULL;		
+	_Node->m_Privios = NULL;
 
-	*(_ElementPtr) = _Element;
+	*(_NodePtr) = _Node;
 
 	return 0;
 }

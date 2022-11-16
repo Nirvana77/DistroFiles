@@ -155,6 +155,18 @@ int File_WriteAll(FILE* _File, const unsigned char* _Data, int _DataSize)
 }
 
 
+Bool File_Exist(const char* _Path)
+{
+	FILE* f = NULL;
+	File_Open(_Path, File_Mode_Read, &f);
+
+	if(f == NULL)
+		return False;
+
+	File_Close(f);
+	return True;
+}
+
 int File_Move(const char* _Source, const char* _Destination)
 {
 	int renameSuccess = rename(_Source, _Destination);

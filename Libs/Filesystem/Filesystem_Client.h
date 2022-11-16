@@ -15,8 +15,7 @@ struct T_Filesystem_Client
 	UInt64 m_Timeout;
 	UInt64 m_NextCheck;
 
-	Buffer m_Buffer;
-	LinkedList m_Sockets;
+	LinkedList m_Connections;
 
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;

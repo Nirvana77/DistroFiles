@@ -101,8 +101,6 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	int readed = 0;
 	if(_DataLayer->m_DataBuffer.m_BytesLeft != 0)
 	{
-		printf("Error!\r\n");
-		printf("Have not read all in buffer(DataLayer)\r\n");
 		readed = _DataLayer->m_DataBuffer.m_BytesLeft;
 	}
 	else

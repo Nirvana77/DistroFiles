@@ -129,11 +129,18 @@ struct T_Payload
 int Payload_InitializePtr(UInt8 _UUID[UUID_DATA_SIZE], Payload** _PayloadPtr);
 int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE]); 
 
-int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
-int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer);
+int Payload_WriteAddress(Payload_Address* _Address, Buffer* _Buffer);
+int Payload_ReadAddress(Payload_Address* _Address, Buffer* _Buffer);
 
-void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src);
+void Payload_FilAddress(Payload_Address* _Des, Payload_Address* _Src);
 void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src);
+Bool Payload_ComperAddresses(Payload_Address* _A, Payload_Address* _B)
+{
+	if(_A->m_Type != _B->m_Type)
+		return False;
+
+	return memcmp(&_A->m_Address, &_B->m_Address, sizeof(_A->m_Address)) == 0 ? True : False;
+}
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);
 int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);

@@ -72,11 +72,11 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	UInt8 type = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
 	_Message->m_Src.m_Type = (Payload_Address_Type) type;
-	Payload_ReadCommunicator(&_Message->m_Src, &_Message->m_Data);
+	Payload_ReadAddress(&_Message->m_Src, &_Message->m_Data);
 
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&type);
 	_Message->m_Des.m_Type = (Payload_Address_Type) type;
-	Payload_ReadCommunicator(&_Message->m_Des, &_Message->m_Data);
+	Payload_ReadAddress(&_Message->m_Des, &_Message->m_Data);
 
 	if(_Message->m_Des.m_Type == Payload_Address_Type_IP)
 	{
@@ -111,7 +111,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		if(_NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
 		{//Whant to send replay
 
-			Payload_FilCommunicator(&replay.m_Des, &_Message->m_Src);
+			Payload_FilAddress(&replay.m_Des, &_Message->m_Src);
 			Payload_Copy(_Replay, &replay);
 
 			int success = NetworkLayer_PayloadBuilder(_NetworkLayer, _Replay);
@@ -161,11 +161,11 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	else if(_Payload->m_Src.m_Type == Payload_Address_Type_MAC)
 		GetMAC((UInt8*)&_Payload->m_Src.m_Address);
 	
-	success = Payload_WriteCommunicator(&_Payload->m_Src, &_Payload->m_Data);
+	success = Payload_WriteAddress(&_Payload->m_Src, &_Payload->m_Data);
 	if(success < 0)
 		return -4;
 	
-	success = Payload_WriteCommunicator(&_Payload->m_Des, &_Payload->m_Data);
+	success = Payload_WriteAddress(&_Payload->m_Des, &_Payload->m_Data);
 	if(success < 0)
 		return -6;
 
@@ -223,11 +223,11 @@ int NetworkLayer_PayloadLinker(NetworkLayer* _NetworLayer, Payload* _Dst, Payloa
 		Buffer_WriteBuffer(&_Dst->m_Data, mac, 6);
 	}
 	/*
-	success = Payload_WriteCommunicator(&_Src->m_Src, &_Dst->m_Data);
+	success = Payload_WriteAddress(&_Src->m_Src, &_Dst->m_Data);
 	if(success < 0)
 		return -4;
 	*/
-	success = Payload_WriteCommunicator(&_Src->m_Des, &_Dst->m_Data);
+	success = Payload_WriteAddress(&_Src->m_Des, &_Dst->m_Data);
 	if(success < 0)
 		return -6;
 

@@ -25,6 +25,7 @@ int Folder_Create(const char* _Path)
 	return check;
 }
 
+//TODO #57 Fix hash on folders
 int Folder_Hash(const char* _Path, unsigned char _Result[16])
 {
 	tinydir_dir dir;

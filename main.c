@@ -47,7 +47,6 @@ int kbhit(void);
 StateMachine g_StateMachine;
 
 
-//TODO: #54 LinkedList is not disposed correctly
 int main(int argc, char* argv[])
 {
 	#ifdef ALLOCATOR_DEBUG
@@ -110,7 +109,7 @@ int main(int argc, char* argv[])
 	int doExit = 1;
 	StateMachine_Initialize(&g_StateMachine);
 	
-	Folder_Remove("Shared/root");
+	//Folder_Remove("Shared/root");
 	Folder_Remove("Shared/temp");
 	File_Remove("payload_dump.txt");
 	
@@ -202,22 +201,7 @@ int main(int argc, char* argv[])
 
 					case 's':
 					{
-						Payload* message = NULL;
-						char* path = "root";
-
-						int size = 2 + strlen(path) + 16;
-
-						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
-						{
-							Buffer_WriteUInt16(&message->m_Data, strlen(path));
-							Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
-
-							unsigned char hash[16];
-							Folder_Hash(service->m_Server->m_FilesytemPath.m_Ptr, hash);
-							Buffer_WriteBuffer(&message->m_Data, hash, 16);
-
-							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
-						}
+						Filesystem_Server_Sync(service->m_Server);
 					} break;
 
 					case 'w':
@@ -336,6 +320,19 @@ int main(int argc, char* argv[])
 						printf("\r\n");
 						
 					} break;
+				
+					case 'l':
+					{
+						String str;
+						String_Initialize(&str, 32);
+
+						String_Set(&str, "tree ");
+						String_Append(&str, service->m_Server->m_FilesytemPath.m_Ptr, service->m_Server->m_FilesytemPath.m_Length);
+						printf("\r\n");
+						system(str.m_Ptr);
+
+						String_Dispose(&str);
+					}break;
 				
 					default:
 					{
