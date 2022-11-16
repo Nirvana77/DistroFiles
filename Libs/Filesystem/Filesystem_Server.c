@@ -1385,7 +1385,10 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			if(size != _Server->m_Connections.m_Size - 1)
 				return;
 
-			float ratio = oks / size * 100;
+			if(size == 0)
+				return;
+
+			int ratio = (int)((double)(oks / size) * 100);
 			if(ratio < 50)
 				_Server->m_State = Filesystem_Server_State_ReSync;
 			else
