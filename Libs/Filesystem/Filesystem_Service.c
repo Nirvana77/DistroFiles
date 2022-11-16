@@ -62,22 +62,15 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Can't create folder(%i): %s\n\r", success, tempFolder);
 		String_Dispose(&_Service->m_Path);
 		
-		return -3;
-	}
-
-	String_Initialize(&_Service->m_FilesytemPath, 32);
-	
-	success = String_Sprintf(&_Service->m_FilesytemPath, "%s/root", _Service->m_Path.m_Ptr);
-
-	success = Folder_Create(_Service->m_FilesytemPath.m_Ptr);
-
-	if(success < 0)
-	{
-		printf("Can't create folder(%i): %s\n\r", success, _Service->m_FilesytemPath.m_Ptr);
-		String_Dispose(&_Service->m_FilesytemPath);
-		String_Dispose(&_Service->m_Path);
-
 		return -4;
+	}
+	success = Buffer_Initialize(&_Service->m_Buffer, True, 64);
+	if(success != 0)
+	{
+		printf("Failed to initialize the Buffer!\n\r");
+		printf("Error code: %i\n\r", success);
+		String_Dispose(&_Service->m_Path);
+		return -5;
 	}
 
 	//-------------Initialize------------------
@@ -102,11 +95,11 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	{
 		printf("Failed to save Filesystem Server standard settings!\r\n");
 		printf("Failed code: %i\n\r", loadSuccess);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
-		return -5;
+		Buffer_Dispose(&_Service->m_Buffer);
+		return -6;
 	}
 	else if(loadSuccess == 1)
 	{
@@ -119,27 +112,25 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	{
 		printf("Failed to initialize server!\r\n");
 		printf("Failed code: %i\n\r", success);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
-		return -6;
+		Buffer_Dispose(&_Service->m_Buffer);
+		return -7;
 	}
 
-	/*
 	success = Filesystem_Client_InitializePtr(_Service, &_Service->m_Client);
 	if(success != 0)
 	{
 		printf("Failed to initialize client!\r\n");
 		printf("Failed code: %i\n\r", success);
-		String_Dispose(&_Service->m_FilesytemPath);
 		String_Dispose(&_Service->m_Path);
 		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Filesystem_Server_Dispose(_Service->m_Server);
-		return -6;
+		Buffer_Dispose(&_Service->m_Buffer);
+		return -8;
 	}
-	*/
 
 	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
@@ -150,7 +141,7 @@ void Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
 	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
 
 	Filesystem_Server_Work(_MSTime, _Service->m_Server);
-	// Filesystem_Client_Work(_MSTime, _Service->m_Client);
+	Filesystem_Client_Work(_MSTime, _Service->m_Client);
 }
 
 
@@ -288,31 +279,6 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	String str;
 	if(String_Initialize(&str, 16) != 0)
 		return -1;
-
-	String servers;
-	
-	if(String_Initialize(&servers, 16) != 0)
-		return -1;
-	if(_Service->m_Server != NULL)
-	{
-	
-		char tempStr[126];
-		char ip[17];
-		LinkedList_Node* currentNode = _Service->m_Server->m_Sockets.m_Head;
-		while (currentNode != NULL)
-		{
-			TCPSocket* socket = (TCPSocket*) currentNode->m_Item;
-			memset(ip, 0, sizeof(ip));
-			inet_ntop(AF_INET, &socket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
-			
-			sprintf(tempStr, "{\"post\": %i,\"IP\": %s}", ntohs(socket->m_Addr.sin_port), ip);
-			String_Append(&servers, tempStr, strlen(tempStr));
-
-			currentNode = currentNode->m_Next;
-			if(currentNode != NULL)
-				String_Append(&servers, ",", 1);
-		}
-	}
 	
 
 	if(String_Sprintf(&str, 
@@ -326,17 +292,13 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 				"\"port\": %u,"
 				"\"IP\": \"%s\""
 			"},"
-			"\"servers\": ["
-				"%s"
-			"]"
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Distributer.m_Port, _Service->m_Settings.m_Distributer.m_IP.m_Ptr, servers.m_Ptr
+			"\"servers\": []"
+		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Distributer.m_Port, _Service->m_Settings.m_Distributer.m_IP.m_Ptr
 	) != 0)
 	{
 		String_Dispose(&str);
-		String_Dispose(&servers);
 		return -1;
 	}
-	String_Dispose(&servers);
 	
 	json_error_t error;
 	json_t* json = json_loads(str.m_Ptr, 0, &error);
@@ -367,6 +329,104 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	return 0;
 }
 
+
+int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
+{
+	if(_List->m_Size == 0)
+		return 0;
+
+	int totalReaded = 0;
+	LinkedList_Node* currentNode = _List->m_Head;
+	unsigned char buffer[1024];
+	Buffer_Clear(&_Service->m_Buffer);
+	while(currentNode != NULL)
+	{
+		int readed = 0;
+		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
+		if(readed > 0) {
+			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);
+			if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE)
+			{
+				UInt8 flag = 0;
+				void* ptr = buffer;
+				ptr += Memory_ParseUInt8(ptr, &flag);
+				if(BitHelper_GetBit(&flag, 0) == True) {
+					ptr += 16 + 1 + 8;
+					ptr += Memory_ParseUInt8(ptr, (UInt8*)&connection->m_Addrass.m_Type);
+					ptr += Memory_ParseBuffer(&connection->m_Addrass.m_Address, ptr, sizeof(connection->m_Addrass.m_Address));
+				}
+			}
+
+		}
+
+		while (readed == 1024)
+		{
+			readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
+			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);
+		}
+
+		currentNode = currentNode->m_Next;
+	}
+
+	if(totalReaded > 0)
+	{
+		printf("Filesystem_Service_TCPRead\n\r");
+		Buffer_Copy(_Buffer, &_Service->m_Buffer, _Service->m_Buffer.m_BytesLeft);
+		return totalReaded;
+	}
+
+	return 0;
+}
+
+int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
+{
+	if(_List->m_Size == 0)
+		return 0;
+
+	void* ptr = _Buffer->m_ReadPtr;
+	UInt8 flags = 0;
+	ptr += Memory_ParseUInt8(ptr, &flags);
+	ptr += 16 + 1 + 8 + 1 + 6;
+
+	Payload_Address des;
+	UInt8 type = 0;
+	ptr += Memory_ParseUInt8(ptr, &type);
+	des.m_Type = (Payload_Address_Type)type;
+
+	if(des.m_Type != Payload_Address_Type_NONE)
+		ptr += Memory_ParseBuffer(&des.m_Address, ptr, sizeof(des.m_Address));
+
+	LinkedList_Node* currentNode = _List->m_Head;
+	Buffer_ResetReadPtr(_Buffer);
+	while (currentNode != NULL)
+	{
+		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperMAC(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
+			TCPSocket_Write(connection->m_Socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
+		
+		if(connection->m_Socket->m_Status == TCPSocket_Status_Closed)
+		{
+			printf("Removeing connection(%i) ", connection->m_Socket->m_FD);
+
+			for (int i = 0; i < sizeof(connection->m_Addrass.m_Address); i++)
+				printf("%x.", connection->m_Addrass.m_Address.MAC[i]);
+
+			printf("\r\n");
+			
+			LinkedList_RemoveItem(_List, connection);
+			TCPSocket_Dispose(connection->m_Socket);
+			Allocator_Free(connection);
+			
+		}
+
+	}
+
+	return 0;
+}
+
 void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 {
 	if(_Service->m_Task != NULL)
@@ -389,6 +449,7 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 
 	String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
 	String_Dispose(&_Service->m_Settings.m_Host.m_IP);
+	Buffer_Dispose(&_Service->m_Buffer);
 
 	if(_Service->m_Settings.m_Servers != NULL)
 		json_decref(_Service->m_Settings.m_Servers);
@@ -396,7 +457,6 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 	if(_Service->m_Json != NULL)
 		json_decref(_Service->m_Json);
 
-	String_Dispose(&_Service->m_FilesytemPath);
 	String_Dispose(&_Service->m_Path);
 
 	if(_Service->m_Allocated == True)

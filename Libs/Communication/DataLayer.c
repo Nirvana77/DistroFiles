@@ -101,8 +101,6 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	int readed = 0;
 	if(_DataLayer->m_DataBuffer.m_BytesLeft != 0)
 	{
-		printf("Error!\r\n");
-		printf("Have not read all in buffer(DataLayer)\r\n");
 		readed = _DataLayer->m_DataBuffer.m_BytesLeft;
 	}
 	else
@@ -115,16 +113,27 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	{
 		int size = DataLayer_CalculateSize(_DataLayer);
 
+		if(size > readed)
+		{
+			
+			printf("Size check Failed!\n\r");
+			printf("S/R: %i/%i\n\r", size, readed);
+			printf("Discarding message: \n\r");
+			for (int i = 0; i < readed; i++)
+				printf("%i ", _DataLayer->m_DataBuffer.m_ReadPtr[i]);
+			printf("\n\r");
+			
+
+			_DataLayer->m_DataBuffer.m_ReadPtr += readed;
+			_DataLayer->m_DataBuffer.m_BytesLeft -= readed;
+			return -1;
+		}
+
 		UInt8 CRC = 0;
 		UInt8 ownCRC = 0;
 		Memory_ParseUInt8(&_DataLayer->m_DataBuffer.m_ReadPtr[size - 1], &CRC);
 		
 		DataLayer_GetCRC(_DataLayer->m_DataBuffer.m_ReadPtr, size - 1, &ownCRC);
-
-		printf("Data(R): %i of %i\r\n", size, readed);
-		for (int i = 0; i < size; i++)
-			printf("%x ", _DataLayer->m_DataBuffer.m_ReadPtr[i]);
-		printf("\n\r");
 
 		if(ownCRC != CRC)
 		{
@@ -135,7 +144,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			printf("Discarding message: %s\n\r", str);
 			_DataLayer->m_DataBuffer.m_ReadPtr += size;
 			_DataLayer->m_DataBuffer.m_BytesLeft -= size;
-			return -1;
+			return -2;
 		}
 
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
@@ -146,7 +155,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			if(Buffer_Copy(&packet.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
 			{
 				printf("Buffer copy error\n\r");
-				return -2;
+				return -3;
 			}
 
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
@@ -164,7 +173,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 					Payload_Dispose(&replay);
 					Payload_Dispose(&packet);
-					return -1;
+					return -4;
 				}
 			}
 

@@ -46,6 +46,7 @@ int kbhit(void);
 
 StateMachine g_StateMachine;
 
+
 int main(int argc, char* argv[])
 {
 	#ifdef ALLOCATOR_DEBUG
@@ -109,7 +110,8 @@ int main(int argc, char* argv[])
 	StateMachine_Initialize(&g_StateMachine);
 	
 	//Folder_Remove("Shared/root");
-	//Folder_Remove("Shared/temp");
+	Folder_Remove("Shared/temp");
+	File_Remove("payload_dump.txt");
 	
 	Filesystem_Service* service = NULL;
 	int success = Filesystem_Service_InitializePtr(&g_StateMachine, path, &service);
@@ -199,22 +201,7 @@ int main(int argc, char* argv[])
 
 					case 's':
 					{
-						Payload* message = NULL;
-						char* path = "root";
-
-						int size = 2 + strlen(path) + 16;
-
-						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
-						{
-							Buffer_WriteUInt16(&message->m_Data, strlen(path));
-							Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
-
-							unsigned char hash[16];
-							Folder_Hash(service->m_FilesytemPath.m_Ptr, hash);
-							Buffer_WriteBuffer(&message->m_Data, hash, 16);
-
-							Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
-						}
+						Filesystem_Server_Sync(service->m_Server);
 					} break;
 
 					case 'w':
@@ -228,7 +215,7 @@ int main(int argc, char* argv[])
 							String_Initialize(&fullPath, 8);
 							FILE* f = NULL;
 
-							String_Set(&fullPath, service->m_FilesytemPath.m_Ptr);
+							String_Set(&fullPath, service->m_Server->m_FilesytemPath.m_Ptr);
 
 							if(String_EndsWith(&fullPath, "/") == False)
 								String_Append(&fullPath, "/", 1);
@@ -319,6 +306,33 @@ int main(int argc, char* argv[])
 						Payload_Dispose(&networkMessage);
 						Payload_Dispose(&message);
 					} break;
+
+					case 'b':
+					{
+						printf("CRC: ");
+						for (int i = 0; i < 0xff + 1; i++)
+						{
+							UInt8 crc = 0;
+							DataLayer_GetCRC((unsigned char*)&i, 1, &crc);
+							printf("%i ", crc);
+							
+						}
+						printf("\r\n");
+						
+					} break;
+				
+					case 'l':
+					{
+						String str;
+						String_Initialize(&str, 32);
+
+						String_Set(&str, "tree ");
+						String_Append(&str, service->m_Server->m_FilesytemPath.m_Ptr, service->m_Server->m_FilesytemPath.m_Length);
+						printf("\r\n");
+						system(str.m_Ptr);
+
+						String_Dispose(&str);
+					}break;
 				
 					default:
 					{

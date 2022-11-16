@@ -44,11 +44,11 @@ int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 	return 0;
 }
 
-int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
+int Payload_WriteAddress(Payload_Address* _Address, Buffer* _Buffer)
 {
 
-	Buffer_WriteUInt8(_Buffer, _Communicator->m_Type);
-	return Buffer_WriteBuffer(_Buffer, (unsigned char*)&_Communicator->m_Address, sizeof(_Communicator->m_Address)) + 1;
+	Buffer_WriteUInt8(_Buffer, _Address->m_Type);
+	return Buffer_WriteBuffer(_Buffer, (unsigned char*)&_Address->m_Address, sizeof(_Address->m_Address)) + 1;
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
@@ -90,9 +90,9 @@ int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
 	return written;
 }
 
-int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
+int Payload_ReadAddress(Payload_Address* _Address, Buffer* _Buffer)
 {
-	return Buffer_ReadBuffer(_Buffer, (unsigned char*)&_Communicator->m_Address, sizeof(_Communicator->m_Address));
+	return Buffer_ReadBuffer(_Buffer, (unsigned char*)&_Address->m_Address, sizeof(_Address->m_Address));
 }
 
 int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
@@ -134,7 +134,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 	return readed;
 }
 
-void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src)
+void Payload_FilAddress(Payload_Address* _Des, Payload_Address* _Src)
 {
 	_Des->m_Type = _Src->m_Type;
 	switch (_Src->m_Type)
@@ -191,8 +191,8 @@ void Payload_Copy(Payload* _Des, Payload* _Src)
 
 	memcpy(_Des->m_UUID, _Src->m_UUID, UUID_DATA_SIZE);
 
-	Payload_FilCommunicator(&_Des->m_Des, &_Src->m_Des);
-	Payload_FilCommunicator(&_Des->m_Src, &_Src->m_Src);
+	Payload_FilAddress(&_Des->m_Des, &_Src->m_Des);
+	Payload_FilAddress(&_Des->m_Src, &_Src->m_Src);
 
 	Payload_FilMessage(&_Des->m_Message, &_Src->m_Message);
 
