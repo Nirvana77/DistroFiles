@@ -548,10 +548,16 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		File_GetHash(fullPath.m_Ptr, serverHash);
 
 		if(Filesystem_Server_HashCheck(serverHash, hash) == True)
+		{
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
+		}
 		else
+		{
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 1);
-			
+			_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
+			_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, path, size);
+			_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, serverHash, 16);
+		}	
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "writeCheckAck", strlen("writeCheckAck"));
 		_Replay->m_Type = Payload_Type_Respons;
 		
