@@ -196,6 +196,16 @@ int main(int argc, char* argv[])
 						Folder_Hash("Shared/root/", hash);
 						printf("Hash:\t");
 						printHash(hash);
+						
+						memset(hash, 0, 16);
+						Folder_Hash("Shared/root", hash);
+						printf("Hash:\t");
+						printHash(hash);
+						
+						memset(hash, 0, 16);
+						Folder_Hash(service->m_Server->m_FilesytemPath.m_Ptr, hash);
+						printf("Hash:\t");
+						printHash(hash);
 
 					} break;
 
