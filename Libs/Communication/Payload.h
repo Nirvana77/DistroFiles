@@ -134,12 +134,12 @@ int Payload_ReadAddress(Payload_Address* _Address, Buffer* _Buffer);
 
 void Payload_FilAddress(Payload_Address* _Des, Payload_Address* _Src);
 void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src);
-Bool Payload_ComperAddresses(Payload_Address* _Des, Payload_Address* _Src)
+Bool Payload_ComperAddresses(Payload_Address* _A, Payload_Address* _B)
 {
-	if(_Des->m_Type != _Src->m_Type)
+	if(_A->m_Type != _B->m_Type)
 		return False;
 
-	return memcmp(&_Des->m_Address, &_Src->m_Address, sizeof(_Des->m_Address)) == 0 ? True : False;
+	return memcmp(&_A->m_Address, &_B->m_Address, sizeof(_A->m_Address)) == 0 ? True : False;
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);
