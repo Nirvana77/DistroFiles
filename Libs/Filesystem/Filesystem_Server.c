@@ -276,6 +276,9 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		}
 		
 	}
+
+	Payload* message = NULL;
+	TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 0, 1000, &message);
 	
 	_Server->m_State = Filesystem_Server_State_Idel;
 	return 0;
@@ -765,6 +768,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 	return 0;
 }
+
+
 
 void Filesystem_Server_ClearWriteCheckList(Filesystem_Server* _Server)
 {
