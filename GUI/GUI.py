@@ -4,6 +4,7 @@ import client as c
 import payload as p
 import memory as m
 from threading import Thread
+from urllib.parse import urlparse
 
 # Canvas.create_polygon
 # Canvas.create_oval
@@ -16,19 +17,43 @@ from threading import Thread
 # Canvas.create_window
 
 class GUI:
-	layout = [
-		[
-			sg.Canvas(key="main", size=(1000,500))
+	layouts = [
+		[#* Connecting screen
+			[
+				sg.Text('Distributer'),
+				sg.In(size=(25, 1), enable_events=True, key="-DIN-"),
+				sg.Button("Connect to Distributer", key="Connect"),
+			],
+			[
+				sg.Text('Server'),
+				sg.In(size=(25, 1), enable_events=True, key="-SIN-"),
+				sg.Text(':'),
+				sg.In(size=(25, 1), enable_events=True, key="-PIN-"),
+				sg.Button("Connect to Server", key="Connect"),
+			]
 		],
-		[
-			sg.Button("Exit"),
-			sg.Text("File"),
-			sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
-			sg.FileBrowse(),
-			sg.Button("Send", key="send"),
-			sg.Button("Get list", key="list"),
+		[ #* Connected screen
+			[
+				sg.Canvas(key="main", size=(1000,500))
+			],
+			[
+				sg.Button("Exit"),
+				sg.Text("File"),
+				sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
+				sg.FileBrowse(),
+				sg.Button("Send", key="send"),
+				sg.Button("Get list", key="list"),
+			]
 		]
+
 	]
+
+	connectionWindow = None
+	connectedWindow = None
+	currentWindow = None
+	client = None
+	canvas = None
+	willStop = False
 
 	icons = list()
 	
@@ -37,16 +62,14 @@ class GUI:
 		self.onClose = onClose
 		self.onEvent = onEvent
 		self.thread = Thread(target=self.work)
-		self.willStop = False
-		self.canvas = None
 		
-		self.client = c.Client("133.92.147.203", 8121, self.recv)
 		# self.client = c.Client("mc.gamingpassestime.com", 7000, self.recv)
 
 		# Create the window
-		self.window = sg.Window("GUI", self.layout)
+		self.currentWindow = sg.Window("GUI", self.layouts[0])
+		self.connectionWindow = self.currentWindow
 		if not self.onOpen == None:
-			self.onOpen(self, self.window)
+			self.onOpen(self, self.currentWindow)
 		
 		self.thread.start()
 
@@ -59,7 +82,6 @@ class GUI:
 		(w, h, margin) = (100, 100, 10)
 
 		for i in self.icons:
-			i = self.Icon(i)
 			i.marked = False
 
 		for d in list:
@@ -74,12 +96,10 @@ class GUI:
 			else:
 				fileFolder.destroy()
 				for i in self.icons:
-					i = self.Icon(i)
 					if fileFolder.path == i.path and fileFolder.name == i.name:
 						i.marked = True
 		
 		for i in self.icons:
-			i = self.Icon(i)
 			if not i.marked:
 				i.destroy()
 				self.icons.remove(i)
@@ -96,6 +116,14 @@ class GUI:
 					print("msg: ", message)
 					data = p.messag_builder("", method, message)
 					self.client.socket.sendall(data) """
+
+	def connect(self, ip:str, port:int = None):
+		self.client = c.Client(ip, port, self.recv)
+		self.currentWindow.close()
+		self.connectionWindow = None
+		self.currentWindow = sg.Window("GUI", self.layouts[1])
+		self.connectedWindow = self.currentWindow
+		# self.client = c.Client("133.92.147.203", 8121, self.recv)
 
 	def recv(self, method, data):
 		if len(data) != 0:
@@ -115,44 +143,73 @@ class GUI:
 				
 				self.draw_Directory(directory, "root")
 
+	def uri_validator(self, x):
+		try:
+			result = urlparse(x)
+			return all([result.netloc])
+		except:
+			return False
+
 	def destroy(self):
 		for i in self.icons:
-			i = self.Icon(i)
 			i.destroy()
 			self.icons.remove(i)
 
-		self.client.destroy()
+		if not self.client == None:
+			self.client.destroy()
+			self.client = None
+		
 		self.willStop = True
 
 	def work(self):
 		while not self.willStop:
-			event, values = self.window.read()
-
-			if self.canvas == None and not self.window["main"].TKCanvas == None:
-				self.canvas = self.window["main"].TKCanvas
-				self.canvas.bind("<Key>", self.key)
-				self.canvas.bind("<Button-1>", self.cliecked)
-				self.canvas.bind("<Button-3>", self.cliecked)
-				
-			# End program if user closes window or
-			# presses the OK button
-			if event == "Exit" or event == sg.WIN_CLOSED:
-				self.onClose(self, event, values)
-				break
+			event, values = self.currentWindow.read()
 			
+			if event == sg.WIN_CLOSED:
+				self.onClose(self, event, values)
+			elif self.currentWindow == self.connectedWindow:
+				self.connectedEvent(event, values)
+			elif self.currentWindow == self.connectionWindow:
+				self.connectionEvent(event, values)
+			
+
+		self.currentWindow.close()
+
+	def connectionEvent(self, event:str, values):
+		if event.startswith("Connect"):
+			dis:str = values["-DIN-"]
+			serverIP:str = values["-SIN-"]
+			try: 
+				serverPort:int = int(values["-PIN-"])
+			except:
+				serverPort = None
+
+			if serverIP.count(".") == 3 and not serverPort == None:
+				self.connect(serverIP, serverPort)
+			elif self.uri_validator(dis):
+				self.connect(urlparse(dis).netloc, 7000)
 			else:
-				if event == "send":
-					path = self.window["-TOUT-"].get()
-					self.sendPath(path)
+				sg.popup("You need to enter a valed URL or IP with Port")
 
-				elif event == "list":
-					msg = p.get_list("root")
-					self.client.socket.sendall(p.messag_builder("", "list", msg))
+	def connectedEvent(self, event, values):
+		if event == "Exit":
+			self.onClose(self, event, values)
+		elif self.canvas == None and not self.currentWindow["main"].TKCanvas == None:
+			self.canvas = self.currentWindow["main"].TKCanvas
+			self.canvas.bind("<Key>", self.key)
+			self.canvas.bind("<Button-1>", self.cliecked)
+			self.canvas.bind("<Button-3>", self.cliecked)
 
-				else:
-					self.onEvent(self, event, values)
+		if event == "send":
+			path = self.currentWindow["-TOUT-"].get()
+			self.sendPath(path)
 
-		self.window.close()
+		elif event == "list":
+			msg = p.get_list("root")
+			self.client.socket.sendall(p.messag_builder("", "list", msg))
+
+		else:
+			self.onEvent(self, event, values)
 
 	def sendPath(self, path: str):
 		name = ""
