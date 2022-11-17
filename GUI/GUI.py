@@ -4,17 +4,17 @@ import client as c
 import payload as p
 import memory as m
 from threading import Thread
-import uuid
 
-	# Canvas.create_polygon
-	# Canvas.create_oval
-	# Canvas.create_line
-	# Canvas.create_image
-	# Canvas.create_biticons
-	# Canvas.create_arc
-	# Canvas.create_rectangle
-	# Canvas.create_text
-	# Canvas.create_window
+# Canvas.create_polygon
+# Canvas.create_oval
+# Canvas.create_line
+# Canvas.create_image
+# Canvas.create_bitmap
+# Canvas.create_arc
+# Canvas.create_rectangle
+# Canvas.create_text
+# Canvas.create_window
+
 class GUI:
 	layout = [
 		[
