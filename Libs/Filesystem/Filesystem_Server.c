@@ -58,10 +58,10 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -2;
 	}
 
-	success = TCPServer_Listen(&_Server->m_TCPServer, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Host.m_Port);
+	success = TCPServer_Listen(&_Server->m_TCPServer, "127.0.0.1", _Service->m_Settings.m_Host);
 	if(success != 0)
 	{
-		printf("Failed to listen to port %u for server!\n\r", _Server->m_Service->m_Settings.m_Host.m_Port);
+		printf("Failed to listen to port %u for server!\n\r", _Server->m_Service->m_Settings.m_Host);
 		printf("Error code: %i\n\r", success);
 		TCPServer_Dispose(&_Server->m_TCPServer);
 		return -3;

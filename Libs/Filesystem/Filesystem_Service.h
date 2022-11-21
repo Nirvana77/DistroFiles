@@ -32,8 +32,9 @@ typedef struct
 typedef struct
 {
 
-	Filesystem_ServiceSettings_Host m_Host;
-	Filesystem_ServiceSettings_Host m_Distributer;
+	UInt16 m_Host;
+	UInt16 m_Distributer;
+	Bool m_Autosync;
 
 	json_t* m_Servers; //! This will be removed later
 

@@ -74,8 +74,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	}
 
 	//-------------Initialize------------------
-	String_Initialize(&_Service->m_Settings.m_Host.m_IP, 16);
-	String_Initialize(&_Service->m_Settings.m_Distributer.m_IP, 16);
 	_Service->m_Settings.m_Servers = NULL;
 
 	//-----------------------------------------
@@ -83,11 +81,9 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 
 	//-----------Default Settings--------------
 
-	_Service->m_Settings.m_Host.m_Port = 5566;
-	_Service->m_Settings.m_Distributer.m_Port = 5566;
-
-	String_Set(&_Service->m_Settings.m_Host.m_IP, "127.0.0.1");
-	String_Set(&_Service->m_Settings.m_Distributer.m_IP, "127.0.0.1");
+	_Service->m_Settings.m_Host = 5566;
+	_Service->m_Settings.m_Distributer = 8021;
+	_Service->m_Settings.m_Autosync = True;
 
 	//-----------------------------------------
 	int loadSuccess = Filesystem_Service_Load(_Service);
@@ -96,8 +92,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed to save Filesystem Server standard settings!\r\n");
 		printf("Failed code: %i\n\r", loadSuccess);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
-		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Buffer_Dispose(&_Service->m_Buffer);
 		return -6;
 	}
@@ -113,8 +107,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed to initialize server!\r\n");
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
-		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Buffer_Dispose(&_Service->m_Buffer);
 		return -7;
 	}
@@ -125,8 +117,6 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		printf("Failed to initialize client!\r\n");
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_Path);
-		String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
-		String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 		Filesystem_Server_Dispose(_Service->m_Server);
 		Buffer_Dispose(&_Service->m_Buffer);
 		return -8;
@@ -206,65 +196,40 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	}
 	
 	Bool needSave = False;
-	const char* charVal;
-	//UInt8 uintVal;
+	//const char* charVal;
+	Bool boolVal;
 	UInt16 ulintVal;
-
-	json_t* host = json_object_get(_JSON, "host");
-	if(host != NULL)
+	if(json_getUInt16(_JSON, "host", &ulintVal) == 0)
 	{
-		if(json_getString(host, "IP", &charVal) == 0)
-		{
-			String_Set(&_Service->m_Settings.m_Host.m_IP, charVal);
-		}
-		else
-		{
-			needSave = True;
-		}
-
-		if(json_getUInt16(host, "port", &ulintVal) == 0)
-		{
-			_Service->m_Settings.m_Host.m_Port = ulintVal;
-		}
-		else
-		{
-			needSave = True;
-		}
+		_Service->m_Settings.m_Host = ulintVal;
 	}
 	else
 	{
 		needSave = True;
 	}
 
-	json_t* distributer = json_object_get(_JSON, "distributer");
-	if(distributer != NULL)
+	if(json_getUInt16(_JSON, "distributer", &ulintVal) == 0)
 	{
-		if(json_getString(distributer, "IP", &charVal) == 0)
-		{
-			String_Set(&_Service->m_Settings.m_Distributer.m_IP, charVal);
-		}
-		else
-		{
-			needSave = True;
-		}
-
-		if(json_getUInt16(distributer, "port", &ulintVal) == 0)
-		{
-			_Service->m_Settings.m_Distributer.m_Port = ulintVal;
-		}
-		else
-		{
-			needSave = True;
-		}
+		_Service->m_Settings.m_Distributer = ulintVal;
 	}
 	else
 	{
 		needSave = True;
 	}
+
 	json_t* servers = json_object_get(_JSON, "servers");
 	if(servers != NULL)
 	{
 		_Service->m_Settings.m_Servers = json_copy(servers);
+	}
+	else
+	{
+		needSave = True;
+	}
+
+	if(json_getBool(_JSON, "autosync", &boolVal) == 0)
+	{
+		_Service->m_Settings.m_Autosync = boolVal;
 	}
 	else
 	{
@@ -284,16 +249,11 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	if(String_Sprintf(&str, 
 		"{"
 			"\"version\": %u,"
-			"\"host\": {"
-				"\"port\": %u,"
-				"\"IP\": \"%s\""
-			"},"
-			"\"distributer\": {"
-				"\"port\": %u,"
-				"\"IP\": \"%s\""
-			"},"
-			"\"servers\": []"
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host.m_Port, _Service->m_Settings.m_Host.m_IP.m_Ptr, _Service->m_Settings.m_Distributer.m_Port, _Service->m_Settings.m_Distributer.m_IP.m_Ptr
+			"\"host\": %u,"
+			"\"distributer\": %u,"
+			"\"servers\": [],"
+			"\"autosync\": %s"
+		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host, _Service->m_Settings.m_Distributer, _Service->m_Settings.m_Autosync == True ? "true" : "false"
 	) != 0)
 	{
 		String_Dispose(&str);
@@ -447,8 +407,6 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Client = NULL;
 	}
 
-	String_Dispose(&_Service->m_Settings.m_Distributer.m_IP);
-	String_Dispose(&_Service->m_Settings.m_Host.m_IP);
 	Buffer_Dispose(&_Service->m_Buffer);
 
 	if(_Service->m_Settings.m_Servers != NULL)
