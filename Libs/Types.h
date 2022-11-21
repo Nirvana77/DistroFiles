@@ -7,7 +7,7 @@
 
 #define False 0
 #define True 1
-#define Bool int
+#define Bool unsigned char
 
 #ifdef __linux__
     #include <inttypes.h>
