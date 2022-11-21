@@ -130,8 +130,11 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 {
 	Buffer temp;
-	Buffer_Initialize(&temp, False, _Payload->m_Size);
-	Buffer_Copy(&temp, &_Payload->m_Data, _Payload->m_Size);
+	if(_Payload->m_Size != 0) 
+	{
+		Buffer_Initialize(&temp, False, _Payload->m_Size);
+		Buffer_Copy(&temp, &_Payload->m_Data, _Payload->m_Size);
+	}
 
 	Buffer_Clear(&_Payload->m_Data);
 
@@ -176,12 +179,16 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	success = Buffer_WriteUInt16(&_Payload->m_Data, _Payload->m_Size);
 	if(success < 0)
 		return -8;
+		
+	if(_Payload->m_Size != 0)
+	{
+		success = Buffer_WriteBuffer(&_Payload->m_Data, temp.m_ReadPtr, temp.m_BytesLeft);
+		if(success < 0)
+			return -9;
+		
+		Buffer_Dispose(&temp);
+	}	
 
-	success = Buffer_WriteBuffer(&_Payload->m_Data, temp.m_ReadPtr, temp.m_BytesLeft);
-	if(success < 0)
-		return -9;
-
-	Buffer_Dispose(&temp);
 	return 0;
 }
 
