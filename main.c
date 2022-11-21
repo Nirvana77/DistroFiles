@@ -8,9 +8,10 @@
 #include <fcntl.h>
 
 #ifdef COMPILEDEBUG
-	#define ALLOCATOR_DEBUG
 	#define ALLOCATOR_DEBUG_BORDERCHECK 6
 	#define ALLOCATOR_RUN_AFTERCHECK
+	#define ALLOCATOR_DEBUG
+	#define ALLOCATOR_PRINT
 #endif
 
 // #include "Libs/Portability.c"
