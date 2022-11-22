@@ -942,6 +942,7 @@ int Filesystem_Server_SetCheckingState(Filesystem_Server* _Server, Filesystem_Se
 				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 			}
+			String_Dispose(&fullPath);
 		} break;
 
 		case Filesystem_Server_CheckState_None:
