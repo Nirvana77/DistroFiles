@@ -37,7 +37,7 @@ class GUI:
 				sg.Canvas(key="main", size=(1000,500))
 			],
 			[
-				sg.Button("Exit"),
+				sg.Button("Back"),
 				sg.Text("File"),
 				sg.In(size=(25, 1), enable_events=True, key="-TOUT-"),
 				sg.FileBrowse(),
@@ -75,7 +75,7 @@ class GUI:
 
 	def draw_Directory(self, list: list, path: str):
 		if len(self.icons) > 0:
-			last = self.Icon(self.icons[len(self.icons) - 1])
+			last:self.Icon = self.icons[len(self.icons) - 1]
 			(x, y) = (last.x + last.width + 10, last.y)
 		else:
 			(x, y) = (0,0)
@@ -86,9 +86,9 @@ class GUI:
 
 		for d in list:
 			if d["isFile"]:
-				fileFolder = self.File(self.canvas, x, y, w, h, d["name"], path)
+				fileFolder = self.File(self, self.canvas, x, y, w, h, d["name"], path)
 			else:
-				fileFolder = self.Folder(self.canvas, x, y, w, h, d["name"], path)
+				fileFolder = self.Folder(self, self.canvas, x, y, w, h, d["name"], path)
 				
 			if not self.icons.__contains__(fileFolder):
 				self.icons.append(fileFolder)
@@ -109,7 +109,7 @@ class GUI:
 
 	def cliecked(self, event):
 		for icon in self.icons:
-			icon = self.Icon(icon)
+			icon:self.Icon = icon
 			if icon.x < event.x and icon.x + icon.width > event.x and icon.y < event.y and icon.y + icon.heigth > event.y:
 				method, message = icon.click(event)
 				""" if len(message) > 0:
@@ -119,11 +119,36 @@ class GUI:
 
 	def connect(self, ip:str, port:int = None):
 		self.client = c.Client(ip, port, self.recv)
-		self.currentWindow.close()
-		self.connectionWindow = None
-		self.currentWindow = sg.Window("GUI", self.layouts[1])
-		self.connectedWindow = self.currentWindow
+		self.swapWindow(1)
 		# self.client = c.Client("133.92.147.203", 8121, self.recv)
+	def swapWindow(self, index:int):
+		self.currentWindow.Hide()
+		if index == 0:
+			if self.connectionWindow == None:
+				self.currentWindow = sg.Window("GUI", self.layouts[0])
+				self.connectionWindow = self.currentWindow
+			else:
+				self.currentWindow = self.connectionWindow
+				self.currentWindow.UnHide()
+			
+		elif index == 1:
+			if self.connectedWindow == None:
+				self.currentWindow = sg.Window("GUI", self.layouts[1])
+				self.connectedWindow = self.currentWindow
+			else:
+				self.currentWindow = self.connectedWindow
+				self.currentWindow.UnHide()
+
+	
+	def closeWindows(self):
+		if not self.connectedWindow == None:
+			for i in self.icons:
+				self.icons.remove(i)
+			self.connectedWindow.close()
+		
+		if not self.connectionWindow == None:
+			self.connectionWindow.close()
+		
 
 	def recv(self, method, data):
 		if len(data) != 0:
@@ -150,50 +175,55 @@ class GUI:
 		except:
 			return False
 
-	def destroy(self):
-		for i in self.icons:
-			i.destroy()
-			self.icons.remove(i)
-
+	def destroy(self, event:str, values):
 		if not self.client == None:
 			self.client.destroy()
 			self.client = None
 		
+		self.closeWindows()
+		self.onClose(self, event, values)
+
+	def close(self):
 		self.willStop = True
 
 	def work(self):
 		while not self.willStop:
 			event, values = self.currentWindow.read()
 			
-			if event == sg.WIN_CLOSED:
-				self.onClose(self, event, values)
-			elif self.currentWindow == self.connectedWindow:
+			#if event == sg.WIN_CLOSED:
+			#	self.onClose(self, event, values)
+			if self.currentWindow == self.connectedWindow:
 				self.connectedEvent(event, values)
 			elif self.currentWindow == self.connectionWindow:
 				self.connectionEvent(event, values)
 			
 
-		self.currentWindow.close()
+		self.destroy(event, values)
 
 	def connectionEvent(self, event:str, values):
-		if event.startswith("Connect"):
-			dis:str = values["-DIN-"]
-			serverIP:str = values["-SIN-"]
-			try: 
-				serverPort:int = int(values["-PIN-"])
-			except:
-				serverPort = None
+		if event == "Exit" or event == sg.WIN_CLOSED:
+			self.close()
+		elif not event == None:
+			if event.startswith("Connect"):
+				dis:str = values["-DIN-"]
+				serverIP:str = values["-SIN-"]
+				try: 
+					serverPort:int = int(values["-PIN-"])
+				except:
+					serverPort = None
 
-			if serverIP.count(".") == 3 and not serverPort == None:
-				self.connect(serverIP, serverPort)
-			elif self.uri_validator(dis):
-				self.connect(urlparse(dis).netloc, 7000)
-			else:
-				sg.popup("You need to enter a valed URL or IP with Port")
+				if serverIP.count(".") == 3 and not serverPort == None:
+					self.connect(serverIP, serverPort)
+				elif self.uri_validator(dis):
+					self.connect(urlparse(dis).netloc, 7000)
+				else:
+					sg.popup("You need to enter a valed URL or IP with Port")
 
 	def connectedEvent(self, event, values):
-		if event == "Exit":
-			self.onClose(self, event, values)
+		if event == "Exit" or event == sg.WIN_CLOSED:
+			self.close()
+		elif event == "Back":
+			self.swapWindow(0)
 		elif self.canvas == None and not self.currentWindow["main"].TKCanvas == None:
 			self.canvas = self.currentWindow["main"].TKCanvas
 			self.canvas.bind("<Key>", self.key)
@@ -211,7 +241,7 @@ class GUI:
 		else:
 			self.onEvent(self, event, values)
 
-	def sendPath(self, path: str):
+	def sendPath(self, path:str):
 		name = ""
 		ext = ""
 		
@@ -225,16 +255,14 @@ class GUI:
 
 		name = name[::-1]
 		ext = ext[::-1]
-		if ext == ".txt" or ext == ".json" or ext == ".zip":
-			msg = p.send_file(path, name)
-			self.client.socket.sendall(p.messag_builder("", "upload", msg))
-		else:
-			print("Extantion ", ext, " is not supported!")
+		msg = p.send_file(path, name)
+		self.client.socket.sendall(p.messag_builder("", "upload", msg))
 
 
 	class Icon:
 
-		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+		def __init__(self, gui, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+			self.gui = gui
 			self.x = x
 			self.y = y
 			self.width = w
@@ -266,8 +294,8 @@ class GUI:
 	
 	class File(Icon):
 
-		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
-			super().__init__(canvas, x, y, w, h, name, path)
+		def __init__(self, gui, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+			super().__init__(gui, canvas, x, y, w, h, name, path)
 			self.canvas.itemconfig(self.rec, fill="RED")
 
 		def click(self, event) -> list:
@@ -288,13 +316,14 @@ class GUI:
 				return (method, msg)
 			elif event.num == 3:
 				print("Rigth Click File")
+				self.gui.client.delete(self.path + "/" + self.name)
 
 			return list()
 
 	class Folder(Icon):
 
-		def __init__(self, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
-			super().__init__(canvas, x, y, w, h, name, path)
+		def __init__(self, gui, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
+			super().__init__(gui, canvas, x, y, w, h, name, path)
 			self.canvas.itemconfig(self.rec, fill="BLUE")
 		
 		def click(self, event) -> list:
@@ -329,7 +358,6 @@ def onOpen(gui: GUI, window: sg.Window):
 	
 def onClose(gui: GUI, event: str, values: list):
 	print("onClose")
-	gui.destroy()
 	
 def onEvent(gui: GUI, event: str, values: list):
 	print("onEvent")

@@ -50,7 +50,17 @@ class Client:
 				return
 		
 		self.connected = True
-		
+
+	def delete(self, path:str):
+		message = list()
+
+		message.append(len(path))
+		for i in list(path.encode('ascii')):
+			message.append(i)
+
+		arr = p.messag_builder("", "delete", message)
+		self.socket.sendall(arr)
+
 	def work(self):
 
 		while (not self.willStop):
