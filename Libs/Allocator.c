@@ -117,7 +117,8 @@
 	{
 		File_SetPosition(g_Allocator.m_F, 0);
 		#ifdef ALLOCATOR_PRINT
-			printf("-----------------------------------\r\n");
+			printf("\r\n");
+			printf("-------------------Not freed memory----------------------\r\n");
 		#endif
 
 		if(g_Allocator.m_Mallocs.m_Size != 0)
@@ -136,13 +137,14 @@
 		}
 
 		#ifdef ALLOCATOR_PRINT
-			printf("Max malloced memory: %u at %s,%u,%s\r\n", g_Allocator.m_Max.m_Size, g_Allocator.m_Max.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Max.m_FunctionString);
-			printf("Min malloced memory: %u at %s,%u,%s\r\n", g_Allocator.m_Min.m_Size, g_Allocator.m_Min.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Min.m_FunctionString);
-			printf("Average malloced memory: %u\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
-			printf("Max memory: %lu\r\n", g_Allocator.m_MaxMemory);
-			printf("Total malloced memory: %lu\r\n", g_Allocator.m_Total);
-			printf("Number of malloced memory: %lu\r\n", g_Allocator.m_Num);
-			printf("-----------------------------------\r\n");
+			printf("---------------------------Stats---------------------------\r\n");
+			printf("Max malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Max.m_Size, g_Allocator.m_Max.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Max.m_FunctionString);
+			printf("Min malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Min.m_Size, g_Allocator.m_Min.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Min.m_FunctionString);
+			printf("Average malloced memory: %ub\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
+			printf("Max memory: %lub\r\n", g_Allocator.m_MaxMemory);
+			printf("Total malloced memory: %lub\r\n", g_Allocator.m_Total);
+			printf("Number of malloced memory: %lub\r\n", g_Allocator.m_Num);
+			printf("---------------------------------------------------------\r\n");
 		#endif
 		
 		File_Close(g_Allocator.m_F);
