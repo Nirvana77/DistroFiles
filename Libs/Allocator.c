@@ -143,7 +143,7 @@
 			printf("Average malloced memory: %ub\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
 			printf("Max memory: %lub\r\n", g_Allocator.m_MaxMemory);
 			printf("Total malloced memory: %lub\r\n", g_Allocator.m_Total);
-			printf("Number of malloced memory: %lub\r\n", g_Allocator.m_Num);
+			printf("Number of malloced memory: %lu times\r\n", g_Allocator.m_Num);
 			printf("---------------------------------------------------------\r\n");
 		#endif
 		
