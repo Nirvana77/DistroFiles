@@ -144,11 +144,11 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 		Buffer_ReadUInt16(&_Message->m_Data, &size);
 
-		char name[size + 1];
-		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)name, size);
-		name[size] = 0;
+		char path[size + 1];
+		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
+		path[size] = 0;
 
-		Filesystem_Server_Write(_Client->m_Server, isFile, name, &_Message->m_Data);
+		Filesystem_Server_Write(_Client->m_Server, isFile, path, &_Message->m_Data);
 		
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "list") == 0)
@@ -177,6 +177,24 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		path[size] = 0;
 
 		printf("Path: %s\r\n", path);
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "delete") == 0)
+	{
+		Bool isFile = True;
+		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+		UInt16 size = 0;
+		Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+		char path[size + 1];
+
+		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
+		path[size] = 0;
+
+		int success = Filesystem_Server_Delete(_Client->m_Server, isFile, path);
+
+		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)success);
+		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "deleteRespons", strlen("deleteRespons"));
 	}
 	else
 	{

@@ -18,12 +18,19 @@ typedef enum
 	Filesystem_Server_State_Init = 0, // Initializeing
 	Filesystem_Server_State_Idel = 1, // Ideling
 	Filesystem_Server_State_Connecting = 2, // Connecting to servers
-	Filesystem_Server_State_WriteCheck = 3, // Checking if the write is good or not. Success < 50% do ReSync else Synced
+	Filesystem_Server_State_Checking = 3, // Checking if the acction is good or not. Success < 50% do ReSync else Synced
 	Filesystem_Server_State_Synced = 4, // Synced with  servers
 	Filesystem_Server_State_Syncing = 5, // Syncing with servers
 	Filesystem_Server_State_ReSync = 6, // Sends sync message.
 	Filesystem_Server_State_ReSyncing = 7, // Sends sync message.
 } Filesystem_Server_State;
+
+typedef enum
+{
+	Filesystem_Server_CheckState_None = 0,
+	Filesystem_Server_CheckState_Write = 1,
+	Filesystem_Server_CheckState_Delete = 2
+} Filesystem_Server_CheckState;
 
 typedef struct
 {
@@ -31,7 +38,7 @@ typedef struct
 	Filesystem_Connection* m_Connection;
 	UInt8 m_IsOk;
 
-} Filesystem_Server_WriteCheck;
+} Filesystem_Server_Check;
 
 struct T_Filesystem_Server
 {
@@ -49,6 +56,7 @@ struct T_Filesystem_Server
 	
 	LinkedList m_Connections;
 	LinkedList m_WriteChecked;
+	Filesystem_Server_CheckState m_CheckState;
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
@@ -127,7 +135,8 @@ static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
 }
 
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
-int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer);
+int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer);
+int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Path);
 
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);
