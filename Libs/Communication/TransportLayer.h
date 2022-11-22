@@ -13,6 +13,7 @@ struct T_TransportLayer
 
 	LinkedList m_Queued;
 	LinkedList m_Sented;
+	LinkedList m_Postponed;
 
 	Payload_FuncOut m_FuncOut;
 	

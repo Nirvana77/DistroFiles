@@ -37,6 +37,13 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 		printf("Error code: %i\n\r", success);
 		return -2;
 	}
+	success = LinkedList_Initialize(&_TransportLayer->m_Postponed);
+	if(success != 0)
+	{
+		printf("Failed to initialize the Postponed!\n\r");
+		printf("Error code: %i\n\r", success);
+		return -2;
+	}
 	
 	return 0;
 }
@@ -124,7 +131,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 	{
 		Payload* replay;
 		Payload_InitializePtr(_Replay->m_UUID, &replay);
-		if(_TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay) == 1)
+		int revice = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay);
+		if(revice == 1)
 		{
 			
 			Payload_FilAddress(&replay->m_Des, &_Message->m_Src);
@@ -132,12 +140,22 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 			return 0;
 		}
+		else if(revice == 2)
+		{
+			Payload_Copy(replay, _Message);
+			SystemMonotonicMS(&replay->m_Time);
+			replay->m_Time += 1000 * 2;
+
+			Payload_Print(replay, "Postponed", False);
+			
+			LinkedList_Push(&_TransportLayer->m_Postponed, replay);
+			return 0;
+		}
 		Payload_Dispose(replay);
 	}
 
 	return 0;
 }
-
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
@@ -154,6 +172,48 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			printf("Removed: %s\n\r", str);
 			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
 			Payload_Dispose(_Payload);
+		}
+
+	}
+
+	currentNode = _TransportLayer->m_Postponed.m_Head;
+	while(currentNode != NULL)
+	{
+		LinkedList_Node* node = currentNode;
+		Payload* _Payload = (Payload*) node->m_Item;
+		currentNode = currentNode->m_Next;
+		
+		if(_MSTime > _Payload->m_Time)
+		{
+			char str[37];
+			uuid_ToString(_Payload->m_UUID, str);
+			printf("Prossessing postponed messaged: %s\n\r", str);
+			LinkedList_UnlinkNode(&_TransportLayer->m_Postponed, node);
+
+			if(_TransportLayer->m_FuncOut.m_Receive != NULL)
+			{
+				Payload* replay = NULL;
+				Payload_InitializePtr(_Payload->m_UUID, &replay);
+				int revice = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Payload, replay);
+				if(revice == 1)
+				{
+					
+					Payload_FilAddress(&replay->m_Des, &_Payload->m_Src);
+					node->m_Item = replay;
+					LinkedList_LinkLast(&_TransportLayer->m_Queued, node);
+				}
+				else if(revice == 2)
+				{
+					SystemMonotonicMS(&_Payload->m_Time);
+					_Payload->m_Time += 1000 * 2;
+					LinkedList_LinkLast(&_TransportLayer->m_Postponed, node);
+					Payload_Dispose(replay);
+				}
+				else
+				{
+					Payload_Dispose(replay);
+				}
+			}
 		}
 
 	}
@@ -176,11 +236,21 @@ void TransportLayer_Dispose(TransportLayer* _TransportLayer)
 	{
 		Payload* _Payload = (Payload*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
-		LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
+		LinkedList_RemoveFirst(&_TransportLayer->m_Sented);
+		Payload_Dispose(_Payload);
+	}
+
+	currentNode = _TransportLayer->m_Postponed.m_Head;
+	while(currentNode != NULL)
+	{
+		Payload* _Payload = (Payload*) currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+		LinkedList_RemoveFirst(&_TransportLayer->m_Postponed);
 		Payload_Dispose(_Payload);
 	}
 	
 
+	LinkedList_Dispose(&_TransportLayer->m_Postponed);
 	LinkedList_Dispose(&_TransportLayer->m_Sented);
 	LinkedList_Dispose(&_TransportLayer->m_Queued);
 
