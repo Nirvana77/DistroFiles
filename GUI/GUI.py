@@ -130,6 +130,9 @@ class GUI:
 			else:
 				self.currentWindow = self.connectionWindow
 				self.currentWindow.UnHide()
+				if not self.client == None:
+					self.client.destroy()
+					self.client = None
 			
 		elif index == 1:
 			if self.connectedWindow == None:
