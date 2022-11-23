@@ -290,7 +290,7 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 	Payload* message = NULL;
 	TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 0, 1000, &message);
 	
-	_Server->m_State = Filesystem_Server_State_Idel;
+	_Server->m_State = Filesystem_Server_State_Conneced;
 	return 0;
 }
 
@@ -1372,10 +1372,13 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 	{
 		case Filesystem_Server_State_Init:
 		{
-			
 			_Server->m_State = Filesystem_Server_State_Connecting;
 			Filesystem_Server_LoadServer(_Server);
-			Filesystem_Server_Sync(_Server);
+		} break;
+
+		case Filesystem_Server_State_Conneced:
+		{
+			_Server->m_State = Filesystem_Server_State_ReSync;
 		} break;
 
 		case Filesystem_Server_State_ReSyncing:
@@ -1595,8 +1598,8 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				return;
 
 			_Server->m_CheckState = Filesystem_Server_CheckState_None;
-			int ratio = (int)((double)(oks / size) * 100);
-			if(ratio < 50)
+			int error = (int)((double)(1 - oks / size) * 100);
+			if(error >= Filesystem_Server_CheckError)
 			{
 				_Server->m_State = Filesystem_Server_State_ReSync;
 			}
@@ -1616,6 +1619,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Idel:
 		{
+			printf("Ideling\r\n");
 			if(_Server->m_Service->m_Settings.m_AutoSync == True)
 			{
 				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)

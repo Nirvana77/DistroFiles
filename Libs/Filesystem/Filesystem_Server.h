@@ -13,23 +13,27 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #define Filesystem_Server_TempFlag_WillSend 2
 #define Filesystem_Server_TempFlag_WillClear 3
 
+#define Filesystem_Server_CheckError 50 //This is in %
+
 typedef enum
 {
 	Filesystem_Server_State_Init = 0, // Initializeing
 	Filesystem_Server_State_Idel = 1, // Ideling
 	Filesystem_Server_State_Connecting = 2, // Connecting to servers
-	Filesystem_Server_State_Checking = 3, // Checking if the acction is good or not. Success < 50% do ReSync else Synced
-	Filesystem_Server_State_Synced = 4, // Synced with  servers
-	Filesystem_Server_State_Syncing = 5, // Syncing with servers
-	Filesystem_Server_State_ReSync = 6, // Sends sync message.
-	Filesystem_Server_State_ReSyncing = 7, // Sends sync message.
+	Filesystem_Server_State_Conneced = 3, // Connected to servers
+	Filesystem_Server_State_Checking = 4, // Checking if the acction is good or not. Success < 50% do ReSync else Synced
+	Filesystem_Server_State_Synced = 5, // Synced with  servers
+	Filesystem_Server_State_Syncing = 6, // Syncing with servers
+	Filesystem_Server_State_ReSync = 7, // Sends sync message.
+	Filesystem_Server_State_ReSyncing = 8, // Sends sync message.
 } Filesystem_Server_State;
 
 typedef enum
 {
 	Filesystem_Server_CheckState_None = 0,
 	Filesystem_Server_CheckState_Write = 1,
-	Filesystem_Server_CheckState_Delete = 2
+	Filesystem_Server_CheckState_Delete = 2,
+	Filesystem_Server_CheckState_Syncing = 3
 } Filesystem_Server_CheckState;
 
 typedef struct
