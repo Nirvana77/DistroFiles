@@ -34,9 +34,11 @@ typedef struct
 
 	UInt16 m_Host;
 	UInt16 m_Distributer;
-	Bool m_Autosync;
 
 	json_t* m_Servers; //! This will be removed later
+
+	Bool m_AutoSync;
+	UInt16 m_Interval;
 
 } Filesystem_ServiceSettings;
 

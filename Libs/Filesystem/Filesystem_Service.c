@@ -83,7 +83,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 
 	_Service->m_Settings.m_Host = 5566;
 	_Service->m_Settings.m_Distributer = 8021;
-	_Service->m_Settings.m_Autosync = True;
+	_Service->m_Settings.m_AutoSync = True;
+	_Service->m_Settings.m_Interval = 10000;
 
 	//-----------------------------------------
 	int loadSuccess = Filesystem_Service_Load(_Service);
@@ -229,7 +230,16 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 
 	if(json_getBool(_JSON, "autosync", &boolVal) == 0)
 	{
-		_Service->m_Settings.m_Autosync = boolVal;
+		_Service->m_Settings.m_AutoSync = boolVal;
+	}
+	else
+	{
+		needSave = True;
+	}
+
+	if(json_getUInt16(_JSON, "interval", &ulintVal) == 0)
+	{
+		_Service->m_Settings.m_Interval = ulintVal;
 	}
 	else
 	{
@@ -252,8 +262,9 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 			"\"host\": %u,"
 			"\"distributer\": %u,"
 			"\"servers\": [],"
-			"\"autosync\": %s"
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host, _Service->m_Settings.m_Distributer, _Service->m_Settings.m_Autosync == True ? "true" : "false"
+			"\"autosync\": %s,"
+			"\"interval\": %u"
+		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host, _Service->m_Settings.m_Distributer, _Service->m_Settings.m_AutoSync == True ? "true" : "false", _Service->m_Settings.m_Interval
 	) != 0)
 	{
 		String_Dispose(&str);

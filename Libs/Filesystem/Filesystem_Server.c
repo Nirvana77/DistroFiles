@@ -1375,7 +1375,8 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			
 			_Server->m_State = Filesystem_Server_State_Connecting;
 			Filesystem_Server_LoadServer(_Server);
-		}break;
+			Filesystem_Server_Sync(_Server);
+		} break;
 
 		case Filesystem_Server_State_ReSyncing:
 		case Filesystem_Server_State_Syncing:
@@ -1611,6 +1612,16 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		{
 			Filesystem_Server_Sync(_Server);
 			_Server->m_State = Filesystem_Server_State_ReSyncing;
+		} break;
+
+		case Filesystem_Server_State_Idel:
+		{
+			if(_Server->m_Service->m_Settings.m_AutoSync == True)
+			{
+				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
+					Filesystem_Server_Sync(_Server);
+				
+			}
 		} break;
 
 		default: {} break;
