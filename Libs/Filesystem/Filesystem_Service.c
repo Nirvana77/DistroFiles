@@ -285,12 +285,15 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	char oldfilepath[128];
 	sprintf(filepath, "%s/settings.json", _Service->m_Path.m_Ptr);
 	sprintf(oldfilepath, "%s/settings.json.old", _Service->m_Path.m_Ptr);
-	File_Remove(oldfilepath);
-	if(File_Copy(filepath, oldfilepath) != 0)
+	if(File_Exist(oldfilepath) == True)
 	{
-		printf("Error then copying old json!\r\n");
-		String_Dispose(&str);
-		return -3;
+		File_Remove(oldfilepath);
+		if(File_Copy(filepath, oldfilepath) != 0)
+		{
+			printf("Error then copying old json!\r\n");
+			String_Dispose(&str);
+			return -3;
+		}
 	}
 	printf("Save settings.json to settings.json.old\r\n");
 	int success = String_SaveToFile(&str, filepath);
