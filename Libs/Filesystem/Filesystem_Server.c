@@ -549,10 +549,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Message->m_Data.m_ReadPtr += written;
 		_Message->m_Data.m_BytesLeft -= written;
 		File_Close(f);
-		String_Dispose(&fullPath);
 
 		unsigned char hash[16] = "";
 		File_GetHash(fullPath.m_Ptr, hash);
+		String_Dispose(&fullPath);
 		
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
