@@ -198,7 +198,7 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	
 	Bool needSave = False;
 	//const char* charVal;
-	Bool boolVal;
+	Bool boolVal = False;
 	UInt16 ulintVal;
 	if(json_getUInt16(_JSON, "host", &ulintVal) == 0)
 	{
@@ -282,14 +282,24 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	}
 	
 	char filepath[128];
+	char oldfilepath[128];
 	sprintf(filepath, "%s/settings.json", _Service->m_Path.m_Ptr);
+	sprintf(oldfilepath, "%s/settings.json.old", _Service->m_Path.m_Ptr);
+	File_Remove(oldfilepath);
+	if(File_Copy(filepath, oldfilepath) != 0)
+	{
+		printf("Error then copying old json!\r\n");
+		String_Dispose(&str);
+		return -3;
+	}
+	printf("Save settings.json to settings.json.old\r\n");
 	int success = String_SaveToFile(&str, filepath);
 	
 	if(success != 0)
 	{
 		printf("Error then saveing new json!\r\n");
 		String_Dispose(&str);
-		return -3;
+		return -4;
 	}
 	
 	json_decref(_Service->m_Json);
@@ -308,7 +318,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 	int totalReaded = 0;
 	LinkedList_Node* currentNode = _List->m_Head;
-	unsigned char buffer[1024];
+	unsigned char buffer[Filesystem_Service_BufferMax];
 	Buffer_Clear(&_Service->m_Buffer);
 	while(currentNode != NULL)
 	{
@@ -331,7 +341,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 		}
 
-		while (readed == 1024)
+		while (readed == Filesystem_Service_BufferMax)
 		{
 			readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
 			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);

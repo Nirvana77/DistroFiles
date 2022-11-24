@@ -16,6 +16,9 @@ static inline Bool BitHelper_GetBit(Byte* _Byte, Byte _Bit)
 	return (Bool)((*(_Byte) >> _Bit) & 0x1);
 }
 
+//TODO: Make two function clear and set bit!
+//* BitHelper_SetUInt16Bit
+//* BitHelper_ClearUInt16Bit
 static inline void BitHelper_Set16Bit(UInt16* _Byte, Byte _Bit, Bool _Value)
 {
 	if(_Value == True)

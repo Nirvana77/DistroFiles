@@ -15,6 +15,8 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 
 #define Filesystem_Server_CheckError 50 //This is in %
 
+#define Filesystem_Server_SyncTimeout 10000
+
 typedef enum
 {
 	Filesystem_Server_State_Init = 0, // Initializeing
@@ -115,28 +117,7 @@ static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char 
 	printf("\r\n");
 }
 
-static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
-{
-	Payload* message = NULL;
-	char* path = "root";
-
-	int size = 2 + strlen(path) + 16;
-
-	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
-	{
-		_Server->m_State = Filesystem_Server_State_Syncing;
-		Buffer_WriteUInt16(&message->m_Data, strlen(path));
-		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
-
-		unsigned char hash[16];
-		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
-
-		Filesystem_Server_PrintHash("Sync Hash", hash);
-		Buffer_WriteBuffer(&message->m_Data, hash, 16);
-
-		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
-	}
-}
+void Filesystem_Server_Sync(Filesystem_Server* _Server);
 
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
 int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer);

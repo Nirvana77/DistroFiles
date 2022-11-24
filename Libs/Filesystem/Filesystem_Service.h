@@ -5,6 +5,7 @@ struct T_Filesystem_Service;
 typedef struct T_Filesystem_Service Filesystem_Service;
 
 #define Filesystem_Service_VERSION 1u
+#define Filesystem_Service_BufferMax 1024
 
 #include "../String.h"
 #include "../File.h"

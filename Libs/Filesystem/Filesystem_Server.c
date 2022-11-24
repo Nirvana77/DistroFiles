@@ -549,10 +549,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Message->m_Data.m_ReadPtr += written;
 		_Message->m_Data.m_BytesLeft -= written;
 		File_Close(f);
-		String_Dispose(&fullPath);
 
 		unsigned char hash[16] = "";
 		File_GetHash(fullPath.m_Ptr, hash);
+		String_Dispose(&fullPath);
 		
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
@@ -1593,9 +1593,14 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			
 			if(size != _Server->m_Connections.m_Size - 1)
 				return;
+			_Server->m_CheckState = Filesystem_Server_CheckState_None;
 
 			if(size == 0)
+			{
+				_Server->m_State = Filesystem_Server_State_Synced;
+				Filesystem_Server_ClearWriteCheckList(_Server);
 				return;
+			}
 
 			_Server->m_CheckState = Filesystem_Server_CheckState_None;
 			int error = (int)((double)(1 - oks / size) * 100);
@@ -1626,10 +1631,12 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 					Filesystem_Server_Sync(_Server);
 				
 			}
+			
 		} break;
 
-		default: {} break;
-		
+		case Filesystem_Server_State_Connecting:
+		{ } break;
+
 	}
 	
 	if(_MSTime > _Server->m_NextCheck)
@@ -1652,6 +1659,29 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		
 	}
 
+}
+
+void Filesystem_Server_Sync(Filesystem_Server* _Server)
+{
+	Payload* message = NULL;
+	char* path = "root";
+
+	int size = 2 + strlen(path) + 16;
+
+	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, Filesystem_Server_SyncTimeout, &message) == 0)
+	{
+		_Server->m_State = Filesystem_Server_State_Syncing;
+		Buffer_WriteUInt16(&message->m_Data, strlen(path));
+		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
+
+		unsigned char hash[16];
+		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
+
+		Filesystem_Server_PrintHash("Sync Hash", hash);
+		Buffer_WriteBuffer(&message->m_Data, hash, 16);
+
+		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+	}
 }
 
 
