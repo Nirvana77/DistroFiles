@@ -1619,8 +1619,9 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			
 		} break;
 
-		default: {} break;
-		
+		case Filesystem_Server_State_Connecting:
+		{ } break;
+
 	}
 	
 	if(_MSTime > _Server->m_NextCheck)
