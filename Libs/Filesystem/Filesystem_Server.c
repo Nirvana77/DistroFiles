@@ -1590,11 +1590,15 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			
 			if(size != _Server->m_Connections.m_Size - 1)
 				return;
+			_Server->m_CheckState = Filesystem_Server_CheckState_None;
 
 			if(size == 0)
+			{
+				_Server->m_State = Filesystem_Server_State_Synced;
+				Filesystem_Server_ClearWriteCheckList(_Server);
 				return;
+			}
 
-			_Server->m_CheckState = Filesystem_Server_CheckState_None;
 			int ratio = (int)((double)(oks / size) * 100);
 			if(ratio < 50)
 			{
