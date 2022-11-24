@@ -318,7 +318,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 	int totalReaded = 0;
 	LinkedList_Node* currentNode = _List->m_Head;
-	unsigned char buffer[1024];
+	unsigned char buffer[Filesystem_Service_BufferMax];
 	Buffer_Clear(&_Service->m_Buffer);
 	while(currentNode != NULL)
 	{
@@ -341,7 +341,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 		}
 
-		while (readed == 1024)
+		while (readed == Filesystem_Service_BufferMax)
 		{
 			readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
 			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);
