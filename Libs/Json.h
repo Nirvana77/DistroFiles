@@ -54,7 +54,7 @@ static inline int json_getBool(json_t* _JSON, const char* _Filed, Bool* _Value)
 	if(value == NULL)
 		return -2;
 		
-	*(_Value) = json_boolean_value(value) == 0 ? True : False;
+	*(_Value) = json_boolean_value(value) == 0 ? False : True;
 	
 	return 0;
 }

@@ -198,7 +198,7 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	
 	Bool needSave = False;
 	//const char* charVal;
-	Bool boolVal;
+	Bool boolVal = False;
 	UInt16 ulintVal;
 	if(json_getUInt16(_JSON, "host", &ulintVal) == 0)
 	{
