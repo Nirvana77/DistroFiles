@@ -232,7 +232,7 @@ int String_SaveToFile(String* _Str, const char* _Path)
 	}
 
 	File_Close(f);
-	return success;
+	return 0;
 }
 
 Bool String_EndsWith(String* _Str, const char* _Exp)
