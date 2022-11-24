@@ -1616,12 +1616,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Idel:
 		{
-			if(_Server->m_Service->m_Settings.m_AutoSync == True)
-			{
-				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
-					Filesystem_Server_Sync(_Server);
-				
-			}
+			
 		} break;
 
 		default: {} break;
@@ -1645,6 +1640,12 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				TCPSocket_Dispose(socket);
 			}
 		}
+		
+	}
+	if(_Server->m_Service->m_Settings.m_AutoSync == True)
+	{
+		if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
+			Filesystem_Server_Sync(_Server);
 		
 	}
 
