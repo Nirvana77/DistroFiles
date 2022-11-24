@@ -1656,6 +1656,29 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 }
 
+void Filesystem_Server_Sync(Filesystem_Server* _Server)
+{
+	Payload* message = NULL;
+	char* path = "root";
+
+	int size = 2 + strlen(path) + 16;
+
+	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, Filesystem_Server_SyncTimeout, &message) == 0)
+	{
+		_Server->m_State = Filesystem_Server_State_Syncing;
+		Buffer_WriteUInt16(&message->m_Data, strlen(path));
+		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
+
+		unsigned char hash[16];
+		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
+
+		Filesystem_Server_PrintHash("Sync Hash", hash);
+		Buffer_WriteBuffer(&message->m_Data, hash, 16);
+
+		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+	}
+}
+
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
