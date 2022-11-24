@@ -14,7 +14,6 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #define Filesystem_Server_TempFlag_WillClear 3
 
 #define Filesystem_Server_CheckError 50 //This is in %
-
 #define Filesystem_Server_SyncTimeout 10000
 
 typedef enum
