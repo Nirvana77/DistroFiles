@@ -192,6 +192,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			printf("Prossessing postponed messaged: %s\n\r", str);
 			LinkedList_RemoveNode(&_TransportLayer->m_Postponed, node);
 			TransportLayer_ReveicePayload(_TransportLayer, _Payload, NULL);
+			Payload_Dispose(_Payload);
 			
 		}
 
