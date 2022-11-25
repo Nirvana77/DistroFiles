@@ -540,7 +540,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
 	{
-
+		Filesystem_Checking_SetState(&_Server->m_Checking, Filesystem_Checking_Type_Delete, _Message);
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 
