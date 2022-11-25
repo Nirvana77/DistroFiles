@@ -307,6 +307,8 @@ void Filesystem_Checking_Dispose(Filesystem_Checking* _Checking)
 		LinkedList_RemoveFirst(&_Checking->m_List);
 	}
 
+	Payload_Dispose(&_Checking->m_Message);
+
 	if(_Checking->m_Allocated == True)
 		Allocator_Free(_Checking);
 	else
