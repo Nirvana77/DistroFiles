@@ -221,10 +221,7 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 
 	int wrtten = Buffer_WriteBuffer(_Des, _Src->m_ReadPtr, _Size);
 
-	_Src->m_ReadPtr += wrtten;
-	_Src->m_BytesLeft -= wrtten;
-
-	return 1;
+	return wrtten;
 }
 
 

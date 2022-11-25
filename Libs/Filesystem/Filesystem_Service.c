@@ -356,7 +356,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 	if(totalReaded > 0)
 	{
 		printf("Filesystem_Service_TCPRead\n\r");
-		Buffer_Copy(_Buffer, &_Service->m_Buffer, _Service->m_Buffer.m_BytesLeft);
+		Buffer_DeepCopy(_Buffer, &_Service->m_Buffer, _Service->m_Buffer.m_BytesLeft);
 		return totalReaded;
 	}
 

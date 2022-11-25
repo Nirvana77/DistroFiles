@@ -69,6 +69,15 @@ static inline void Buffer_Reset(Buffer* _Buffer)
 	Buffer_ResetReadPtr(_Buffer);
 	Buffer_ResetWritePtr(_Buffer);
 }
+static inline int Buffer_DeepCopy(Buffer* _Des, Buffer* _Src, int _Size)
+{
+	int written = Buffer_Copy(_Des, _Src, _Size);
+	
+	_Src->m_ReadPtr += written;
+	_Src->m_BytesLeft -= written;
+
+	return written;
+}
 
 void Buffer_Dispose(Buffer* _Buffer);
 
