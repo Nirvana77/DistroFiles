@@ -41,6 +41,12 @@ struct T_Filesystem_Checking
 int Filesystem_Checking_InitializePtr(Filesystem_Server* _Server,Filesystem_Checking** _CheckingPtr);
 int Filesystem_Checking_Initialize(Filesystem_Checking* _Checking, Filesystem_Server* _Server);
 
+static inline void Filesystem_Checking_SetState(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
+{
+	Payload_Copy(&_Checking->m_Message, _Message);
+	_Checking->m_Type = _Type;
+}
+
 void Filesystem_Checking_RemoveCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* _Check);
 void Filesystem_Checking_ClearWriteCheckList(Filesystem_Checking* _Checking);
 int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_Address* _Address, Filesystem_Checking_Check** _CheckPtr);
