@@ -104,7 +104,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 	return 0;
 }
 
-int Filesystem_Checking_SetCheckingState(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
+int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Payload* _Message)
 {
 	//if(_Checking->m_State == Filesystem_Checking_State_Idel || _Checking->m_State == Filesystem_Checking_State_Synced)
 	//	return 0;
@@ -113,8 +113,6 @@ int Filesystem_Checking_SetCheckingState(Filesystem_Checking* _Checking, Filesys
 		return 1;
 
 	Filesystem_Checking_ResetCheckingState(_Checking);
-	_Checking->m_Type = _Type;
-	Payload_Copy(&_Checking->m_Message, _Message);
 
 	switch (_Checking->m_Type)
 	{
@@ -253,7 +251,6 @@ int Filesystem_Checking_SetCheckingState(Filesystem_Checking* _Checking, Filesys
 
 void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking)
 {
-	_Checking->m_Type = Filesystem_Checking_Type_None;
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{

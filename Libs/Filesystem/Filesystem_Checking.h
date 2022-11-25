@@ -50,8 +50,7 @@ static inline void Filesystem_Checking_SetState(Filesystem_Checking* _Checking, 
 void Filesystem_Checking_RemoveCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* _Check);
 void Filesystem_Checking_ClearWriteCheckList(Filesystem_Checking* _Checking);
 int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_Address* _Address, Filesystem_Checking_Check** _CheckPtr);
-int Filesystem_Checking_SetCheckingState(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message);
-
+int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Payload* _Message);
 
 Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesystem_Connection* _Connection);
 
