@@ -147,6 +147,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
 void Payload_Copy(Payload* _Des, Payload* _Src);
 
+//! This is only for DEBUGING!
 static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasFlags)
 {
 	String str;
