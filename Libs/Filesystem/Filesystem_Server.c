@@ -585,7 +585,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
-		int success = Filesystem_Checking_WorkOnPayload(&_Server->m_Checking, _Message);
+		int success = Filesystem_Checking_WorkOnPayload(&_Server->m_Checking, (Filesystem_Checking_Type)type, _Message);
 		if(success > 0)
 			return 2; //Postponed message for 2 sec
 
