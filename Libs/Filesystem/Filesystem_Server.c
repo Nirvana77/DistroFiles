@@ -1087,7 +1087,6 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
-
 	Payload message;
 	Payload_Initialize(&message, NULL);
 
@@ -1108,6 +1107,7 @@ int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address*
 //TODO: Rename this to CheckForwording or something
 void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Payload* _Message)
 {
+	_Server->m_State = Filesystem_Server_State_Checking;
 	Payload_SetMessageType(_Message, Payload_Message_Type_String, "Check", strlen("Check"));
 
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
@@ -1345,70 +1345,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Checking:
 		{
-			/*
-			int size = 0;
-			int oks = 0;
-			int notSync = 0;
-			LinkedList_Node* currentNode = _Server->m_Checking.m_Head;
-			while (currentNode != NULL)
-			{
-				Filesystem_Checking* check = (Filesystem_Checking*) currentNode->m_Item;
-
-				if(check->m_IsUsed == False)
-					break;
-
-				if(check->m_IsOk == 0)
-					oks++;
-
-				else if(check->m_IsOk == 2)
-					notSync++;
-
-				size++;
-				currentNode = currentNode->m_Next;
-			}
-			
-			if(size != _Server->m_Connections.m_Size - 1)
-				return;
-
-			if(size - notSync == 0)
-			{
-				_Server->m_CheckState = Filesystem_Checking_Type_None;
-				_Server->m_State = Filesystem_Server_State_Synced;
-				Filesystem_Server_ClearWriteCheckList(_Server);
-				return;
-			}
-
-			int error = (int)((double)(1 - oks / (size - notSync)) * 100);
-			if(error >= Filesystem_CheckingError)
-			{
-				_Server->m_CheckState = Filesystem_Checking_Type_None;
-				_Server->m_State = Filesystem_Server_State_ReSync;
-			}
-			else
-			{
-				_Server->m_State = Filesystem_Server_State_Synced;
-
-				currentNode = _Server->m_Checking.m_Head;
-				while (currentNode != NULL)
-				{
-					Filesystem_Checking* check = (Filesystem_Checking*) currentNode->m_Item;
-
-					if(check->m_IsUsed == False)
-						break;
-
-					if(check->m_IsOk == 2)
-					{
-						
-					}
-
-					size++;
-					currentNode = currentNode->m_Next;
-				}
-
-				Filesystem_Server_ClearWriteCheckList(_Server);
-			}
-			*/
-
+			Filesystem_Checking_Work(_MSTime, &_Server->m_Checking);
 		} break;
 
 		case Filesystem_Server_State_ReSync:

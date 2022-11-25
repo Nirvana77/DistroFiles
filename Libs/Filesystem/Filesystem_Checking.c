@@ -287,6 +287,76 @@ Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesy
 	return True;
 }
 
+void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
+{
+
+	int size = 0;
+	int oks = 0;
+	int notSync = 0;
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+			break;
+
+		if(check->m_IsOk == 0)
+			oks++;
+
+		else if(check->m_IsOk == 2)
+			notSync++;
+
+		size++;
+		currentNode = currentNode->m_Next;
+	}
+	
+	if(size != _Checking->m_Server->m_Connections.m_Size - 1)
+		return;
+
+	if(size - notSync == 0)
+	{
+		_Checking->m_Type = Filesystem_Checking_Type_None;
+		_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
+		Filesystem_Checking_ClearWriteCheckList(_Checking);
+		return;
+	}
+
+	int error = (int)((double)(1 - oks / (size - notSync)) * 100);
+	if(error >= Filesystem_Checking_CheckError)
+	{
+		_Checking->m_Type = Filesystem_Checking_Type_None;
+		_Checking->m_Server->m_State = Filesystem_Server_State_ReSync;
+	}
+	else
+	{
+		_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
+
+		currentNode = _Checking->m_List.m_Head;
+		while (currentNode != NULL)
+		{
+			Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+
+			if(check->m_IsUsed == False)
+				break;
+
+			if(check->m_IsOk == Filesystem_Checking_Check_Satus_DontHave)
+			{
+				Payload* message = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, 1000, &message) == 0)
+					Payload_Copy(message, &_Checking->m_Message);
+
+			}
+
+			size++;
+			currentNode = currentNode->m_Next;
+		}
+
+		Filesystem_Checking_ClearWriteCheckList(_Checking);
+	}
+			
+
+}
 
 void Filesystem_Checking_Dispose(Filesystem_Checking* _Checking)
 {

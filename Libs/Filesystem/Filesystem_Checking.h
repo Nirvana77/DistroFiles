@@ -6,6 +6,7 @@ typedef struct T_Filesystem_Checking Filesystem_Checking;
 
 #include "Filesystem_Server.h"
 
+#define Filesystem_Checking_CheckError 50 //This is in %
 typedef enum
 {
 	Filesystem_Checking_Type_None = 0,
@@ -54,6 +55,8 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message);
 
 Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesystem_Connection* _Connection);
+
+void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking);
 
 void Filesystem_Checking_Dispose(Filesystem_Checking* _Checking);
 
