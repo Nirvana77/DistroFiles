@@ -29,6 +29,18 @@ typedef enum
 	Filesystem_Server_State_ReSyncing = 8, // Sends sync message.
 } Filesystem_Server_State;
 
+const char* Filesystem_Server_States[] = {
+	"Filesystem_Server_State_Init",
+	"Filesystem_Server_State_Idel",
+	"Filesystem_Server_State_Connecting",
+	"Filesystem_Server_State_Conneced",
+	"Filesystem_Server_State_Checking",
+	"Filesystem_Server_State_Synced",
+	"Filesystem_Server_State_Syncing",
+	"Filesystem_Server_State_ReSync",
+	"Filesystem_Server_State_ReSyncing"
+};
+
 typedef enum
 {
 	Filesystem_Server_CheckState_None = 0,
