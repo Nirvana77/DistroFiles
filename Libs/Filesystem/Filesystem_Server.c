@@ -8,10 +8,7 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
 
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
-int Filesystem_Server_SpawnWriteCheck(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Server_Check** _CheckPtr);
 int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr);
-int Filesystem_Server_SetCheckingState(Filesystem_Server* _Server, Filesystem_Server_CheckState _Type, Payload* _Message);
-void Filesystem_Server_ResetCheckingState(Filesystem_Server* _Server);
 
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
 int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
@@ -53,7 +50,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	_Server->m_Timeout = 10000;
 	_Server->m_Service = _Service;
 	_Server->m_State = Filesystem_Server_State_Init;
-	_Server->m_CheckState = Filesystem_Server_CheckState_None;
 
 	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
 	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
@@ -102,7 +98,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -4;
 	}
 	LinkedList_Initialize(&_Server->m_Connections);
-	LinkedList_Initialize(&_Server->m_WriteChecked);
+	Filesystem_Checking_Initialize(&_Server->m_Checking, _Server);
 
 
 	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, 100);
@@ -113,7 +109,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
-		LinkedList_Dispose(&_Server->m_WriteChecked);
+		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		return -5;
 	}
@@ -126,7 +122,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
-		LinkedList_Dispose(&_Server->m_WriteChecked);
+		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		return -6;
@@ -140,7 +136,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		LinkedList_Dispose(&_Server->m_Connections);
-		LinkedList_Dispose(&_Server->m_WriteChecked);
+		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		NetworkLayer_Dispose(&_Server->m_NetworkLayer);
@@ -197,29 +193,9 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 		while (currentNode != NULL)
 		{
-			Bool isAllowed = True;
 			Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
-			LinkedList_Node* node = _Server->m_WriteChecked.m_Head;
-			while (node != NULL)
-			{
-				Filesystem_Server_Check* check = (Filesystem_Server_Check*) node->m_Item;
 
-				if(check->m_IsUsed == False)
-				{
-					node = NULL;
-				}
-				else if(connection == check->m_Connection)
-				{
-					if(check->m_IsOk != 0)
-						isAllowed = False;
-					
-					node = NULL;
-				}
-				else
-				{
-					node = node->m_Next;
-				}
-			}
+			Bool isAllowed = Filesystem_Checking_CanUseConnection(&_Server->m_Checking, connection);
 
 			if(isAllowed == True)
 			{
@@ -234,7 +210,7 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 			}
 			
 		}
-
+		
 	}
 	else
 	{
@@ -482,7 +458,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
-
+		Filesystem_Checking_SetState(&_Server->m_Checking, Filesystem_Checking_Type_Write, _Message);
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 
@@ -609,7 +585,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
-		int success = Filesystem_Server_SetCheckingState(_Server, (Filesystem_Server_CheckState)type, _Message);
+		int success = Filesystem_Checking_WorkOnPayload(&_Server->m_Checking, (Filesystem_Checking_Type)type, _Message);
 		if(success > 0)
 			return 2; //Postponed message for 2 sec
 
@@ -619,30 +595,27 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	{
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
-
-		if((Filesystem_Server_CheckState)type != _Server->m_CheckState)
+		
+		
+		if((Filesystem_Checking_Type)type != _Server->m_Checking.m_Type)
 			return 2;
-
-		Filesystem_Server_Check* check = NULL;
-		if(Filesystem_Server_SpawnWriteCheck(_Server, &_Message->m_Src, &check) == 1)
+		
+		Filesystem_Checking_Check* check = NULL;
+		if(Filesystem_Checking_SpawnWriteCheck(&_Server->m_Checking, &_Message->m_Src, &check) == 1)
 			return 0;
 		
-		Buffer_ReadUInt8(&_Message->m_Data, &check->m_IsOk);
+		Buffer_ReadUInt8(&_Message->m_Data, &type);
+		check->m_IsOk = (Filesystem_Checking_Check_Satus)type;
 		
 		if(Filesystem_Server_GetConnection(_Server, &_Message->m_Src, &check->m_Connection) != 0)
 		{
-			check->m_IsUsed = False;
-			check->m_Connection = NULL;
-
-			LinkedList_Node* node = NULL;
-			LinkedList_UnlinkItem(&_Server->m_WriteChecked, check, &node);
-			LinkedList_LinkLast(&_Server->m_WriteChecked, node);
 			printf("Error with: \r\n");
 			for (int i = 0; i < sizeof(_Message->m_Src.m_Address); i++)
 				printf("%x ", _Message->m_Src.m_Address.MAC[i]);
 			printf("\r\n");
 			return 0;
 		}
+		
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReSync") == 0)
 	{
@@ -749,61 +722,6 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	return 0;
 }
 
-
-
-void Filesystem_Server_ClearWriteCheckList(Filesystem_Server* _Server)
-{
-	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
-	while (currentNode != NULL)
-	{
-		Filesystem_Server_Check* check = (Filesystem_Server_Check*)currentNode->m_Item;
-
-		if(check->m_IsUsed == False)
-			return;
-		
-		check->m_IsUsed = False;
-		check->m_Connection = NULL;
-		currentNode = currentNode->m_Next;
-	}
-}
-
-int Filesystem_Server_SpawnWriteCheck(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Server_Check** _CheckPtr)
-{
-	if(_CheckPtr == NULL)
-		return -1;
-
-	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
-	while (currentNode != NULL)
-	{
-		Filesystem_Server_Check* check = (Filesystem_Server_Check*)currentNode->m_Item;
-
-		if(check->m_IsUsed == False)
-		{
-			check->m_IsUsed = True;
-			check->m_Connection = NULL;
-			LinkedList_UnlinkNode(&_Server->m_WriteChecked, currentNode);
-			LinkedList_LinkFirst(&_Server->m_WriteChecked, currentNode);
-			*(_CheckPtr) = check;
-			return 0;
-		}
-		else if(Payload_ComperAddresses(&check->m_Connection->m_Addrass, _Address) == True)
-		{
-			*(_CheckPtr) = check;
-			return 1;
-		}
-		currentNode = currentNode->m_Next;
-	}
-	
-	Filesystem_Server_Check* check = (Filesystem_Server_Check*) Allocator_Malloc(sizeof(Filesystem_Server_Check));
-
-	check->m_Connection = NULL;
-	check->m_IsUsed = True;
-
-	LinkedList_AddFirst(&_Server->m_WriteChecked, check);	
-	*(_CheckPtr) = check;
-	return 0;
-}
-
 int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr)
 {
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
@@ -822,153 +740,6 @@ int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address*
 	}
 	
 	return 1;
-}
-
-int Filesystem_Server_SetCheckingState(Filesystem_Server* _Server, Filesystem_Server_CheckState _Type, Payload* _Message)
-{
-	if(_Server->m_State == Filesystem_Server_State_Idel || _Server->m_State == Filesystem_Server_State_Synced)
-		return 0;
-
-	if(_Server->m_CheckState != Filesystem_Server_CheckState_None || _Server->m_State == Filesystem_Server_State_Checking)
-		return 1;
-
-	Filesystem_Server_ResetCheckingState(_Server);
-	_Server->m_CheckState = _Type;
-	_Server->m_State = Filesystem_Server_State_Checking;
-
-	switch (_Server->m_CheckState)
-	{
-		case Filesystem_Server_CheckState_Write:
-		{
-			Bool isFile = True;
-			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
-
-			UInt16 size = 0;
-			Buffer_ReadUInt16(&_Message->m_Data, &size);
-
-			unsigned char path[size + 1];
-			Buffer_ReadBuffer(&_Message->m_Data, path, size);
-			path[size] = 0;
-			String fullPath;
-
-			String_Initialize(&fullPath, 64);
-			String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
-
-			if(String_EndsWith(&fullPath, "/") == False)
-				String_Append(&fullPath, "/", 1);
-
-			String_Append(&fullPath, (const char*)path, size);
-
-			unsigned char hash[16] = "";
-			unsigned char serverHash[16] = "";
-			Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
-
-			if(isFile == True)
-				File_GetHash(fullPath.m_Ptr, serverHash);
-			else
-				Folder_Hash(fullPath.m_Ptr, serverHash);
-				
-			Bool isSame = Filesystem_Server_HashCheck(serverHash, hash);
-
-			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
-			{
-				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Server->m_CheckState);
-				if(isSame == True)
-				{
-					Buffer_WriteUInt8(&msg->m_Data, 0);
-				}
-				else
-				{
-					Buffer_WriteUInt8(&msg->m_Data, 1);
-					Buffer_WriteUInt16(&msg->m_Data, size);
-					Buffer_WriteBuffer(&msg->m_Data, path, size);
-					Buffer_WriteBuffer(&msg->m_Data, serverHash, 16);
-				}
-
-				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
-				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-			}
-			
-			String_Dispose(&fullPath);
-		} break;
-
-		case Filesystem_Server_CheckState_Delete:
-		{
-			Bool isFile = True;
-			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
-
-			UInt16 size = 0;
-			Buffer_ReadUInt16(&_Message->m_Data, &size);
-
-			unsigned char path[size + 1];
-			Buffer_ReadBuffer(&_Message->m_Data, path, size);
-			path[size] = 0;
-			String fullPath;
-
-			String_Initialize(&fullPath, 64);
-			String_Set(&fullPath, _Server->m_FilesytemPath.m_Ptr);
-
-			if(String_EndsWith(&fullPath, "/") == False)
-				String_Append(&fullPath, "/", 1);
-
-			String_Append(&fullPath, (const char*)path, size);
-			int index = String_LastIndexOf(&fullPath, "/");
-			String_SubString(&fullPath, index, fullPath.m_Length);
-
-			unsigned char bufferHash[16] = "";
-			unsigned char hash[16] = "";
-			Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
-			Folder_Hash(fullPath.m_Ptr, hash);
-
-			Bool isSame = Filesystem_Server_HashCheck(bufferHash, hash);
-
-			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
-			{
-				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Server->m_CheckState);
-				if(isSame == True)
-				{
-					Buffer_WriteUInt8(&msg->m_Data, 0);
-				}
-				else
-				{
-					Buffer_WriteUInt8(&msg->m_Data, 1);
-					Buffer_WriteUInt16(&msg->m_Data, size);
-					Buffer_WriteBuffer(&msg->m_Data, path, size);
-					Buffer_WriteBuffer(&msg->m_Data, hash, 16);
-				}
-
-				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
-				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-			}
-			String_Dispose(&fullPath);
-		} break;
-
-		case Filesystem_Server_CheckState_None:
-		{
-			printf("SetCheckingState is None!\r\n");
-			_Server->m_State = Filesystem_Server_State_Idel;
-			return -1;
-		} break;
-	}
-
-	return 0;
-}
-
-void Filesystem_Server_ResetCheckingState(Filesystem_Server* _Server)
-{
-	_Server->m_CheckState = Filesystem_Server_CheckState_None;
-	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
-	while (currentNode != NULL)
-	{
-		Filesystem_Server_Check* check = (Filesystem_Server_Check*) currentNode->m_Item;
-		if(check->m_IsUsed == False)
-			break;
-
-		check->m_IsUsed = False;
-		currentNode = currentNode->m_Next;
-	}
 }
 
 int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
@@ -1255,7 +1026,7 @@ int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* 
 	Payload message;
 	Payload_Initialize(&message, NULL);
 
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Server_CheckState_Write);
+	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Checking_Type_Write);
 	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) _IsFile);
 	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen((const char*)_Path));
 	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Path, strlen((const char*)_Path));
@@ -1316,11 +1087,10 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
-
 	Payload message;
 	Payload_Initialize(&message, NULL);
 
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Server_CheckState_Delete);
+	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Checking_Type_Delete);
 	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8)_IsFile);
 	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen((const char*)_Path));
 	message.m_Size += Buffer_WriteBuffer(&message.m_Data, (unsigned char*)_Path, strlen((const char*)_Path));
@@ -1337,6 +1107,7 @@ int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address*
 //TODO: Rename this to CheckForwording or something
 void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Payload* _Message)
 {
+	_Server->m_State = Filesystem_Server_State_Checking;
 	Payload_SetMessageType(_Message, Payload_Message_Type_String, "Check", strlen("Check"));
 
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
@@ -1574,46 +1345,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Checking:
 		{
-			int size = 0;
-			int oks = 0;
-			LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
-			while (currentNode != NULL)
-			{
-				Filesystem_Server_Check* check = (Filesystem_Server_Check*) currentNode->m_Item;
-
-				if(check->m_IsUsed == False)
-					break;
-
-				if(check->m_IsOk == 0)
-					oks++;
-
-				size++;
-				currentNode = currentNode->m_Next;
-			}
-			
-			if(size != _Server->m_Connections.m_Size - 1)
-				return;
-			_Server->m_CheckState = Filesystem_Server_CheckState_None;
-
-			if(size == 0)
-			{
-				_Server->m_State = Filesystem_Server_State_Synced;
-				Filesystem_Server_ClearWriteCheckList(_Server);
-				return;
-			}
-
-			_Server->m_CheckState = Filesystem_Server_CheckState_None;
-			int error = (int)((double)(1 - oks / size) * 100);
-			if(error >= Filesystem_Server_CheckError)
-			{
-				_Server->m_State = Filesystem_Server_State_ReSync;
-			}
-			else
-			{
-				_Server->m_State = Filesystem_Server_State_Synced;
-				Filesystem_Server_ClearWriteCheckList(_Server);
-			}
-
+			Filesystem_Checking_Work(_MSTime, &_Server->m_Checking);
 		} break;
 
 		case Filesystem_Server_State_ReSync:
@@ -1691,18 +1423,7 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 	DataLayer_Dispose(&_Server->m_DataLayer);
 
-	LinkedList_Node* currentNode = _Server->m_WriteChecked.m_Head;
-	while(currentNode != NULL)
-	{
-		Filesystem_Server_Check* check = (Filesystem_Server_Check*)currentNode->m_Item;
-		currentNode = currentNode->m_Next;
-
-		check->m_Connection = NULL;
-		Allocator_Free(check);
-		LinkedList_RemoveFirst(&_Server->m_WriteChecked);
-	}
-
-	currentNode = _Server->m_Connections.m_Head;
+	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
 		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
@@ -1717,7 +1438,7 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 
 	String_Dispose(&_Server->m_FilesytemPath);
 
-	LinkedList_Dispose(&_Server->m_WriteChecked);
+	Filesystem_Checking_Dispose(&_Server->m_Checking);
 	LinkedList_Dispose(&_Server->m_Connections);
 	Buffer_Dispose(&_Server->m_TempListBuffer);
 
