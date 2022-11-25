@@ -106,10 +106,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 
 int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
 {
-	if(_Checking->m_Type == Filesystem_Checking_Type_None)
-		return 0;
-
-	if(_Checking->m_Type != _Type || _Checking->m_Server->m_State == Filesystem_Server_State_Connecting)
+	if(_Checking->m_Type != Filesystem_Checking_Type_None && (_Checking->m_Type != _Type || _Checking->m_Server->m_State == Filesystem_Server_State_Connecting))
 		return 1;
 
 	Filesystem_Checking_ResetCheckingState(_Checking);
