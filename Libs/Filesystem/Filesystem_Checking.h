@@ -43,6 +43,7 @@ int Filesystem_Checking_Initialize(Filesystem_Checking* _Checking, Filesystem_Se
 
 static inline void Filesystem_Checking_SetState(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
 {
+	printf("Set Checking_State to %i\r\n", (int)_Type);
 	Payload_Copy(&_Checking->m_Message, _Message);
 	_Checking->m_Type = _Type;
 }

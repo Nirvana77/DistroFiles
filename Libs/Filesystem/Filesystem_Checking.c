@@ -235,7 +235,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 			Payload* msg = NULL;
 			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, 1000, &msg) == 0)
 			{
-				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Checking->m_Type);
+				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 				Buffer_WriteUInt8(&msg->m_Data, 2);
 
 				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);

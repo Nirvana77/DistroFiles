@@ -126,11 +126,10 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
 
-
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
 		Payload* replay;
-		Payload_InitializePtr(_Replay->m_UUID, &replay);
+		Payload_InitializePtr(_Message->m_UUID, &replay);
 		unsigned char* readPtr = _Message->m_Data.m_ReadPtr;
 		int revice = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay);
 		if(revice == 1)
@@ -143,11 +142,11 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		}
 		else if(revice == 2)
 		{
+			_Message->m_Data.m_BytesLeft += _Message->m_Data.m_ReadPtr - readPtr;
+			_Message->m_Data.m_ReadPtr = readPtr;
 			Payload_Copy(replay, _Message);
 			SystemMonotonicMS(&replay->m_Time);
 			replay->m_Time += 1000 * 2;
-			replay->m_Data.m_BytesLeft += readPtr - replay->m_Data.m_ReadPtr;
-			replay->m_Data.m_ReadPtr = readPtr;
 
 			Payload_Print(replay, "Postponed", False);
 			
@@ -191,32 +190,9 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			char str[37];
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Prossessing postponed messaged: %s\n\r", str);
-			LinkedList_UnlinkNode(&_TransportLayer->m_Postponed, node);
-
-			if(_TransportLayer->m_FuncOut.m_Receive != NULL)
-			{
-				Payload* replay = NULL;
-				Payload_InitializePtr(_Payload->m_UUID, &replay);
-				int revice = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Payload, replay);
-				if(revice == 1)
-				{
-					
-					Payload_FilAddress(&replay->m_Des, &_Payload->m_Src);
-					node->m_Item = replay;
-					LinkedList_LinkLast(&_TransportLayer->m_Queued, node);
-				}
-				else if(revice == 2)
-				{
-					SystemMonotonicMS(&_Payload->m_Time);
-					_Payload->m_Time += 1000 * 2;
-					LinkedList_LinkLast(&_TransportLayer->m_Postponed, node);
-					Payload_Dispose(replay);
-				}
-				else
-				{
-					Payload_Dispose(replay);
-				}
-			}
+			LinkedList_RemoveNode(&_TransportLayer->m_Postponed, node);
+			TransportLayer_ReveicePayload(_TransportLayer, _Payload, NULL);
+			
 		}
 
 	}
