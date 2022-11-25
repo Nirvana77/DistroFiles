@@ -5,6 +5,7 @@ struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
 #include "Filesystem_Service.h"
+#include "Filesystem_Checking.h"
 #include "../BitHelper.h"
 #include "../Memory.h"
 
@@ -41,21 +42,6 @@ const char* Filesystem_Server_States[] = {
 	"Filesystem_Server_State_ReSyncing"
 };
 
-typedef enum
-{
-	Filesystem_Server_CheckState_None = 0,
-	Filesystem_Server_CheckState_Write = 1,
-	Filesystem_Server_CheckState_Delete = 2,
-	Filesystem_Server_CheckState_Syncing = 3
-} Filesystem_Server_CheckState;
-
-typedef struct
-{
-	Bool m_IsUsed;
-	Filesystem_Connection* m_Connection;
-	UInt8 m_IsOk;
-
-} Filesystem_Server_Check;
 
 struct T_Filesystem_Server
 {
@@ -72,8 +58,7 @@ struct T_Filesystem_Server
 	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Connections;
-	LinkedList m_WriteChecked;
-	Filesystem_Server_CheckState m_CheckState;
+	Filesystem_Checking m_Checking;
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
