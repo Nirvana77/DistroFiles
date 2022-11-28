@@ -6,7 +6,9 @@ typedef struct T_Filesystem_Checking Filesystem_Checking;
 
 #include "Filesystem_Server.h"
 
-#define Filesystem_Checking_CheckError 50 //This is in %
+#ifndef Filesystem_Checking_CheckError
+	#define Filesystem_Checking_CheckError 50 //This is in %
+#endif
 typedef enum
 {
 	Filesystem_Checking_Type_None = 0,

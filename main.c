@@ -14,7 +14,7 @@
 	#define ALLOCATOR_PRINT
 #endif
 
-// #include "Libs/Portability.c"
+#include "SystemConfig.h"
 
 #include "Libs/Hash/md5.c"
 #include "Libs/File.c"

@@ -14,8 +14,9 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #define Filesystem_Server_TempFlag_WillSend 2
 #define Filesystem_Server_TempFlag_WillClear 3
 
-#define Filesystem_Server_SyncTimeout 10000
-
+#ifndef Filesystem_Server_SyncTimeout
+	#define Filesystem_Server_SyncTimeout 10000
+#endif
 typedef enum
 {
 	Filesystem_Server_State_Init = 0, // Initializeing

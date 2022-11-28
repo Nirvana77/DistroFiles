@@ -7,10 +7,6 @@ typedef struct T_Buffer Buffer;
 #include "Types.h"
 #include "Memory.h"
 
-#ifndef TCPBufferSize
-	#define TCPBufferSize 256
-#endif
-
 struct T_Buffer
 {
 	Bool m_Allocated;
