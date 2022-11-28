@@ -67,7 +67,6 @@ void Filesystem_Checking_Clear(Filesystem_Checking* _Checking)
 	}
 	
 	_Checking->m_Type = Filesystem_Checking_Type_None;
-	memset(&_Checking->m_Message, 0, sizeof(Payload));
 }
 
 int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_Address* _Address, Filesystem_Checking_Check** _CheckPtr)
