@@ -573,6 +573,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_SubString(&fullPath, index, fullPath.m_Length);
 
 		Folder_Hash(fullPath.m_Ptr, hash);
+		String_Dispose(&fullPath);
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
