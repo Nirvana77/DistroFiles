@@ -4,4 +4,6 @@ bin/*
 Shared
 Shared/*
 *.json
-*dump.txt
+*.txt
+*__pycache__
+*__pycache__/*
