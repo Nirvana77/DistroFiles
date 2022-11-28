@@ -21,6 +21,9 @@ $ ./compile
 - `IP`: Sets the `IP` for the communication with the server.
 - `version`: definse the JSON `version` for the settings.
 - `Path`: Set the root `Path` for the system.
+- `Servers`: An temporary array for connection to diffrent servers. 
+    - `IP`: IP to connect to the server.
+    - `port`: The port number
 
 # Usage
 When useing the service the host `port` needs to be oppen from the firewall. [Linux](https://www.cyberciti.biz/faq/how-to-open-firewall-port-on-ubuntu-linux-12-04-14-04-lts/), [Windows](https://learn.microsoft.com/en-us/answers/questions/291348/can39t-open-ports-in-windows-10.html)
