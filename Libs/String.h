@@ -38,6 +38,9 @@ int String_ReadFromFile(String* _Str, const char* _Path);
 int String_SaveToFile(String* _Str, const char* _Path);
 
 int String_IndexOf(String* _Str, const char* _Exp);
+int String_LastIndexOf(String* _Str, const char* _Exp);
+
+int String_SubString(String* _Str, int _Start, int _End);
 
 void String_Dispose(String* _Str);
 

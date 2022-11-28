@@ -11,6 +11,18 @@ Easy to use, user based file shearing system. [Doc](https://www.overleaf.com/rea
 # Build Instructions
 - [How to build the Service](Docs/Service.md): Linux build only
 - [How to launched the GUI](Docs/GUI.md): Python3
+# Installation
+```
+$ sudo apt-get update && sudo apt-get upgrade -y
+$ sudo apt-get install -y libjansson-dev gcc libcurl4-gnutls-dev git uuid-dev
+$ git clone https://github.com/Nirvana77/Filesystem.git
+$ cd Filesystem
+$ ./compile
+```
+
+# Build Instructions
+- [How to build the Service](Docs/Service.md): Linux build only
+- [How to launched the GUI](Docs/GUI.md): Python3
 
 # Contribute
 1. Fork the repo and create a new branch: `$ git checkout -b name_for_new_branch`.

@@ -5,6 +5,7 @@ struct T_Filesystem_Server;
 typedef struct T_Filesystem_Server Filesystem_Server;
 
 #include "Filesystem_Service.h"
+#include "Filesystem_Checking.h"
 #include "../BitHelper.h"
 #include "../Memory.h"
 
@@ -13,25 +14,34 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #define Filesystem_Server_TempFlag_WillSend 2
 #define Filesystem_Server_TempFlag_WillClear 3
 
+#ifndef Filesystem_Server_SyncTimeout
+	#define Filesystem_Server_SyncTimeout 10000
+#endif
 typedef enum
 {
 	Filesystem_Server_State_Init = 0, // Initializeing
 	Filesystem_Server_State_Idel = 1, // Ideling
 	Filesystem_Server_State_Connecting = 2, // Connecting to servers
-	Filesystem_Server_State_WriteCheck = 3, // Checking if the write is good or not. Success < 50% do ReSync else Synced
-	Filesystem_Server_State_Synced = 4, // Synced with  servers
-	Filesystem_Server_State_Syncing = 5, // Syncing with servers
-	Filesystem_Server_State_ReSync = 6, // Sends sync message.
-	Filesystem_Server_State_ReSyncing = 7, // Sends sync message.
+	Filesystem_Server_State_Conneced = 3, // Connected to servers
+	Filesystem_Server_State_Checking = 4, // Checking if the acction is good or not. Success < 50% do ReSync else Synced
+	Filesystem_Server_State_Synced = 5, // Synced with  servers
+	Filesystem_Server_State_Syncing = 6, // Syncing with servers
+	Filesystem_Server_State_ReSync = 7, // Sends sync message.
+	Filesystem_Server_State_ReSyncing = 8, // Sends sync message.
 } Filesystem_Server_State;
 
-typedef struct
-{
-	Bool m_IsUsed;
-	Filesystem_Connection* m_Connection;
-	UInt8 m_IsOk;
+const char* Filesystem_Server_States[] = {
+	"Filesystem_Server_State_Init",
+	"Filesystem_Server_State_Idel",
+	"Filesystem_Server_State_Connecting",
+	"Filesystem_Server_State_Conneced",
+	"Filesystem_Server_State_Checking",
+	"Filesystem_Server_State_Synced",
+	"Filesystem_Server_State_Syncing",
+	"Filesystem_Server_State_ReSync",
+	"Filesystem_Server_State_ReSyncing"
+};
 
-} Filesystem_Server_WriteCheck;
 
 struct T_Filesystem_Server
 {
@@ -48,7 +58,7 @@ struct T_Filesystem_Server
 	TransportLayer m_TransportLayer;
 	
 	LinkedList m_Connections;
-	LinkedList m_WriteChecked;
+	Filesystem_Checking m_Checking;
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
@@ -103,31 +113,11 @@ static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char 
 	printf("\r\n");
 }
 
-static inline void Filesystem_Server_Sync(Filesystem_Server* _Server)
-{
-	Payload* message = NULL;
-	char* path = "root";
-
-	int size = 2 + strlen(path) + 16;
-
-	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
-	{
-		_Server->m_State = Filesystem_Server_State_Syncing;
-		Buffer_WriteUInt16(&message->m_Data, strlen(path));
-		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
-
-		unsigned char hash[16];
-		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
-
-		Filesystem_Server_PrintHash("Sync Hash", hash);
-		Buffer_WriteBuffer(&message->m_Data, hash, 16);
-
-		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
-	}
-}
+void Filesystem_Server_Sync(Filesystem_Server* _Server);
 
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
-int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Name, Buffer* _DataBuffer);
+int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer);
+int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Path);
 
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server);

@@ -5,9 +5,6 @@
 struct T_Allocator;
 typedef struct T_Allocator Allocator;
 
-struct T_List_Node;
-typedef struct T_List_Node List_Node;
-
 #include "Memory.h"
 #include "Portability.h"
 
@@ -25,34 +22,49 @@ typedef enum
 
 } Allocator_Event;
 
-typedef struct
-{
-	unsigned int m_Size;
-	const char m_FileString[256];
-	unsigned int m_LineNumber;
-	const char m_FunctionString[126];
-	unsigned char* m_Ptr;
-} Allocator_Data;
+#ifdef ALLOCATOR_DEBUG
 
-struct T_List_Node
-{
-    List_Node* m_Next;
-    List_Node* m_Privios;
-	Allocator_Data m_Data;
-} ;
+	struct T_List_Node;
+	typedef struct T_List_Node List_Node;
 
-typedef struct
-{
-	int m_Size;
-	List_Node* m_Head;
-	List_Node* m_Tail;
-} List;
+	typedef struct
+	{
+		unsigned int m_Size;
+		const char m_FileString[256];
+		unsigned int m_LineNumber;
+		const char m_FunctionString[126];
+		unsigned char* m_Ptr;
+	} Allocator_Data;
+
+	struct T_List_Node
+	{
+		List_Node* m_Next;
+		List_Node* m_Privios;
+		Allocator_Data m_Data;
+	};
+
+	typedef struct
+	{
+		int m_Size;
+		List_Node* m_Head;
+		List_Node* m_Tail;
+	} List;
+#endif
 
 struct T_Allocator
 {
 	char m_Path[1024];
 	FILE* m_F;
-	List m_Mallocs;
+	
+	#ifdef ALLOCATOR_DEBUG
+		List m_Mallocs;
+		Allocator_Data m_Max;
+		Allocator_Data m_Min;
+		UInt64 m_MaxMemory;
+		UInt64 m_CurrentMemory;
+		UInt64 m_Num;
+		UInt64 m_Total;
+	#endif
 };
 
 

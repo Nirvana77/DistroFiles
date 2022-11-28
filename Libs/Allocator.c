@@ -5,6 +5,7 @@
 #endif
 
 #ifdef ALLOCATOR_DEBUG
+
 	int Allocator_CreateDatapoint(Allocator_Event _Event, void* _Pointer, unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString)
 	{
 		if(_Event == ALLOCATOR_EVENT_FREE)
@@ -35,7 +36,7 @@
 						currentNode->m_Privios->m_Next = currentNode->m_Next;
 						currentNode->m_Next->m_Privios = currentNode->m_Privios;
 					}
-					
+					g_Allocator.m_CurrentMemory += currentNode->m_Data.m_Size;
 					g_Allocator.m_Mallocs.m_Size--;
 					free(currentNode);
 					return 0;
@@ -57,6 +58,19 @@
 		node->m_Data.m_LineNumber = _LineNumber;
 		node->m_Data.m_Size = _Size;
 		node->m_Data.m_Ptr = _Pointer;
+
+		g_Allocator.m_CurrentMemory += _Size;
+
+		if(node->m_Data.m_Size > g_Allocator.m_Max.m_Size)
+			g_Allocator.m_MaxMemory = g_Allocator.m_CurrentMemory;
+
+		if(node->m_Data.m_Size > g_Allocator.m_Max.m_Size)
+			memcpy(&g_Allocator.m_Max, &node->m_Data, sizeof(Allocator_Data));
+		else if(node->m_Data.m_Size < g_Allocator.m_Min.m_Size)
+			memcpy(&g_Allocator.m_Min, &node->m_Data, sizeof(Allocator_Data));
+
+		g_Allocator.m_Total += node->m_Data.m_Size;
+		g_Allocator.m_Num++;
 
 		if(g_Allocator.m_Mallocs.m_Size == 0)
 		{
@@ -83,6 +97,10 @@
 		g_Allocator.m_Mallocs.m_Head = NULL;
 		g_Allocator.m_Mallocs.m_Tail = NULL;
 		g_Allocator.m_Mallocs.m_Size = 0;
+		g_Allocator.m_MaxMemory = 0;
+		g_Allocator.m_CurrentMemory = 0;
+		g_Allocator.m_Max.m_Size = 0;
+		g_Allocator.m_Min.m_Size = UINT32_MAX;
 	}
 
 	void Allocator_WriteEvent(Allocator_Event _Event, void* _Pointer, unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString)
@@ -97,25 +115,11 @@
 
 	void Allocator_Close()
 	{
-		File_SetPosition(g_Allocator.m_F, 0);/* 
-		char * line = NULL;
-		size_t len = 0;
-    	ssize_t read;
-		Allocator_Data node->m_Data[16];
-		int i = 0;
-
-		while ((read = getline(&line, &len, g_Allocator.m_F)) != -1) {
-			printf("Retrieved line of length %zu:\n", read);
-			printf("%s", line);
-			node->m_Data[i]
-
-			i++;
-
-			if(i == 16)
-			{
-				
-			}
-		} */
+		File_SetPosition(g_Allocator.m_F, 0);
+		#ifdef ALLOCATOR_PRINT
+			printf("\r\n");
+			printf("-------------------Not freed memory----------------------\r\n");
+		#endif
 
 		if(g_Allocator.m_Mallocs.m_Size != 0)
 		{
@@ -124,14 +128,28 @@
 			{
 				List_Node* node = currentNode;
 				currentNode = currentNode->m_Next;
-				printf("%u,%s,%u,%s,%p\n",node->m_Data.m_Size, node->m_Data.m_FileString, node->m_Data.m_LineNumber, node->m_Data.m_FunctionString, node->m_Data.m_Ptr);
+				#ifdef ALLOCATOR_PRINT
+					printf("%u,%s,%u,%s,%p\n",node->m_Data.m_Size, node->m_Data.m_FileString, node->m_Data.m_LineNumber, node->m_Data.m_FunctionString, node->m_Data.m_Ptr);
+				#endif
 				
 				free(node);
 			}
 		}
+
+		#ifdef ALLOCATOR_PRINT
+			printf("---------------------------Stats---------------------------\r\n");
+			printf("Max malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Max.m_Size, g_Allocator.m_Max.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Max.m_FunctionString);
+			printf("Min malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Min.m_Size, g_Allocator.m_Min.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Min.m_FunctionString);
+			printf("Average malloced memory: %ub\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
+			printf("Max memory: %lub\r\n", g_Allocator.m_MaxMemory);
+			printf("Total malloced memory: %lub\r\n", g_Allocator.m_Total);
+			printf("Number of malloced memory: %lu times\r\n", g_Allocator.m_Num);
+			printf("---------------------------------------------------------\r\n");
+		#endif
 		
 		File_Close(g_Allocator.m_F);
 	}
+	
 
 	unsigned char* _Allocator_Malloc(unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString)
 	{
@@ -157,7 +175,10 @@
 				}
 			}
 		#endif
-		
+
+		if(orginalSize == 0)
+			printf("%u,%s,%u,%s,%p\n",orginalSize, _FileString, _LineNumber, _FunctionString, ptr);
+
 		Allocator_WriteEvent(ALLOCATOR_EVENT_MALLOC, ptr, orginalSize, _FileString, _LineNumber, _FunctionString);
 		
 		return ptr;

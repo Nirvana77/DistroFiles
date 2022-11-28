@@ -6,6 +6,10 @@ typedef struct T_Filesystem_Service Filesystem_Service;
 
 #define Filesystem_Service_VERSION 1u
 
+#ifndef Filesystem_Service_BufferMax
+	#define Filesystem_Service_BufferMax 1024
+#endif
+
 #include "../String.h"
 #include "../File.h"
 #include "../Folder.h"
@@ -32,10 +36,13 @@ typedef struct
 typedef struct
 {
 
-	Filesystem_ServiceSettings_Host m_Host;
-	Filesystem_ServiceSettings_Host m_Distributer;
+	UInt16 m_Host;
+	UInt16 m_Distributer;
 
 	json_t* m_Servers; //! This will be removed later
+
+	Bool m_AutoSync;
+	UInt16 m_Interval;
 
 } Filesystem_ServiceSettings;
 
