@@ -216,35 +216,60 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 
 			String_Append(&fullPath, (const char*)path, size);
 
-			int index = String_LastIndexOf(&fullPath, "/");
-			String_SubString(&fullPath, index, fullPath.m_Length);
+			Bool exist = False;
 
-			unsigned char bufferHash[16] = "";
-			unsigned char hash[16] = "";
-			Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
-			Folder_Hash(fullPath.m_Ptr, hash);
+			if(isFile == True)
+				exist = File_Exist(fullPath.m_Ptr);
+			
+			else
+				exist = Folder_Exist(fullPath.m_Ptr);
 
-			Bool isSame = Filesystem_Server_HashCheck(bufferHash, hash);
-
-			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
+			if(exist == False)
 			{
-				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
-				if(isSame == True)
+				int index = String_LastIndexOf(&fullPath, "/");
+				String_SubString(&fullPath, index, fullPath.m_Length);
+
+				unsigned char bufferHash[16] = "";
+				unsigned char hash[16] = "";
+				Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
+				Folder_Hash(fullPath.m_Ptr, hash);
+
+				Bool isSame = Filesystem_Server_HashCheck(bufferHash, hash);
+
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
 				{
-					Buffer_WriteUInt8(&msg->m_Data, 0);
-				}
-				else
-				{
-					Buffer_WriteUInt8(&msg->m_Data, 1);
-					Buffer_WriteUInt16(&msg->m_Data, size);
-					Buffer_WriteBuffer(&msg->m_Data, path, size);
-					Buffer_WriteBuffer(&msg->m_Data, hash, 16);
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					if(isSame == True)
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 0);
+					}
+					else
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 1);
+						Buffer_WriteUInt16(&msg->m_Data, size);
+						Buffer_WriteBuffer(&msg->m_Data, path, size);
+						Buffer_WriteBuffer(&msg->m_Data, hash, 16);
+					}
+
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 				}
 
-				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
-				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 			}
+			else
+			{
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, 1000, &msg) == 0)
+				{
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					Buffer_WriteUInt8(&msg->m_Data, 2);
+
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+				}
+			}
+			
 			String_Dispose(&fullPath);
 		} break;
 
