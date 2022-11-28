@@ -9,6 +9,8 @@
 int Folder_Create(const char* _Path);
 int Folder_Hash(const char* _Path, unsigned char _Result[16]);
 
+Bool Folder_Exist(const char* _Path);
+
 int Folder_Remove(const char* _Path);
 
 static inline Bool Folder_IsEmpty(const char* _Path)

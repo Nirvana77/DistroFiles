@@ -573,6 +573,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_SubString(&fullPath, index, fullPath.m_Length);
 
 		Folder_Hash(fullPath.m_Ptr, hash);
+		String_Dispose(&fullPath);
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
@@ -587,8 +588,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
 		int success = Filesystem_Checking_WorkOnPayload(&_Server->m_Checking, (Filesystem_Checking_Type)type, _Message);
 		if(success > 0)
-			return 2; //Postponed message for 2 sec
-
+		{
+			printf("Success: %i\r\n", success);
+			return 2; //* Postponed message for 2 sec
+		}
 		return success;
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "CheckAck") == 0)
@@ -596,9 +599,14 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
 		
-		
+		if(_Server->m_Checking.m_Type == Filesystem_Checking_Type_None)
+			return 0; //* Ignore the message
+
 		if((Filesystem_Checking_Type)type != _Server->m_Checking.m_Type)
-			return 2;
+		{
+			printf("Message type: %i\r\nChecking type: %i\r\n", (int)type, (int)_Server->m_Checking.m_Type);
+			return 2; //* Postponed message for 2 sec
+		}
 		
 		Filesystem_Checking_Check* check = NULL;
 		if(Filesystem_Checking_SpawnWriteCheck(&_Server->m_Checking, &_Message->m_Src, &check) == 1)

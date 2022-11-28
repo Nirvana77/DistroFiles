@@ -78,6 +78,22 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 	return 0;
 }
 
+Bool Folder_Exist(const char* _Path)
+{
+	int success = Folder_Create(_Path);
+	if(success == 0)
+	{
+		Folder_Remove(_Path);
+		return False;
+	}
+	else if(success == 1)
+	{
+		return True;
+	}
+
+	return False;
+}
+
 int Folder_Remove(const char* _Path)
 {
 	tinydir_dir dir;
