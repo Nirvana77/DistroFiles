@@ -598,6 +598,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
 		
+		if(_Server->m_Checking.m_Type == Filesystem_Checking_Type_None)
+			return 0; //* Ignore the message
 
 		if((Filesystem_Checking_Type)type != _Server->m_Checking.m_Type)
 		{
