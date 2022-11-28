@@ -215,6 +215,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				String_Append(&fullPath, "/", 1);
 
 			String_Append(&fullPath, (const char*)path, size);
+
 			int index = String_LastIndexOf(&fullPath, "/");
 			String_SubString(&fullPath, index, fullPath.m_Length);
 
@@ -228,7 +229,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 			Payload* msg = NULL;
 			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
 			{
-				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Checking->m_Type);
+				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 				if(isSame == True)
 				{
 					Buffer_WriteUInt8(&msg->m_Data, 0);
