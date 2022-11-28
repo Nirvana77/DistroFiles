@@ -51,7 +51,7 @@ void Filesystem_Checking_RemoveCheck(Filesystem_Checking* _Checking, Filesystem_
 		LinkedList_LinkLast(&_Checking->m_List, node);
 }
 
-void Filesystem_Checking_ClearWriteCheckList(Filesystem_Checking* _Checking)
+void Filesystem_Checking_Clear(Filesystem_Checking* _Checking)
 {
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
@@ -65,6 +65,9 @@ void Filesystem_Checking_ClearWriteCheckList(Filesystem_Checking* _Checking)
 		check->m_Connection = NULL;
 		currentNode = currentNode->m_Next;
 	}
+	
+	_Checking->m_Type = Filesystem_Checking_Type_None;
+	memset(&_Checking->m_Message, 0, sizeof(Payload));
 }
 
 int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_Address* _Address, Filesystem_Checking_Check** _CheckPtr)
@@ -314,46 +317,42 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 	if(size != _Checking->m_Server->m_Connections.m_Size - 1)
 		return;
 
-	if(size - notSync == 0)
+	if(size - notSync != 0)
 	{
-		_Checking->m_Type = Filesystem_Checking_Type_None;
-		_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
-		Filesystem_Checking_ClearWriteCheckList(_Checking);
-		return;
-	}
-
-	int error = (int)((double)(1 - oks / (size - notSync)) * 100);
-	if(error >= Filesystem_Checking_CheckError)
-	{
-		_Checking->m_Type = Filesystem_Checking_Type_None;
-		_Checking->m_Server->m_State = Filesystem_Server_State_ReSync;
-	}
-	else
-	{
-		_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
-
-		currentNode = _Checking->m_List.m_Head;
-		while (currentNode != NULL)
+		int error = (int)((double)(1 - oks / (size - notSync)) * 100);
+		if(error >= Filesystem_Checking_CheckError)
 		{
-			Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+			_Checking->m_Type = Filesystem_Checking_Type_None;
+			_Checking->m_Server->m_State = Filesystem_Server_State_ReSync;
+			return;
+		}
+	}
 
-			if(check->m_IsUsed == False)
-				break;
+	_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
 
-			if(check->m_IsOk == Filesystem_Checking_Check_Satus_DontHave)
+	currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+			break;
+
+		if(check->m_IsOk == Filesystem_Checking_Check_Satus_DontHave)
+		{
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, 1000, &message) == 0)
 			{
-				Payload* message = NULL;
-				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, 1000, &message) == 0)
-					Payload_Copy(message, &_Checking->m_Message);
-
+				Payload_FilAddress(&_Checking->m_Message.m_Des, &check->m_Connection->m_Addrass);
+				Payload_Copy(message, &_Checking->m_Message);
 			}
-
-			size++;
-			currentNode = currentNode->m_Next;
 		}
 
-		Filesystem_Checking_ClearWriteCheckList(_Checking);
+		size++;
+		currentNode = currentNode->m_Next;
 	}
+
+	Filesystem_Checking_Clear(_Checking);
 			
 
 }
