@@ -313,7 +313,7 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	return 0;
 }
 
-
+//FIX: Magic numbers!
 int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
@@ -336,7 +336,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 				void* ptr = buffer;
 				ptr += Memory_ParseUInt8(ptr, &flag);
 				if(BitHelper_GetBit(&flag, 0) == True) {
-					ptr += 16 + 1 + 8;
+					ptr += 8 + 1 + 1 + 6;
 					ptr += Memory_ParseUInt8(ptr, (UInt8*)&connection->m_Addrass.m_Type);
 					ptr += Memory_ParseBuffer(&connection->m_Addrass.m_Address, ptr, sizeof(connection->m_Addrass.m_Address));
 				}
@@ -363,6 +363,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 	return 0;
 }
 
+//FIX: Magic numbers!
 int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
@@ -371,7 +372,7 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 	void* ptr = _Buffer->m_ReadPtr;
 	UInt8 flags = 0;
 	ptr += Memory_ParseUInt8(ptr, &flags);
-	ptr += 16 + 1 + 8 + 1 + 6;
+	ptr += 8 + 1 + 1 + 6;
 
 	Payload_Address des;
 	UInt8 type = 0;
@@ -388,7 +389,7 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
-		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperMAC(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
+		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperIP(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
 			TCPSocket_Write(connection->m_Socket, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft);
 		
 		if(connection->m_Socket->m_Status == TCPSocket_Status_Closed)

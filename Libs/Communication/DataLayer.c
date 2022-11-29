@@ -78,14 +78,40 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
-	UInt8 CRC = 0;
-	DataLayer_GetCRC(_Payload->m_Data.m_Ptr, _Payload->m_Data.m_BytesLeft, &CRC);
-	
-	Buffer_WriteUInt8(&_Payload->m_Data, CRC);
-	
-	Payload_Print(_Payload, "Datalayer", True);
+	Buffer buffer;
+	Buffer_Initialize(&buffer, True, 32);
 
-	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &_Payload->m_Data, _Payload->m_Data.m_BytesLeft);
+	UInt8 flags = 0;
+	BitHelper_SetBit(&flags, 0, _Payload->m_Src.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 1, _Payload->m_Des.m_Type == Payload_Address_Type_NONE ? False : True);
+	BitHelper_SetBit(&flags, 2, _Payload->m_Message.m_Type == Payload_Message_Type_None ? False : True);
+
+	Buffer_WriteUInt8(&buffer, flags);
+	
+	Buffer_WriteUInt64(&buffer, _Payload->m_Time);
+
+	Buffer_WriteUInt8(&buffer, _Payload->m_Type);
+	
+	Payload_WriteAddress(&_Payload->m_Src, &buffer);
+	Payload_WriteAddress(&_Payload->m_Des, &buffer);
+	
+	Buffer_WriteBuffer(&buffer, _Payload->m_UUID, UUID_DATA_SIZE);
+
+	Payload_WriteMessage(&_Payload->m_Message, &buffer);
+
+	Buffer_WriteUInt16(&buffer, _Payload->m_Data.m_BytesLeft);
+	
+	Buffer_WriteBuffer(&buffer, _Payload->m_Data.m_Ptr, _Payload->m_Data.m_BytesLeft);
+
+	UInt8 CRC = 0;
+	DataLayer_GetCRC(buffer.m_Ptr, buffer.m_BytesLeft, &CRC);
+	
+	Buffer_WriteUInt8(&buffer, CRC);
+	
+	Payload_Print(_Payload, "Datalayer");
+
+	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &buffer, buffer.m_BytesLeft);
+	Buffer_Dispose(&buffer);
 	if(success < 0)
 	{
 		printf("DataLayer_SendMessage: OnWrite Error\n\r");
@@ -159,6 +185,10 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			}
 
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
+			Buffer_ReadUInt8(&packet.m_Data, &CRC);
+
+			UInt64 time = 0;
+			Buffer_ReadUInt64(&packet.m_Data, &time);
 
 			Payload replay;
 			Payload_Initialize(&replay, packet.m_UUID);

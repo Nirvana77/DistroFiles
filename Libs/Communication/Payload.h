@@ -148,7 +148,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 void Payload_Copy(Payload* _Des, Payload* _Src);
 
 //! This is only for DEBUGING!
-static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasFlags)
+static inline void Payload_Print(Payload* _Payload, const char* _Str)
 {
 	String str;
 	String_Initialize(&str, 128);
@@ -179,20 +179,9 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str, Bool _HasF
 	}
 
 	String_Sprintf(&str, "Data: %ib\n", _Payload->m_Data.m_BytesLeft);
-	int i = 0;
-
-	if(_HasFlags == True)
-	{
-		String_Sprintf(&str, "0b");
-		for (i = 8; i >= 0; i--)
-			String_Sprintf(&str, "%i", BitHelper_GetBit(&_Payload->m_Data.m_Ptr[0], i));
-		
-		i = 1;
-		String_Sprintf(&str, " ");
-	}
-
-	for (; i < _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr; i++)
-		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1< _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr ? " " : "");
+	
+	for (int i = _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr - _Payload->m_Size; i < _Payload->m_Size; i++)
+		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1 < _Payload->m_Size ? " " : "");
 		
 	String_Sprintf(&str, "\n");
 	String_Sprintf(&str, "\n");
