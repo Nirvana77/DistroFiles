@@ -225,7 +225,7 @@ int DataLayer_CalculateSize(DataLayer* _DataLayer)
 	UInt16 size = 0;
 
 	ptr += Memory_ParseUInt8(ptr, (UInt8*)&flags);
-	ptr += Payload_SourcePosistion + Payload_AddreessSize*2; //Src & Des & Time & Type
+	ptr += Payload_MethodPosistion; //Src & Des & Time & Type & UUID
 	
 	if(BitHelper_GetBit(&flags, 2) == True)
 	{
@@ -233,7 +233,6 @@ int DataLayer_CalculateSize(DataLayer* _DataLayer)
 		ptr += Memory_ParseUInt16(ptr, &size);
 		ptr += size;
 	}
-	ptr += UUID_DATA_SIZE; //UUID
 	
 	ptr += Memory_ParseUInt16(ptr, &size);
 	ptr += size;

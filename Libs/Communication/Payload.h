@@ -32,7 +32,7 @@ typedef struct T_Payload Payload;
 #define Payload_SourcePosistion (Payload_TypePosistion + 1)
 #define Payload_DestinationPosistion (Payload_SourcePosistion + Payload_AddreessSize)
 #define Payload_UUIDPosistion (Payload_DestinationPosistion + Payload_AddreessSize)
-
+#define Payload_MethodPosistion (Payload_SourcePosistion + Payload_AddreessSize*2 + UUID_DATA_SIZE)
 typedef struct
 {
 	void* m_Context;
