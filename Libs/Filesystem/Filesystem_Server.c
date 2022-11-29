@@ -447,7 +447,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		_Replay->m_Size += Buffer_WriteUInt16(&_Replay->m_Data, size);
 		_Replay->m_Size += Buffer_WriteBuffer(&_Replay->m_Data, folderContext.m_ReadPtr, folderContext.m_BytesLeft);
 
-		Payload_Print(_Replay, "SyncAck list data: ", False);
+		Payload_Print(_Replay, "SyncAck list data");
 
 		Buffer_Dispose(&folderContext);
 		return 1;

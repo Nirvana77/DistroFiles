@@ -124,6 +124,14 @@ int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
+	
+	UInt8 UUID[UUID_DATA_SIZE];
+	Buffer_ReadBuffer(&_Message->m_Data, UUID, UUID_DATA_SIZE);
+	memcpy(_Message->m_UUID, UUID, UUID_DATA_SIZE);
+
+	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+
+	Payload_Print(_Message, "ReveicePayload");
 
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
@@ -131,23 +139,23 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		Payload_InitializePtr(_Message->m_UUID, &replay);
 		unsigned char* readPtr = _Message->m_Data.m_ReadPtr;
 		int revice = _TransportLayer->m_FuncOut.m_Receive(_TransportLayer->m_FuncOut.m_Context, _Message, replay);
+		SystemMonotonicMS(&replay->m_Time);
 		if(revice == 1)
 		{
-			
+			/*
 			Payload_FilAddress(&replay->m_Des, &_Message->m_Src);
 			LinkedList_Push(&_TransportLayer->m_Queued, replay);
-
-			return 0;
+			*/
+			return 1;
 		}
 		else if(revice == 2)
 		{
 			_Message->m_Data.m_BytesLeft += _Message->m_Data.m_ReadPtr - readPtr;
 			_Message->m_Data.m_ReadPtr = readPtr;
 			Payload_Copy(replay, _Message);
-			SystemMonotonicMS(&replay->m_Time);
 			replay->m_Time += 1000 * 2;
 
-			Payload_Print(replay, "Postponed", False);
+			Payload_Print(replay, "Postponed");
 			
 			LinkedList_Push(&_TransportLayer->m_Postponed, replay);
 			return 0;
