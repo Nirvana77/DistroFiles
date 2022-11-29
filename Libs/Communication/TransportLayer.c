@@ -131,6 +131,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
 
+	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
+
 	Payload_Print(_Message, "ReveicePayload");
 
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
@@ -143,12 +145,9 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		if(revice == 1)
 		{
 			
-			Payload_Copy(_Replay, replay);
-			/*
 			Payload_FilAddress(&replay->m_Des, &_Message->m_Src);
 			LinkedList_Push(&_TransportLayer->m_Queued, replay);
-			*/
-			return 1;
+			return 0;
 		}
 		else if(revice == 2)
 		{
