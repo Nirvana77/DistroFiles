@@ -88,8 +88,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		Payload replay;
 		Payload_Initialize(&replay, _Replay->m_UUID);
 		
-		replay.m_Src.m_Type = Payload_Address_Type_IP;
-		GetIP(replay.m_Src.m_Address.IP);
+		replay.m_Src.m_Type = Payload_Address_Type_MAC;
+		GetMAC(replay.m_Src.m_Address.MAC);
 		
 		if(_NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
 		{//Whant to send replay
@@ -181,8 +181,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 {
-	_Payload->m_Src.m_Type = Payload_Address_Type_IP;
-	GetIP((UInt8*)&_Payload->m_Src.m_Address);
+	_Payload->m_Src.m_Type = Payload_Address_Type_MAC;
+	GetMAC((UInt8*)&_Payload->m_Src.m_Address);
 	/*
 	Buffer temp;
 	if(_Payload->m_Size != 0) 
