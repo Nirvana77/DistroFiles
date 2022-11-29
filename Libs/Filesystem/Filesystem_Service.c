@@ -335,7 +335,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 				void* ptr = buffer;
 				ptr += Memory_ParseUInt8(ptr, &flag);
 				if(BitHelper_GetBit(&flag, 0) == True) {
-					ptr += Payload_DestinationPosistion;
+					ptr += Payload_SourcePosistion;
 					ptr += Memory_ParseUInt8(ptr, (UInt8*)&connection->m_Addrass.m_Type);
 					ptr += Memory_ParseBuffer(&connection->m_Addrass.m_Address, ptr, sizeof(connection->m_Addrass.m_Address));
 				}
