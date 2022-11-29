@@ -142,6 +142,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		SystemMonotonicMS(&replay->m_Time);
 		if(revice == 1)
 		{
+			
+			Payload_Copy(_Replay, replay);
 			/*
 			Payload_FilAddress(&replay->m_Des, &_Message->m_Src);
 			LinkedList_Push(&_TransportLayer->m_Queued, replay);
