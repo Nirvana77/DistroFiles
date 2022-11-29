@@ -25,6 +25,14 @@ typedef struct T_Payload Payload;
 	#include <net/if.h>
 
 #endif
+
+#define Payload_AddreessSize (1 + 6)
+
+#define Payload_TypePosistion (8)
+#define Payload_SourcePosistion (Payload_TypePosistion + 1)
+#define Payload_DestinationPosistion (Payload_SourcePosistion + Payload_AddreessSize)
+#define Payload_UUIDPosistion (Payload_DestinationPosistion + Payload_AddreessSize)
+
 typedef struct
 {
 	void* m_Context;
