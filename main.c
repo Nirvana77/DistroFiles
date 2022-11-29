@@ -219,6 +219,10 @@ int main(int argc, char* argv[])
 					case 't':
 					{
 						printf("\r\nServer State is: %s\r\n", Filesystem_Server_States[service->m_Server->m_State]);
+						printf("Checking State is: %i\r\n", (int)service->m_Server->m_Checking.m_Type);
+						UInt64 time = 0;
+						Filesystem_Server_GetTimeFromPath(service->m_Server->m_FilesytemPath.m_Ptr, &time);
+						printf("Path: %s last modyfed %lu\r\n", service->m_Server->m_FilesytemPath.m_Ptr, time);
 					} break;
 				
 					case 'l':

@@ -88,18 +88,8 @@ static inline Bool Filesystem_Server_HashCheck(unsigned char _A[16], unsigned ch
 static inline void Filesystem_Server_GetTimeFromPath(char* _Path, UInt64* _Value)
 {
 	struct stat attr;
-	char str[64];
-	UInt64 value = 0;
 	stat(_Path, &attr);
-	sprintf(str, "%u", attr.st_mtim);
-
-	for (int i = 0; i < strlen(str); i++)
-	{
-		value += str[i] - 48;
-		value *= 10;
-	}
-	value /= 10;
-	*(_Value) = value;
+	*(_Value) = (UInt64)attr.st_mtim.tv_sec;;
 }
 
 static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char _Result[16])
