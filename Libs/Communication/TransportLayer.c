@@ -91,7 +91,6 @@ int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payl
 	return LinkedList_RemoveItem(&_TransportLayer->m_Queued, _Payload);
 }
 
-//TODO #17 Fix this to be a propper transport layer
 int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 {
 	TransportLayer* _TransportLayer = (TransportLayer*) _Context;
