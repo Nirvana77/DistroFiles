@@ -183,6 +183,7 @@ int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 	return Filesystem_Service_TCPRead(_Server->m_Service, &_Server->m_Connections, _Buffer, _Size);
 }
 
+//note: This is a bite janked
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
@@ -1112,7 +1113,6 @@ int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address*
 	return 0;
 }
 
-//TODO: Rename this to CheckForwording or something
 void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Payload* _Message)
 {
 	_Server->m_State = Filesystem_Server_State_Checking;
