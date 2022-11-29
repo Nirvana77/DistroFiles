@@ -313,7 +313,7 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	return 0;
 }
 
-
+//FIX: Magic numbers!
 int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
@@ -336,7 +336,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 				void* ptr = buffer;
 				ptr += Memory_ParseUInt8(ptr, &flag);
 				if(BitHelper_GetBit(&flag, 0) == True) {
-					ptr += 16 + 1 + 8;
+					ptr += 8 + 1 + 1 + 6;
 					ptr += Memory_ParseUInt8(ptr, (UInt8*)&connection->m_Addrass.m_Type);
 					ptr += Memory_ParseBuffer(&connection->m_Addrass.m_Address, ptr, sizeof(connection->m_Addrass.m_Address));
 				}
@@ -363,6 +363,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 	return 0;
 }
 
+//FIX: Magic numbers!
 int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
