@@ -185,6 +185,10 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			}
 
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
+			Buffer_ReadUInt8(&packet.m_Data, &CRC);
+
+			UInt64 time = 0;
+			Buffer_ReadUInt64(&packet.m_Data, &time);
 
 			Payload replay;
 			Payload_Initialize(&replay, packet.m_UUID);

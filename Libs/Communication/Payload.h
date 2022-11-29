@@ -180,8 +180,8 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 
 	String_Sprintf(&str, "Data: %ib\n", _Payload->m_Data.m_BytesLeft);
 	
-	for (int i = 0; i < _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr; i++)
-		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1< _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr ? " " : "");
+	for (int i = _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr - _Payload->m_Size; i < _Payload->m_Size; i++)
+		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1 < _Payload->m_Size ? " " : "");
 		
 	String_Sprintf(&str, "\n");
 	String_Sprintf(&str, "\n");

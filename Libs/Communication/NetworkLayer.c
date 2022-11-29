@@ -56,7 +56,11 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
 	
 	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
+	
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Src.m_Type);
 	Payload_ReadAddress(&_Message->m_Src, &_Message->m_Data);
+	
+	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Des.m_Type);
 	Payload_ReadAddress(&_Message->m_Des, &_Message->m_Data);
 
 	if(_Message->m_Des.m_Type == Payload_Address_Type_IP)
@@ -74,7 +78,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		if(CommperMAC(mac, _Message->m_Des.m_Address.MAC) == False)
 			return 0;
 	}
-	else if(_Message->m_Type != Payload_Type_Broadcast || _Message->m_Type != Payload_Type_BroadcastRespons)
+	else if(_Message->m_Type != Payload_Type_Broadcast && _Message->m_Type != Payload_Type_BroadcastRespons)
 	{
 		return 0;
 	}
