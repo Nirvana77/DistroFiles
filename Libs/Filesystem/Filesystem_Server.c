@@ -21,6 +21,8 @@ int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* 
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16]);
 void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data);
 
+int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
 {
@@ -1422,6 +1424,63 @@ void Filesystem_Server_Sync(Filesystem_Server* _Server)
 	}
 }
 
+int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	Payload* _Message = (Payload*) _Object;
+	Payload_State _Event = (Payload_Type)_EventCall;
+	int success = 0;
+	
+	switch (_Event)
+	{/*
+		case Payload_State_Resived:
+		{
+			
+		} break;
+		{
+			
+		} break;
+		case Payload_State_Replay:
+		{
+			
+		} break;
+		
+		case Payload_State_Init:
+		case Payload_State_Sented:
+		case Payload_State_Sending:
+		{
+			return 0;
+		} break;*/
+
+		case Payload_State_Timeout:
+		{
+			if(_Message->m_Message.m_Type == Payload_Message_Type_String)
+			{
+				if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
+				{
+					TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, NULL);
+				}
+			}
+			return 1;
+		} break;
+
+		case Payload_State_Removed:
+		case Payload_State_Destroyed:
+		case Payload_State_Failed:
+		{
+			success = 1;
+		} break;
+
+		default: 
+		{
+			char str[UUID_FULLSTRING_SIZE];
+			uuid_ToString(_Message->m_UUID, str);
+			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
+		} break;
+	}
+
+	return success;
+}
 
 void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 {
