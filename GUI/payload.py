@@ -110,13 +110,9 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 
 	flag += 1 << 0 # src
 
-	UUID = uuid.uuid4()
-
 	array.append(flag)
 
-	array = array + uuid.uuid4().bytes
-		
-	for v in [0, 1,2,3,4,5,6,7,8]:
+	for v in [1,2,3,4,5,6,7,8, 0]:
 		array.append(v)
 	
 	array.append(2)
@@ -132,6 +128,9 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 		array.append(0)
 		for x in range(1,7):
 			array.append(0)
+	
+	UUID = uuid.uuid4()
+	array = array + UUID.bytes
 
 	if(method != ""):
 		array.append(1)

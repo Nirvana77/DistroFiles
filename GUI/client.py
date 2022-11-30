@@ -54,7 +54,13 @@ class Client:
 	def delete(self, path:str):
 		message = list()
 
-		message.append(len(path))
+		if path.endswith("/"):
+			message.append(0)
+		else:
+			message.append(1)
+		
+		message.append(int(len(path) / 256))
+		message.append(len(path) % 256)
 		for i in list(path.encode('ascii')):
 			message.append(i)
 
