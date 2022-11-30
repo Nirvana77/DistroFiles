@@ -175,23 +175,25 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
 		{
-			Payload_SetState(&packet, Payload_State_Resived, &packet);
+			Payload frame;
+			Payload_Initialize(&frame, NULL);
+			Payload_SetState(&frame, Payload_State_Resived, &frame);
 
-			if(Buffer_DeepCopy(&packet.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
+			if(Buffer_DeepCopy(&frame.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
 			{
 				printf("Buffer copy error\n\r");
 				return -3;
 			}
 
 			Buffer_ReadUInt8(&_DataLayer->m_DataBuffer, &CRC);
-			Buffer_ReadUInt8(&packet.m_Data, &CRC);
+			Buffer_ReadUInt8(&frame.m_Data, &CRC);
 
 			UInt64 time = 0;
-			Buffer_ReadUInt64(&packet.m_Data, &time);
+			Buffer_ReadUInt64(&frame.m_Data, &time);
 
 			Payload replay;
-			Payload_Initialize(&replay, packet.m_UUID);
-			if(_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &packet, &replay) == 1)//Whants to send replay
+			Payload_Initialize(&replay, frame.m_UUID);
+			if(_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &frame, &replay) == 1)//Whants to send replay
 			{
 				//send message/payload
 				int success = DataLayer_SendMessage(_DataLayer, &replay);
@@ -201,13 +203,13 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 					printf("Error code: %i\n\r", success);
 
 					Payload_Dispose(&replay);
-					Payload_Dispose(&packet);
+					Payload_Dispose(&frame);
 					return -4;
 				}
 			}
 
 			Payload_Dispose(&replay);
-			Payload_Dispose(&packet);
+			Payload_Dispose(&frame);
 
 		}
 		
