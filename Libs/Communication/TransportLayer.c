@@ -89,6 +89,20 @@ int TransportLayer_DestroyMessage(TransportLayer* _TransportLayer, Payload* _Pay
 	return 0;
 }
 
+int TransportLayer_ResendMessage(TransportLayer* _TransportLayer, Payload* _Payload, Payload** _PayloadPtr)
+{
+	Payload* message = NULL;
+	if(TransportLayer_CreateMessage(_TransportLayer, _Payload->m_Type, _Payload->m_Size, _Payload->m_Timeout, &message) == 0)
+	{
+		Payload_Copy(message, _Payload);
+		if(_PayloadPtr != NULL)
+			*(_PayloadPtr) = message;
+			
+		return 0;
+	}
+	return -1;
+}
+
 int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payload)
 {
 	return LinkedList_RemoveItem(&_TransportLayer->m_Queued, _Payload);
@@ -218,6 +232,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			
 			_Payload->m_State = Payload_State_Timeout;
 			EventHandler_EventCall(&_Payload->m_EventHandler, (int)_Payload->m_State, _Payload);
+			
 			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
 			Payload_Dispose(_Payload);
 		}
