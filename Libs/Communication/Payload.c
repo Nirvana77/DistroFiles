@@ -186,11 +186,7 @@ void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src)
 void Payload_Copy(Payload* _Des, Payload* _Src)
 {
 	_Des->m_Size = _Src->m_Size;
-	_Des->m_Time = _Src->m_Time;
 	_Des->m_Type = _Src->m_Type;
-	_Des->m_State = _Src->m_State;
-
-	memcpy(_Des->m_UUID, _Src->m_UUID, UUID_DATA_SIZE);
 
 	Payload_FilAddress(&_Des->m_Des, &_Src->m_Des);
 	Payload_FilAddress(&_Des->m_Src, &_Src->m_Src);

@@ -160,6 +160,16 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer);
 
 void Payload_Copy(Payload* _Des, Payload* _Src);
 
+static inline void Payload_DeepCopy(Payload* _Des, Payload* _Src)
+{
+	Payload_Copy(_Des, _Src);
+	_Des->m_State = _Src->m_State;
+	_Des->m_Time = _Src->m_Time;
+
+	memcpy(_Des->m_UUID, _Src->m_UUID, UUID_DATA_SIZE);
+
+}
+
 //! This is only for DEBUGING!
 static inline void Payload_Print(Payload* _Payload, const char* _Str)
 {

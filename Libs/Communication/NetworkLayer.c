@@ -95,7 +95,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		{//Whant to send replay
 
 			Payload_FilAddress(&replay.m_Des, &_Message->m_Src);
-			Payload_Copy(_Replay, &replay);
+			Payload_DeepCopy(_Replay, &replay);
 
 			int success = NetworkLayer_PayloadBuilder(_NetworkLayer, _Replay);
 			Payload_Dispose(&replay);
@@ -163,7 +163,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		{//Whant to send replay
 
 			Payload_FilAddress(&replay.m_Des, &_Message->m_Src);
-			Payload_Copy(_Replay, &replay);
+			Payload_DeepCopy(_Replay, &replay);
 
 			int success = NetworkLayer_PayloadBuilder(_NetworkLayer, _Replay);
 			Payload_Dispose(&replay);
