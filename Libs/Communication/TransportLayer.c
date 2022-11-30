@@ -155,7 +155,12 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		}
 				
 		if(hasMessage == False)
+		{
+			char str[37];
+			uuid_ToString(_Message->m_UUID, str);
+			printf("Discarding %s\r\n", str);
 			return 0;
+		}
 	}
 
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
