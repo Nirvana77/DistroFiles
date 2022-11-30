@@ -26,7 +26,7 @@ int uuid_Initialize(uuid* _UUID)
 	return 0;
 }
 
-int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[37])
+int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[UUID_FULLSTRING_SIZE])
 {
 	char* ptr = _Buffer;
 	int i;

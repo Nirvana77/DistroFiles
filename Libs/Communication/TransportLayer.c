@@ -156,7 +156,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 				
 		if(hasMessage == False)
 		{
-			char str[37];
+			char str[UUID_FULLSTRING_SIZE];
 			uuid_ToString(_Message->m_UUID, str);
 			printf("Discarding %s\r\n", str);
 			return 0;
@@ -209,7 +209,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 		
 		if(_MSTime > _Payload->m_Timeout + _Payload->m_Time)
 		{
-			char str[37];
+			char str[UUID_FULLSTRING_SIZE];
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Removed: %s\n\r", str);
 			Payload_SetState(_Payload, Payload_State_Removed, _Payload);
@@ -228,7 +228,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 		
 		if(_MSTime > _Payload->m_Time)
 		{
-			char str[37];
+			char str[UUID_FULLSTRING_SIZE];
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Prossessing postponed messaged: %s\n\r", str);
 			LinkedList_RemoveNode(&_TransportLayer->m_Postponed, node);
