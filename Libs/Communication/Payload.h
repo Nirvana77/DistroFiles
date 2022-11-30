@@ -190,12 +190,7 @@ static inline void Payload_Print(Payload* _Payload, const char* _Str)
 	
 	for(int i = 0; i < _Payload->m_Data.m_BytesLeft; i++)
 		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_ReadPtr[i], i + 1 < _Payload->m_Data.m_BytesLeft ? " " : "");
-
-	int length = _Payload->m_Data.m_WritePtr - _Payload->m_Data.m_Ptr;
-	String_Sprintf(&str, "\r\nBuffer: %ib\n", length);
-	for(int i = 0; i < length; i++)
-		String_Sprintf(&str, "%x%s", _Payload->m_Data.m_Ptr[i], i + 1 < length ? " " : "");
-		
+	
 	String_Sprintf(&str, "\n");
 	String_Sprintf(&str, "\n");
 	String_Sprintf(&str, "\n");
