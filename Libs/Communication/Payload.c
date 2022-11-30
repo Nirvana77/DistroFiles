@@ -31,6 +31,7 @@ int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 	_Payload->m_Type = Payload_Type_UnSafe;
 
 	Buffer_Initialize(&_Payload->m_Data, True, 64);
+	EventHandler_Initialize(&_Payload->m_EventHandler);
 
 	if(_UUID == NULL)
 		uuid_generate(_Payload->m_UUID);
@@ -201,6 +202,7 @@ void Payload_Copy(Payload* _Des, Payload* _Src)
 
 void Payload_Dispose(Payload* _Payload)
 {
+	EventHandler_Dispose(&_Payload->m_EventHandler);
 	Buffer_Dispose(&_Payload->m_Data);
 
 	if(_Payload->m_Allocated == True)

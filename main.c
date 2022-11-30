@@ -24,6 +24,7 @@
 #include "Libs/LinkedList.c"
 #include "Libs/StateMachine.c"
 #include "Libs/Buffer.c"
+#include "Libs/EventHandler.c"
 
 #include "Libs/Allocator.c"
 #include "Libs/BitHelper.c"

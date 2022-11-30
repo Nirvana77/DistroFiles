@@ -11,6 +11,7 @@ typedef struct T_Payload Payload;
 
 #include "../Buffer.h"
 #include "../uuid.h"
+#include "../EventHandler.h"
 
 #ifdef __linux__
 
@@ -131,6 +132,8 @@ struct T_Payload
 	Payload_Address m_Src;
 	Payload_Address m_Des;
 
+	EventHandler m_EventHandler;
+
 	Buffer m_Data;
 };
 
@@ -148,6 +151,12 @@ Bool Payload_ComperAddresses(Payload_Address* _A, Payload_Address* _B)
 		return False;
 
 	return memcmp(&_A->m_Address, &_B->m_Address, sizeof(_A->m_Address)) == 0 ? True : False;
+}
+
+static inline void Payload_SetState(Payload* _Payload, Payload_State _State)
+{
+	_Payload->m_State = _State;
+	EventHandler_EventCall(&_Payload->m_EventHandler, (int)_State);
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);

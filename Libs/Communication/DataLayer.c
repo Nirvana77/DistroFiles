@@ -67,10 +67,10 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 		{
 			//send message/payload
 			if(DataLayer_SendMessage(_DataLayer, message) != 0)
-				message->m_State = Payload_State_Failed;
+				Payload_SetState(message, Payload_State_Failed);
 			
 			else
-				message->m_State = Payload_State_Sented;
+				Payload_SetState(message, Payload_State_Sented);
 
 		}
 	}

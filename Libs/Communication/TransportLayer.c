@@ -107,10 +107,10 @@ int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 	else if(_TransportLayer->m_Queued.m_Size > 0)
 	{
 		Payload* p = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
-		p->m_State = Payload_State_Sending;
 		SystemMonotonicMS(&p->m_Time);
 
 		LinkedList_Push(&_TransportLayer->m_Sented, p);
+		Payload_SetState(p, Payload_State_Sending);
 
 		*(_PaylodePtr) = p;
 		
@@ -180,6 +180,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			char str[37];
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Removed: %s\n\r", str);
+			Payload_SetState(_Payload, Payload_State_Removed);
 			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
 			Payload_Dispose(_Payload);
 		}
