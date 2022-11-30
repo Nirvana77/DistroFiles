@@ -169,7 +169,7 @@ class GUI:
 					}
 					directory.append(obj)
 				
-				self.draw_Directory(directory, "root")
+				self.draw_Directory(directory, "")
 
 	def uri_validator(self, x):
 		try:
@@ -297,9 +297,10 @@ class GUI:
 	
 	class File(Icon):
 
+		#? tuple?
 		def __init__(self, gui, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
 			super().__init__(gui, canvas, x, y, w, h, name, path)
-			self.canvas.itemconfig(self.rec, fill="RED")
+			self.canvas.itemconfig(self.rec, fill="RED") 
 
 		def click(self, event) -> list:
 			if event.num == 1:
