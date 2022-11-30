@@ -1421,6 +1421,7 @@ void Filesystem_Server_Sync(Filesystem_Server* _Server)
 		Buffer_WriteBuffer(&message->m_Data, hash, 16);
 
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
+		EventHandler_Hook(&message->m_EventHandler, Filesystem_Server_MessageEvent, _Server);
 	}
 }
 
@@ -1458,7 +1459,11 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 			{
 				if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 				{
-					TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, NULL);
+					Payload* message = NULL;
+					if(TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, &message) == 0)
+					{
+						message->m_Timeout = Payload_TimeoutAlgorithm(message->m_Timeout);
+					}
 				}
 			}
 			return 1;
