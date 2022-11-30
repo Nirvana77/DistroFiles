@@ -176,6 +176,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 						Buffer_WriteBuffer(&msg->m_Data, serverHash, 16);
 					}
 
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 				}
@@ -188,6 +189,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					Buffer_WriteUInt8(&msg->m_Data, 2);
 
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 				}
@@ -253,6 +255,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 						Buffer_WriteBuffer(&msg->m_Data, hash, 16);
 					}
 
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 				}
@@ -266,6 +269,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					Buffer_WriteUInt8(&msg->m_Data, 2);
 
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 				}
@@ -289,6 +293,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 				Buffer_WriteUInt8(&msg->m_Data, 2);
 
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
 			}
