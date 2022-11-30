@@ -81,6 +81,8 @@ int TransportLayer_DestroyMessage(TransportLayer* _TransportLayer, Payload* _Pay
 	if(success == 1)
 		return 1;
 
+	Payload_SetState(_Payload, Payload_State_Destroyed, _Payload);
+
 	Payload_Dispose(_Payload);
 
 	return 0;
@@ -110,7 +112,7 @@ int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 		SystemMonotonicMS(&p->m_Time);
 
 		LinkedList_Push(&_TransportLayer->m_Sented, p);
-		Payload_SetState(p, Payload_State_Sending);
+		Payload_SetState(p, Payload_State_Sending, p);
 
 		*(_PaylodePtr) = p;
 		
@@ -180,7 +182,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			char str[37];
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Removed: %s\n\r", str);
-			Payload_SetState(_Payload, Payload_State_Removed);
+			Payload_SetState(_Payload, Payload_State_Removed, _Payload);
 			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
 			Payload_Dispose(_Payload);
 		}

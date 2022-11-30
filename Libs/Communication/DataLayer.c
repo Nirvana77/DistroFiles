@@ -67,10 +67,10 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 		{
 			//send message/payload
 			if(DataLayer_SendMessage(_DataLayer, message) != 0)
-				Payload_SetState(message, Payload_State_Failed);
+				Payload_SetState(message, Payload_State_Failed, message);
 			
 			else
-				Payload_SetState(message, Payload_State_Sented);
+				Payload_SetState(message, Payload_State_Sented, message);
 
 		}
 	}
@@ -175,8 +175,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		if(_DataLayer->m_FuncOut.m_Receive != NULL)
 		{
-			Payload packet;
-			Payload_Initialize(&packet, NULL);
+			Payload_SetState(&packet, Payload_State_Resived, &packet);
 
 			if(Buffer_DeepCopy(&packet.m_Data, &_DataLayer->m_DataBuffer, size - 1) < 0)
 			{

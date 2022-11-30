@@ -60,8 +60,9 @@ typedef enum
 	Payload_State_Sending = 2,
 	Payload_State_Resived = 3,
 	Payload_State_Removed = 4,
-	Payload_State_Destroyed = 5,
-	Payload_State_Failed = 6
+	Payload_State_Replay = 5,
+	Payload_State_Destroyed = 6,
+	Payload_State_Failed = 7
 } Payload_State;
 
 typedef enum
@@ -153,10 +154,10 @@ Bool Payload_ComperAddresses(Payload_Address* _A, Payload_Address* _B)
 	return memcmp(&_A->m_Address, &_B->m_Address, sizeof(_A->m_Address)) == 0 ? True : False;
 }
 
-static inline void Payload_SetState(Payload* _Payload, Payload_State _State)
+static inline void Payload_SetState(Payload* _Payload, Payload_State _State, void* _Object)
 {
 	_Payload->m_State = _State;
-	EventHandler_EventCall(&_Payload->m_EventHandler, (int)_State);
+	EventHandler_EventCall(&_Payload->m_EventHandler, (int)_State, _Object);
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer);

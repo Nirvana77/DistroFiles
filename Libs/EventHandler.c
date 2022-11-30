@@ -28,8 +28,7 @@ int EventHandler_Initialize(EventHandler* _EventHandler)
 	return 0;
 }
 
-//* Callback function: 0 = > do nothing, 1 => UnHook Event
-EventHandler_Event* EventHandler_Hook(EventHandler* _EventHandler, int (*_Callback)(EventHandler* _EventHandler, int _EventCall, void* _Context), void* _Context)
+EventHandler_Event* EventHandler_Hook(EventHandler* _EventHandler, int (*_Callback)(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context), void* _Context)
 {
 	EventHandler_Event* _Event = (EventHandler_Event*) Allocator_Malloc(sizeof(EventHandler_Event));
 
@@ -52,7 +51,7 @@ int EventHandler_UnHook(EventHandler* _EventHandler, EventHandler_Event* _Event)
 	return 0;
 }
 
-void EventHandler_EventCall(EventHandler* _EventHandler, int _EventCall)
+void EventHandler_EventCall(EventHandler* _EventHandler, int _EventCall, void* _Object)
 {
 
 	LinkedList_Node* currentNode = _EventHandler->m_Events.m_Head;
@@ -63,7 +62,7 @@ void EventHandler_EventCall(EventHandler* _EventHandler, int _EventCall)
 
 		int willUnHook = 0;
 		if(_Event->m_Callback != NULL)
-			willUnHook = _Event->m_Callback(_EventHandler, _EventCall, _Event->m_Context);
+			willUnHook = _Event->m_Callback(_EventHandler, _EventCall, _Object, _Event->m_Context);
 		
 		if(willUnHook == 1)
 			EventHandler_UnHook(_EventHandler, _Event);
