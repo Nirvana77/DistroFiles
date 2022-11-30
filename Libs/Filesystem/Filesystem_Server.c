@@ -19,7 +19,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 
 int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16]);
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16]);
-void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Payload* _Message);
+void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data);
 
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
@@ -1032,18 +1032,18 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 
 int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16])
 {
-	Payload message;
-	Payload_Initialize(&message, NULL);
+	Buffer data;
+	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Checking_Type_Write);
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) _IsFile);
-	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen((const char*)_Path));
-	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Path, strlen((const char*)_Path));
-	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Hash, 16);
+	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Write);
+	Buffer_WriteUInt8(&data, (UInt8) _IsFile);
+	Buffer_WriteUInt16(&data, strlen((const char*)_Path));
+	Buffer_WriteBuffer(&data, _Path, strlen((const char*)_Path));
+	Buffer_WriteBuffer(&data, _Hash, 16);
 
-	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &message);
+	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &data);
 	
-	Payload_Dispose(&message);
+	Buffer_Dispose(&data);
 	return 0;
 }
 
@@ -1096,27 +1096,24 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
-	Payload message;
-	Payload_Initialize(&message, NULL);
+	Buffer data;
+	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8) Filesystem_Checking_Type_Delete);
-	message.m_Size += Buffer_WriteUInt8(&message.m_Data, (UInt8)_IsFile);
-	message.m_Size += Buffer_WriteUInt16(&message.m_Data, strlen((const char*)_Path));
-	message.m_Size += Buffer_WriteBuffer(&message.m_Data, (unsigned char*)_Path, strlen((const char*)_Path));
-	message.m_Size += Buffer_WriteBuffer(&message.m_Data, _Hash, 16);
-
-	Payload_SetMessageType(&message, Payload_Message_Type_String, "delete", strlen("delete"));
+	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Delete);
+	Buffer_WriteUInt8(&data, (UInt8)_IsFile);
+	Buffer_WriteUInt16(&data, strlen((const char*)_Path));
+	Buffer_WriteBuffer(&data, (unsigned char*)_Path, strlen((const char*)_Path));
+	Buffer_WriteBuffer(&data, _Hash, 16);
 	
-	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &message);
+	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &data);
 
-	Payload_Dispose(&message);
+	Payload_Dispose(&data);
 	return 0;
 }
 
-void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Payload* _Message)
+void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data)
 {
 	_Server->m_State = Filesystem_Server_State_Checking;
-	Payload_SetMessageType(_Message, Payload_Message_Type_String, "Check", strlen("Check"));
 
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while (currentNode != NULL)
@@ -1127,12 +1124,13 @@ void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _
 		if (Payload_ComperAddresses(&connection->m_Addrass, _IgnoreAddress) == False)
 		{
 			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Message->m_Size, SEC, &msg) == 0)
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Data->m_BytesLeft, SEC, &msg) == 0)
 			{
-				_Message->m_Time = msg->m_Time;
-				_Message->m_State = msg->m_State;
-				Payload_Copy(msg, _Message);
+				
+				Buffer_Copy(&msg->m_Data, _Data, _Data->m_BytesLeft);
+
 				Payload_FilAddress(&msg->m_Des, &connection->m_Addrass);
+				Payload_SetMessageType(msg, Payload_Message_Type_String, "Check", strlen("Check"));
 
 			}
 		}
