@@ -187,6 +187,7 @@ void Payload_Copy(Payload* _Des, Payload* _Src)
 {
 	_Des->m_Size = _Src->m_Size;
 	_Des->m_Type = _Src->m_Type;
+	_Des->m_Timeout = _Src->m_Timeout;
 
 	Payload_FilAddress(&_Des->m_Des, &_Src->m_Des);
 	Payload_FilAddress(&_Des->m_Src, &_Src->m_Src);
