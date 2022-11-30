@@ -106,6 +106,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 	return 0;
 }
 
+//TODO: make this rturn if made an respons
 int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
 {
 	if(_Checking->m_Type != Filesystem_Checking_Type_None && (_Checking->m_Type != _Type || _Checking->m_Server->m_State == Filesystem_Server_State_Connecting))
