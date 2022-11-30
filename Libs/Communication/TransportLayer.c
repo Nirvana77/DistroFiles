@@ -137,6 +137,27 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 	Payload_Print(_Message, "ReveicePayload");
 
+	if(_Message->m_Type == Payload_Type_BroadcastRespons || _Message->m_Type == Payload_Type_Respons)
+	{
+		Bool hasMessage = False;
+		LinkedList_Node* currentNode = _TransportLayer->m_Sented.m_Head;
+		while(currentNode != NULL)
+		{
+			Payload* _Payload = (Payload*) currentNode->m_Item;
+			currentNode = currentNode->m_Next;
+			
+			if(uuid_Compere(_Payload->m_UUID, _Message->m_UUID) == True)
+			{
+				EventHandler_EventCall(&_Payload->m_EventHandler, (int)Payload_State_Replay, _Message);
+				SystemMonotonicMS(&_Payload->m_Time);
+				hasMessage = True;
+			}
+		}
+				
+		if(hasMessage == False)
+			return 0;
+	}
+
 	if(_TransportLayer->m_FuncOut.m_Receive != NULL)
 	{
 		Payload* replay;
@@ -146,6 +167,10 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 		SystemMonotonicMS(&replay->m_Time);
 		if(revice == 1)
 		{
+			if(_Message->m_Type == Payload_Type_UnSafe || _Message->m_Type == Payload_Type_Safe)
+				_Message->m_Type = Payload_Type_Respons;
+			else if(_Message->m_Type == Payload_Type_Broadcast)
+				_Message->m_Type = Payload_Type_BroadcastRespons;
 			
 			Payload_FilAddress(&replay->m_Des, &_Message->m_Src);
 			LinkedList_Push(&_TransportLayer->m_Queued, replay);
