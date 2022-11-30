@@ -22,6 +22,7 @@ int uuid_InitializePtr(uuid** _UUIDPtr);
 int uuid_Initialize(uuid* _UUID);
 
 int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[37]);
+Bool uuid_Compere(UInt8 _A[UUID_DATA_SIZE], UInt8 _B[UUID_DATA_SIZE]);
 
 void uuid_Dispose(uuid* _UUID);
 
