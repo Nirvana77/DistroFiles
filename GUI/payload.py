@@ -17,7 +17,7 @@ def send_file(filepath, filename):
 	length = len(file_arr)
 
 	if length > 256*256 - 1:
-		raise Exception("To bit of file, implement chuncking!")
+		raise Exception("To big of a file, implement chuncking!")
 
 	message.append(int(length/256))
 	message.append(length%256)

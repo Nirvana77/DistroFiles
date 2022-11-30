@@ -319,7 +319,12 @@ class GUI:
 				return (method, msg)
 			elif event.num == 3:
 				print("Rigth Click File")
-				self.gui.client.delete(self.path + "/" + self.name)
+				path = self.path
+				if not path == "":
+					path += "/"
+
+				path += self.name
+				self.gui.client.delete(path)
 
 			return list()
 
