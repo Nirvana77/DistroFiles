@@ -2,6 +2,7 @@ import hashlib
 import memory as m
 import struct
 import uuid
+import time as t
 
 def send_file(filepath, filename):
 	# file = input("filename > ")
@@ -112,8 +113,19 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 
 	array.append(flag)
 
-	for v in [1,2,3,4,5,6,7,8, 0]:
-		array.append(v)
+	time = (int)(t.time())
+	timeList = []
+	while not time == 0:
+		timeList.append((int)(time%255))
+		time = (int)(time/255)
+
+	while not len(timeList) == 8:
+		timeList.append(0)
+
+	for i in reversed(range(0,8)):
+		array.append(timeList[i])
+
+	array.append(0)
 	
 	array.append(2)
 	src = bytearray.fromhex(hex(uuid.getnode())[2:])
