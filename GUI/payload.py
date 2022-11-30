@@ -122,7 +122,7 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 	while not len(timeList) == 8:
 		timeList.append(0)
 
-	for i in reversed(range(0,8)):
+	for i in reversed(range(len(timeList))):
 		array.append(timeList[i])
 
 	array.append(0)
