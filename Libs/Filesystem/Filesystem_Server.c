@@ -1107,7 +1107,7 @@ int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address*
 	
 	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &data);
 
-	Payload_Dispose(&data);
+	Buffer_Dispose(&data);
 	return 0;
 }
 
