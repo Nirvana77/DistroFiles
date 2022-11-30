@@ -30,7 +30,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 {
 	_Client->m_Allocated = False;
 	_Client->m_NextCheck = 0;
-	_Client->m_Timeout = 10000;
+	_Client->m_Timeout = SEC * 10;
 	_Client->m_Service = _Service;
 	_Client->m_Server = _Service->m_Server;
 
@@ -54,7 +54,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	LinkedList_Initialize(&_Client->m_Connections);
 
 
-	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Filesystem_Client_TCPRead, Filesystem_Client_TCPWrite, NULL, _Client, 100);
+	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Filesystem_Client_TCPRead, Filesystem_Client_TCPWrite, NULL, _Client, MS * 100);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");

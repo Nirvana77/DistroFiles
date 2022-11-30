@@ -154,7 +154,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 			_Message->m_Data.m_BytesLeft += _Message->m_Data.m_ReadPtr - readPtr;
 			_Message->m_Data.m_ReadPtr = readPtr;
 			Payload_Copy(replay, _Message);
-			replay->m_Time += 1000 * 2;
+			replay->m_Time += SEC * 2;
 
 			Payload_Print(replay, "Postponed");
 			

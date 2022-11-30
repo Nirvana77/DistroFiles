@@ -9,6 +9,12 @@
 #define True 1
 #define Bool unsigned char
 
+#define MS (1)
+#define SEC (MS*1000)
+#define MIN (SEC*60)
+#define HOURE (MIN*60)
+#define DAY (HOURE*24)
+
 #ifdef __linux__
     #include <inttypes.h>
     #include <stdint.h>

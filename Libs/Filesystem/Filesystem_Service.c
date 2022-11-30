@@ -84,7 +84,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	_Service->m_Settings.m_Host = 5566;
 	_Service->m_Settings.m_Distributer = 8021;
 	_Service->m_Settings.m_AutoSync = True;
-	_Service->m_Settings.m_Interval = 10000;
+	_Service->m_Settings.m_Interval = SEC * 10;
 
 	//-----------------------------------------
 	int loadSuccess = Filesystem_Service_Load(_Service);

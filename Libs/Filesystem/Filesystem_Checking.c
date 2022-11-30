@@ -160,7 +160,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				Bool isSame = Filesystem_Server_HashCheck(serverHash, hash);
 
 				Payload* msg = NULL;
-				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
 				{
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					if(isSame == True)
@@ -182,7 +182,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 			else
 			{
 				Payload* msg = NULL;
-				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, 1000, &msg) == 0)
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
 				{
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					Buffer_WriteUInt8(&msg->m_Data, 2);
@@ -237,7 +237,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				Bool isSame = Filesystem_Server_HashCheck(bufferHash, hash);
 
 				Payload* msg = NULL;
-				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), 1000, &msg) == 0)
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
 				{
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					if(isSame == True)
@@ -260,7 +260,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 			else
 			{
 				Payload* msg = NULL;
-				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, 1000, &msg) == 0)
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
 				{
 					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 					Buffer_WriteUInt8(&msg->m_Data, 2);
@@ -283,7 +283,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 		{
 			printf("Checking_Type is Filesystem_Checking_Type_None!\r\n");
 			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, 1000, &msg) == 0)
+			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
 			{
 				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 				Buffer_WriteUInt8(&msg->m_Data, 2);
@@ -391,7 +391,7 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 		if(check->m_IsOk == Filesystem_Checking_Check_Satus_DontHave)
 		{
 			Payload* message = NULL;
-			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, 1000, &message) == 0)
+			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, SEC, &message) == 0)
 			{
 				Payload_FilAddress(&_Checking->m_Message.m_Des, &check->m_Connection->m_Addrass);
 				Payload_Copy(message, &_Checking->m_Message);

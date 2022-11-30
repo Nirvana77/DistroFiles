@@ -47,7 +47,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	_Server->m_TempFlag = 0;
 	_Server->m_TempListSize = 0;
 	_Server->m_NextCheck = 0;
-	_Server->m_Timeout = 10000;
+	_Server->m_Timeout = SEC * 10;
 	_Server->m_Service = _Service;
 	_Server->m_State = Filesystem_Server_State_Init;
 
@@ -101,7 +101,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	Filesystem_Checking_Initialize(&_Server->m_Checking, _Server);
 
 
-	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, 100);
+	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, MS * 100);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
@@ -265,7 +265,7 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 	}
 
 	Payload* message = NULL;
-	TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 0, 1000, &message);
+	TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 0, SEC, &message);
 	
 	_Server->m_State = Filesystem_Server_State_Conneced;
 	return 0;
@@ -1005,7 +1005,7 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 			UInt16 size = 1 + 2 + strlen(_Path) + 2 + fileSize + 16;
 
 			Payload* message = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, SEC, &message) == 0)
 			{
 				Buffer_WriteUInt8(&message->m_Data, (UInt8)_IsFile);
 				
@@ -1077,7 +1077,7 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 		UInt16 size = 1 + 2 + strlen(_Path) + 16;
 
 		Payload* message = NULL;
-		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, 1000, &message) == 0)
+		if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, SEC, &message) == 0)
 		{
 			Buffer_WriteUInt8(&message->m_Data, (UInt8)_IsFile);
 			
@@ -1127,7 +1127,7 @@ void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _
 		if (Payload_ComperAddresses(&connection->m_Addrass, _IgnoreAddress) == False)
 		{
 			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Message->m_Size, 1000, &msg) == 0)
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Message->m_Size, SEC, &msg) == 0)
 			{
 				_Message->m_Time = msg->m_Time;
 				_Message->m_State = msg->m_State;
@@ -1267,7 +1267,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				}
 				
 				Payload* message = NULL;
-				if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, 1000, &message) == 0)
+				if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 1 + 2 + str.m_Length, SEC, &message) == 0)
 				{
 
 					Buffer_WriteUInt8(&message->m_Data, (UInt8)isFile);
