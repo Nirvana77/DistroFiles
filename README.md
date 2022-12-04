@@ -9,8 +9,8 @@ Easy to use, user based file shearing system. [Doc](https://www.overleaf.com/rea
 
 
 # Build Instructions
-- [How to build the Service](Docs/Service.md): Linux build only
-- [How to launched the GUI](Docs/GUI.md): Python3
+- [How to build the Service](docs/Service.md): Linux build only
+- [How to launched the GUI](docs/GUI.md): Python3
 # Installation
 ```
 $ sudo apt-get update && sudo apt-get upgrade -y
