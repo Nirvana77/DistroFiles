@@ -21,8 +21,8 @@ $ ./compile
 ```
 
 # Build Instructions
-- [How to build the Service](Docs/Service.md): Linux build only
-- [How to launched the GUI](Docs/GUI.md): Python3
+- [How to build the Service](docs/Service.md): Linux build only
+- [How to launched the GUI](docs/GUI.md): Python3
 
 # Contribute
 1. Fork the repo and create a new branch: `$ git checkout -b name_for_new_branch`.
