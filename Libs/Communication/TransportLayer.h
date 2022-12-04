@@ -12,7 +12,7 @@ struct T_TransportLayer
 	Bool m_Allocated;
 
 	LinkedList m_Queued;
-	LinkedList m_Sented;
+	LinkedList m_Sent;
 	LinkedList m_Postponed;
 
 	Payload_FuncOut m_FuncOut;

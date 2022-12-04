@@ -30,7 +30,7 @@ int TransportLayer_Initialize(TransportLayer* _TransportLayer)
 		printf("Error code: %i\n\r", success);
 		return -2;
 	}
-	success = LinkedList_Initialize(&_TransportLayer->m_Sented);
+	success = LinkedList_Initialize(&_TransportLayer->m_Sent);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Sented!\n\r");
@@ -126,7 +126,7 @@ int TransportLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 		Payload* p = (Payload*)LinkedList_RemoveFirst(&_TransportLayer->m_Queued);
 		SystemMonotonicMS(&p->m_Time);
 
-		LinkedList_Push(&_TransportLayer->m_Sented, p);
+		LinkedList_Push(&_TransportLayer->m_Sent, p);
 		
 		p->m_State = Payload_State_Sending;
 		EventHandler_EventCall(&p->m_EventHandler, (int)p->m_State, p);
@@ -157,7 +157,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 	if(_Message->m_Type == Payload_Type_BroadcastRespons || _Message->m_Type == Payload_Type_Respons)
 	{
 		Bool hasMessage = False;
-		LinkedList_Node* currentNode = _TransportLayer->m_Sented.m_Head;
+		LinkedList_Node* currentNode = _TransportLayer->m_Sent.m_Head;
 		while(currentNode != NULL)
 		{
 			Payload* _Payload = (Payload*) currentNode->m_Item;
@@ -218,7 +218,7 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 
 void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 {
-	LinkedList_Node* currentNode = _TransportLayer->m_Sented.m_Head;
+	LinkedList_Node* currentNode = _TransportLayer->m_Sent.m_Head;
 	while(currentNode != NULL)
 	{
 		Payload* _Payload = (Payload*) currentNode->m_Item;
@@ -233,7 +233,7 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			_Payload->m_State = Payload_State_Timeout;
 			EventHandler_EventCall(&_Payload->m_EventHandler, (int)_Payload->m_State, _Payload);
 			
-			LinkedList_RemoveItem(&_TransportLayer->m_Sented, _Payload);
+			LinkedList_RemoveItem(&_TransportLayer->m_Sent, _Payload);
 			Payload_Dispose(_Payload);
 		}
 
@@ -272,12 +272,12 @@ void TransportLayer_Dispose(TransportLayer* _TransportLayer)
 		Payload_Dispose(_Payload);
 	}
 	
-	currentNode = _TransportLayer->m_Sented.m_Head;
+	currentNode = _TransportLayer->m_Sent.m_Head;
 	while(currentNode != NULL)
 	{
 		Payload* _Payload = (Payload*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
-		LinkedList_RemoveFirst(&_TransportLayer->m_Sented);
+		LinkedList_RemoveFirst(&_TransportLayer->m_Sent);
 		Payload_Dispose(_Payload);
 	}
 
@@ -292,7 +292,7 @@ void TransportLayer_Dispose(TransportLayer* _TransportLayer)
 	
 
 	LinkedList_Dispose(&_TransportLayer->m_Postponed);
-	LinkedList_Dispose(&_TransportLayer->m_Sented);
+	LinkedList_Dispose(&_TransportLayer->m_Sent);
 	LinkedList_Dispose(&_TransportLayer->m_Queued);
 
 	if(_TransportLayer->m_Allocated == True)
