@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 // For reading user input for exiting the program without memorys leeks.
 #include <termios.h>
