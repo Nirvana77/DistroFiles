@@ -8,7 +8,7 @@ int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socke
 	if(_Commection == NULL)
 		return -1;
 	
-	int success = Filesystem_Connection_Initialize(_Commection, _Worker, _Socket);
+	int success = Filesystem_Connection_Initialize(_Commection, _Worker, _Socket, _Buffer);
 	if(success != 0)
 	{
 		Allocator_Free(_Commection);
