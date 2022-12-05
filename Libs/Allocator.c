@@ -137,14 +137,24 @@
 		}
 
 		#ifdef ALLOCATOR_PRINT
-			printf("---------------------------Stats---------------------------\r\n");
-			printf("Max malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Max.m_Size, g_Allocator.m_Max.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Max.m_FunctionString);
-			printf("Min malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Min.m_Size, g_Allocator.m_Min.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Min.m_FunctionString);
-			printf("Average malloced memory: %ub\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
-			printf("Max memory: %lub\r\n", g_Allocator.m_MaxMemory);
-			printf("Total malloced memory: %lub\r\n", g_Allocator.m_Total);
-			printf("Number of malloced memory: %lu times\r\n", g_Allocator.m_Num);
-			printf("---------------------------------------------------------\r\n");
+			printf("---------------------------------------------------------\r\n\r\n\r\n");
+			if(g_Allocator.m_Num != 0)
+			{
+				printf("-------------------------Stats---------------------------\r\n");
+				printf("Max malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Max.m_Size, g_Allocator.m_Max.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Max.m_FunctionString);
+				printf("Min malloced memory: %ub at %s,%u,%s\r\n", g_Allocator.m_Min.m_Size, g_Allocator.m_Min.m_FileString, g_Allocator.m_Max.m_LineNumber, g_Allocator.m_Min.m_FunctionString);
+				printf("Average malloced memory: %ub\r\n", (UInt32)(g_Allocator.m_Total/g_Allocator.m_Num + 1));
+				printf("Max memory: %lub\r\n", g_Allocator.m_MaxMemory);
+				printf("Total malloced memory: %lub\r\n", g_Allocator.m_Total);
+				printf("Number of malloced memory: %lu times\r\n", g_Allocator.m_Num);
+				printf("---------------------------------------------------------\r\n");
+			}
+			else
+			{
+				printf("-----------------------No Stats--------------------------\r\n");
+				printf("---------------------------------------------------------\r\n");
+
+			}
 		#endif
 		
 		File_Close(g_Allocator.m_F);
