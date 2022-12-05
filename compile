@@ -5,7 +5,7 @@ clear
 FILENAME="main"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
-LFLAGS="-ljansson -lcurl -luuid"
+LFLAGS="-ljansson -lcurl -luuid -lpthread"
 
 echo "Cleaning up..."
 rm *.o

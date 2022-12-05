@@ -16,7 +16,6 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
 
 
-
 int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16]);
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16]);
 void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data);
@@ -160,8 +159,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	char tempPath[_Server->m_Service->m_Path.m_Length + 5];
 	sprintf(tempPath, "%s/temp", _Server->m_Service->m_Path.m_Ptr);
 
-	printf("tempPath: %s\n\r", tempPath);
-
 	if(Folder_IsEmpty(tempPath) == False)
 		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
 
@@ -171,12 +168,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-
-	char ip[17];
-	memset(ip, 0, sizeof(ip));
-	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
-	
-	printf("Filesystem_Server: Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
 
 	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
 

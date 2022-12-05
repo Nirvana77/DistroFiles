@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 // For reading user input for exiting the program without memorys leeks.
 #include <termios.h>
@@ -40,15 +41,22 @@
 #include "Libs/TCP/TCPClient.c"
 
 #include "Libs/Filesystem/Filesystem_Server.c"
-#include "Libs/Filesystem/Filesystem_Checking.c"
 #include "Libs/Filesystem/Filesystem_Client.c"
 #include "Libs/Filesystem/Filesystem_Service.c"
+#include "Libs/Filesystem/Filesystem_Checking.c"
+#include "Libs/Filesystem/Filesystem_Connection.c"
 
 void printHash(unsigned char result[16]);
 int kbhit(void);
 
 StateMachine g_StateMachine;
-
+int threadFunction(UInt64 _MSTime, void* _Context)
+{
+	printf("I am threadFunction.\n");
+	//sleep(2);
+	printf("End of threadFunction.\n");
+	return 1;
+}
 
 int main(int argc, char* argv[])
 {
@@ -130,7 +138,6 @@ int main(int argc, char* argv[])
 	tim.tv_nsec = 0;
 	while(doExit == 1)
 	{
-		StateMachine_Work(&g_StateMachine);
 		
 		if(kbhit())
 		{
