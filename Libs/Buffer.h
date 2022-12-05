@@ -32,6 +32,10 @@ static inline int Buffer_Extend(Buffer* _Buffer)
 {
 	return Buffer_ExtendBy(_Buffer, _Buffer->m_ExtentionSize);
 }
+static inline int Buffer_SizeLeft(Buffer* _Buffer)
+{
+	return _Buffer->m_Size - (_Buffer->m_WritePtr - _Buffer->m_Ptr);
+}
 
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value);
 int Buffer_ReadUInt32(Buffer* _Buffer, UInt32* _Value);

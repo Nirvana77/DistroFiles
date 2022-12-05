@@ -1,6 +1,6 @@
 #include "Filesystem_Service.h"
 
-void Filesystem_Service_Work(UInt64 _MSTime, void* _Context);
+int Filesystem_Service_Work(UInt64 _MSTime, void* _Context);
 
 int Filesystem_Service_Load(Filesystem_Service* _Service);
 int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON);
@@ -124,17 +124,18 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	}
 
 	EventHandler_Initialize(&_Service->m_EventHandler);
-
-	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
+	
+	StateMachine_CreateTask(_Service->m_Worker, NULL, Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
 }
 
-void Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
+int Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
 
 	Filesystem_Server_Work(_MSTime, _Service->m_Server);
 	Filesystem_Client_Work(_MSTime, _Service->m_Client);
+	return 0;
 }
 
 
@@ -356,7 +357,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 	if(totalReaded > 0)
 	{
-		printf("Filesystem_Service_TCPRead\n\r");
+		printf("Filesystem_Service_TCPRead(%i)\n\r", totalReaded);
 		Buffer_DeepCopy(_Buffer, &_Service->m_Buffer, _Service->m_Buffer.m_BytesLeft);
 		return totalReaded;
 	}
