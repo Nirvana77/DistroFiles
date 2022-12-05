@@ -47,7 +47,6 @@ int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, 
 
 	_Task->m_Callback = _Callback;
 	_Task->m_Context = _Context;
-	pthread_attr_t attr;
 
     int success = pthread_create(&_Task->m_Thread, _Attr, &StateMachine_TaskWork, _Task);
 	if(success != 0)
