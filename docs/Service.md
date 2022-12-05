@@ -34,5 +34,6 @@ When working on an implemtention or want to debug the service.
     - `gdb`: GDB debug mode. Dose the same as `d` but enable the GDB. 
 - `r`: Will auto run the service after compiling
 ```
+$ git checkout <Branch>
 $ ./compile <DebugMode> r
 ```
