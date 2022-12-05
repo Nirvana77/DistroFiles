@@ -49,7 +49,13 @@ void printHash(unsigned char result[16]);
 int kbhit(void);
 
 StateMachine g_StateMachine;
-
+int threadFunction(UInt64 _MSTime, void* _Context)
+{
+	printf("I am threadFunction.\n");
+	//sleep(2);
+	printf("End of threadFunction.\n");
+	return 1;
+}
 
 int main(int argc, char* argv[])
 {
@@ -131,7 +137,6 @@ int main(int argc, char* argv[])
 	tim.tv_nsec = 0;
 	while(doExit == 1)
 	{
-		StateMachine_Work(&g_StateMachine);
 		
 		if(kbhit())
 		{

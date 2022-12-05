@@ -1,5 +1,10 @@
 #include "StateMachine.h"
 
+void* StateMachine_TaskWork(void* _Context);
+void StateMachine_DisposeThread(StateMachine_Task* _Task);
+void* StateMachine_InternalDisposeThread(void* _Context);
+
+
 int StateMachine_InitializePtr(StateMachine** _StateMachinePtr)
 {
 	StateMachine* _StateMachine = (StateMachine*)Allocator_Malloc(sizeof(StateMachine));
@@ -28,26 +33,35 @@ int StateMachine_Initialize(StateMachine* _StateMachine)
 	return 0;
 }
 
-//TODO: #6 fix prio.
-int StateMachine_CreateTask(StateMachine* _StateMachine, unsigned int _Prio, const char* _Name, void (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
+int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, const char* _Name, int (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
 {
+	if(_Callback == NULL)
+		return -2;
+
 	StateMachine_Task* _Task = (StateMachine_Task*) Allocator_Malloc(sizeof(StateMachine_Task));
 
 	if(_Task == NULL)
 		return -1;
+	
+	_Task->m_Disposed = False;
 
 	_Task->m_Callback = _Callback;
 	_Task->m_Context = _Context;
-	_Task->m_Prio = _Prio;
+	pthread_attr_t attr;
+
+    int success = pthread_create(&_Task->m_Thread, _Attr, &StateMachine_TaskWork, _Task);
+	if(success != 0)
+	{
+		Allocator_Free(_Task);
+		return -3;
+	}
 
 	if(LinkedList_Push(&_StateMachine->m_List, _Task) != 0)
 	{
+		StateMachine_DisposeThread(_Task);
 		Allocator_Free(_Task);
-		return -2;
+		return -4;
 	}
-
-	if(_StateMachine->m_Current == NULL)
-		_StateMachine->m_Current = _StateMachine->m_List.m_Head;
 	
 	if(_TaskPtr != NULL)
 		*(_TaskPtr) = _Task;
@@ -64,6 +78,7 @@ int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Tas
 		StateMachine_Task* task = (StateMachine_Task*) currentNode->m_Item;
 		if(_Task == task)
 		{
+			StateMachine_DisposeThread(task);
 			LinkedList_RemoveNode(&_StateMachine->m_List, currentNode);
 			Allocator_Free(task);
 			return 0;
@@ -74,24 +89,39 @@ int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Tas
 	return 1;
 }
 
-void StateMachine_Work(StateMachine* _StateMachine)
+void* StateMachine_TaskWork(void* _Context)
 {
-	if(_StateMachine->m_Current == NULL)
-		return;
+	StateMachine_Task* _Task = (StateMachine_Task*) _Context;
+	while (_Task->m_Disposed == False)
+	{
+		UInt64 monoTime = 0;
 
-	StateMachine_Task* _Task = (StateMachine_Task*) _StateMachine->m_Current->m_Item;
-	_StateMachine->m_Current = _StateMachine->m_Current->m_Next;
+		SystemMonotonicMS(&monoTime);
 
-	if(_StateMachine->m_Current == NULL)
-		_StateMachine->m_Current = _StateMachine->m_List.m_Head;
-		
-	UInt64 monoTime = 0;
+		int willDispose = _Task->m_Callback(monoTime, _Task->m_Context);
+		if(willDispose == 1)
+		{
+			pthread_t thread;
+			pthread_create(&thread, NULL, &StateMachine_InternalDisposeThread, _Task);
+			sleep(1);
+		}
+	}
 
-	SystemMonotonicMS(&monoTime);
+	return NULL;
+}
 
-	if(_Task->m_Callback != NULL)
-		_Task->m_Callback(monoTime, _Task->m_Context);
+void StateMachine_DisposeThread(StateMachine_Task* _Task)
+{
+	_Task->m_Disposed = True;
+	pthread_join(_Task->m_Thread, NULL);
+}
 
+void* StateMachine_InternalDisposeThread(void* _Context)
+{
+	StateMachine_Task* _Task = (StateMachine_Task*) _Context;
+	StateMachine_DisposeThread(_Task);
+
+	return NULL;
 }
 
 void StateMachine_Dispose(StateMachine* _StateMachine)
@@ -102,9 +132,13 @@ void StateMachine_Dispose(StateMachine* _StateMachine)
 	{
 		StateMachine_Task* task = (StateMachine_Task*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
+
+		StateMachine_DisposeThread(task);
 		LinkedList_RemoveFirst(&_StateMachine->m_List);
 		Allocator_Free(task);
 	}
+
+	pthread_exit(NULL);
 
 	LinkedList_Dispose(&_StateMachine->m_List);
 	
