@@ -32,6 +32,7 @@
 #include "Libs/uuid.c"
 
 #include "Libs/Communication/Payload.c"
+#include "Libs/Communication/Bus.c"
 #include "Libs/Communication/DataLayer.c"
 #include "Libs/Communication/NetworkLayer.c"
 #include "Libs/Communication/TransportLayer.c"
