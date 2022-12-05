@@ -24,6 +24,7 @@ typedef struct T_Filesystem_Service Filesystem_Service;
 #include "../Communication/TransportLayer.h"
 #include "../EventHandler.h"
 
+#include "Filesystem_Connection.h"
 #include "Filesystem_Client.h"
 #include "Filesystem_Server.h"
 
@@ -46,12 +47,6 @@ typedef struct
 	UInt16 m_Interval;
 
 } Filesystem_ServiceSettings;
-
-typedef struct
-{
-	Payload_Address m_Addrass;
-	TCPSocket* m_Socket;
-} Filesystem_Connection;
 
 struct T_Filesystem_Service
 {

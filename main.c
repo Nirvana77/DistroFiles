@@ -41,9 +41,10 @@
 #include "Libs/TCP/TCPClient.c"
 
 #include "Libs/Filesystem/Filesystem_Server.c"
-#include "Libs/Filesystem/Filesystem_Checking.c"
 #include "Libs/Filesystem/Filesystem_Client.c"
 #include "Libs/Filesystem/Filesystem_Service.c"
+#include "Libs/Filesystem/Filesystem_Checking.c"
+#include "Libs/Filesystem/Filesystem_Connection.c"
 
 void printHash(unsigned char result[16]);
 int kbhit(void);
