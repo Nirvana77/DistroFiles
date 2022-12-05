@@ -48,33 +48,6 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
 
-	int size = Buffer_SizeLeft(_Connection->m_Buffer);
-	int readed = TCPSocket_Read(_Connection->m_Socket, _Connection->m_Buffer->m_WritePtr, size);
-	
-	while (readed == size)
-	{
-		Buffer_Extend(_Connection->m_Buffer);
-		size = Buffer_SizeLeft(_Connection->m_Buffer);
-		readed = TCPSocket_Read(_Connection->m_Socket, _Connection->m_Buffer->m_WritePtr, size);
-	}
-	
-	if(readed > 0)
-		EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Readed, _Connection);
-		
-
-	if(_MSTime > _Connection->m_NextCheck)
-	{
-		_Connection->m_NextCheck = _MSTime + Filesystem_Connection_Timeout;
-
-		int succeess = recv(_Connection->m_Socket->m_FD, NULL, 1, MSG_PEEK | MSG_DONTWAIT);
-
-		if(succeess == 0)
-		{
-			
-			EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
-			return 1;
-		}
-	}
 
 	return 0;
 }
