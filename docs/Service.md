@@ -25,5 +25,15 @@ To launched the GUI
 - `Path`: Is the path for the filesystem.
 
 ```
-& ./bin/main <Path> <Mode>
+$ ./bin/main <Path> <Mode>
+```
+# Development
+When working on an implemtention or want to debug the service.
+- `DebugMode`: Changes the mode of debuging.
+    - `d`: Normal debug mode. This creates the `payload_dump.txt` and `AllocatorDebug.txt` files.
+    - `gdb`: GDB debug mode. Dose the same as `d` but enable the GDB. 
+- `r`: Will auto run the service after compiling
+```
+$ git checkout <Branch>
+$ ./compile <DebugMode> r
 ```
