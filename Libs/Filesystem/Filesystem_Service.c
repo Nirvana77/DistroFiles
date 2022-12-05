@@ -123,6 +123,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		return -8;
 	}
 
+	EventHandler_Initialize(&_Service->m_EventHandler);
+
 	StateMachine_CreateTask(_Service->m_Worker, 0, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
 }
@@ -431,6 +433,7 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 	}
 
 	Buffer_Dispose(&_Service->m_Buffer);
+	EventHandler_Dispose(&_Service->m_EventHandler);
 
 	if(_Service->m_Settings.m_Servers != NULL)
 		json_decref(_Service->m_Settings.m_Servers);

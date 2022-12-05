@@ -67,6 +67,7 @@ struct T_Filesystem_Server
 	Buffer m_TempListBuffer;
 	UInt16 m_TempListSize;
 	
+	EventHandler m_EventHandler;
 };
 
 int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr);

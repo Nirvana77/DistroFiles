@@ -50,9 +50,6 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		TCPServer_Dispose(&_Client->m_TCPServer);
 		return -3;
 	}
-	
-	LinkedList_Initialize(&_Client->m_Connections);
-
 
 	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Filesystem_Client_TCPRead, Filesystem_Client_TCPWrite, NULL, _Client, MS * 100);
 	if(success != 0)
@@ -60,7 +57,6 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the DataLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Connections);
 		return -5;
 	}
 
@@ -70,7 +66,6 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the NetworkLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Connections);
 		DataLayer_Dispose(&_Client->m_DataLayer);
 		return -6;
 	}
@@ -81,11 +76,13 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 		printf("Failed to initialize the TransportLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Client->m_TCPServer);
-		LinkedList_Dispose(&_Client->m_Connections);
 		DataLayer_Dispose(&_Client->m_DataLayer);
 		NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 		return -6;
 	}
+	
+	LinkedList_Initialize(&_Client->m_Connections);
+	EventHandler_Initialize(&_Client->m_EventHandler);
 
 	Payload_FuncOut_Set(&_Client->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Client->m_NetworkLayer);
 	Payload_FuncOut_Set(&_Client->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Client->m_TransportLayer);
@@ -249,10 +246,11 @@ void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 		TCPSocket_Dispose(connection->m_Socket);
 		Allocator_Free(connection);
 	}
+	LinkedList_Dispose(&_Client->m_Connections);
+	EventHandler_Dispose(&_Client->m_EventHandler);
 
 	TCPServer_Dispose(&_Client->m_TCPServer);
 
-	LinkedList_Dispose(&_Client->m_Connections);
 
 	if(_Client->m_Allocated == True)
 		Allocator_Free(_Client);

@@ -22,6 +22,7 @@ typedef struct T_Filesystem_Service Filesystem_Service;
 #include "../Communication/DataLayer.h"
 #include "../Communication/NetworkLayer.h"
 #include "../Communication/TransportLayer.h"
+#include "../EventHandler.h"
 
 #include "Filesystem_Client.h"
 #include "Filesystem_Server.h"
@@ -69,6 +70,7 @@ struct T_Filesystem_Service
 
 	Filesystem_ServiceSettings m_Settings;
 
+	EventHandler m_EventHandler;
 };
 
 int Filesystem_Service_InitializePtr(StateMachine* _Worker, const char* _Path, Filesystem_Service** _ServicePtr);

@@ -4,6 +4,7 @@
 struct T_Filesystem_Client;
 typedef struct T_Filesystem_Client Filesystem_Client;
 
+
 #include "Filesystem_Service.h"
 
 struct T_Filesystem_Client
@@ -21,6 +22,8 @@ struct T_Filesystem_Client
 	DataLayer m_DataLayer;
 	NetworkLayer m_NetworkLayer;
 	TransportLayer m_TransportLayer;
+
+	EventHandler m_EventHandler;
 
 };
 

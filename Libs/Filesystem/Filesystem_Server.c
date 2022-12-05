@@ -99,9 +99,16 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		String_Dispose(&_Server->m_FilesytemPath);
 		return -4;
 	}
-	LinkedList_Initialize(&_Server->m_Connections);
-	Filesystem_Checking_Initialize(&_Server->m_Checking, _Server);
 
+	success = Filesystem_Checking_Initialize(&_Server->m_Checking, _Server);
+	if(success != 0)
+	{
+		printf("Failed to initialize the DataLayer for server!\n\r");
+		printf("Error code: %i\n\r", success);
+		TCPServer_Disconnect(&_Server->m_TCPServer);
+		String_Dispose(&_Server->m_FilesytemPath);
+		return -5;
+	}
 
 	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, MS * 100);
 	if(success != 0)
@@ -110,7 +117,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Connections);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		return -5;
@@ -123,7 +129,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Connections);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
@@ -137,13 +142,16 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		printf("Error code: %i\n\r", success);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		LinkedList_Dispose(&_Server->m_Connections);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		NetworkLayer_Dispose(&_Server->m_NetworkLayer);
 		return -6;
 	}
+
+	
+	LinkedList_Initialize(&_Server->m_Connections);
+	EventHandler_Initialize(&_Server->m_EventHandler);
 
 	Payload_FuncOut_Set(&_Server->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Server->m_NetworkLayer);
 	Payload_FuncOut_Set(&_Server->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Server->m_TransportLayer);
@@ -1425,6 +1433,7 @@ void Filesystem_Server_Sync(Filesystem_Server* _Server)
 	}
 }
 
+//note: Then return 1 the event gets unhooked;
 int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
@@ -1504,12 +1513,14 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 		LinkedList_RemoveFirst(&_Server->m_Connections);
 	}
 
+	LinkedList_Dispose(&_Server->m_Connections);
+	EventHandler_Dispose(&_Server->m_EventHandler);
+
 	TCPServer_Dispose(&_Server->m_TCPServer);
 
 	String_Dispose(&_Server->m_FilesytemPath);
 
 	Filesystem_Checking_Dispose(&_Server->m_Checking);
-	LinkedList_Dispose(&_Server->m_Connections);
 	Buffer_Dispose(&_Server->m_TempListBuffer);
 
 	if(_Server->m_Allocated == True)
