@@ -33,7 +33,7 @@ int StateMachine_Initialize(StateMachine* _StateMachine)
 	return 0;
 }
 
-int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, const char* _Name, int (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
+int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, int (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr)
 {
 	if(_Callback == NULL)
 		return -2;

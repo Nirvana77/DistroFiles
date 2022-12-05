@@ -30,7 +30,7 @@ int StateMachine_InitializePtr(StateMachine** _StateMachinePtr);
 int StateMachine_Initialize(StateMachine* _StateMachine);
 
 //* Then the callback returns 1 the task will be desposed
-int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, const char* _Name, int (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr);
+int StateMachine_CreateTask(StateMachine* _StateMachine, pthread_attr_t* _Attr, int (*_Callback)(UInt64 _MSTime, void* _Context), void* _Context, StateMachine_Task** _TaskPtr);
 int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Task);
 
 void StateMachine_Dispose(StateMachine* _StateMachine);

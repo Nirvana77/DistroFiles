@@ -124,11 +124,8 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	}
 
 	EventHandler_Initialize(&_Service->m_EventHandler);
-	pthread_attr_t attr;
-	pthread_attr_init(&attr);
-
-
-	StateMachine_CreateTask(_Service->m_Worker, &attr, "FilesystemServer", Filesystem_Service_Work, _Service, &_Service->m_Task);
+	
+	StateMachine_CreateTask(_Service->m_Worker, NULL, Filesystem_Service_Work, _Service, &_Service->m_Task);
 	return 0;
 }
 
