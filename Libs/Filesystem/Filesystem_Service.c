@@ -315,12 +315,13 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 	String_Dispose(&str);
 	return 0;
 }
+/*
 
 int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
 		return 0;
-
+	
 	int totalReaded = 0;
 	LinkedList_Node* currentNode = _List->m_Head;
 	unsigned char buffer[Filesystem_Service_BufferMax];
@@ -412,7 +413,7 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 
 	return 0;
 }
-
+*/
 void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 {
 	if(_Service->m_Task != NULL)

@@ -115,7 +115,7 @@ int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	return 0;
 }
 
-
+/*
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
@@ -127,6 +127,7 @@ int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 	return Filesystem_Service_TCPWrite(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
 }
+*/
 
 int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {

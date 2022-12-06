@@ -184,6 +184,7 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	return 0;
 }
 
+/*
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
@@ -243,6 +244,7 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	LinkedList_Dispose(&list);
 	return success;
 }
+*/
 
 int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 {
