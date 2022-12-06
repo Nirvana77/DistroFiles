@@ -118,6 +118,23 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
+	
+	void* ptr = _Buffer->m_ReadPtr;
+	UInt8 flag = 0;
+	Payload_Address des;
+	UInt8 type = 0;
+
+	ptr += Memory_ParseUInt8(ptr, &flag);
+	ptr += Payload_DestinationPosistion;
+
+	if(BitHelper_GetBit(flag, DataLayer_HasDestinationBit) == True)
+	{
+		ptr += Payload_DestinationPosistion;
+		ptr += Memory_ParseUInt8(ptr, &type);
+		des.m_Type = type;
+		Memory_ParseBuffer(&des.m_Address, ptr, sizeof(des.m_Address));
+	}
+	
 	return TCPSocket_Write((void*)_Connection->m_Socket, _Buffer);	
 }
 
