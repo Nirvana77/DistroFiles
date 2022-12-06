@@ -12,6 +12,9 @@ typedef struct T_DataLayer DataLayer;
 	#define DataLayer_CRC (0b11011)
 #endif
 
+#define DataLayer_HasSourceBit 0
+#define DataLayer_HasDestinationBit 1
+#define DataLayer_HasMethodBit 2
 
 struct T_DataLayer
 {
