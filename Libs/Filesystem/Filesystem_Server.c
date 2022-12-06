@@ -1,6 +1,7 @@
 #include "Filesystem_Server.h"
 
 int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
+int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
@@ -178,9 +179,52 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 	if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, _TCPSocket, &_Server->m_Bus, &_Connection) != 0)
 		return 1;
 
-	EventHandler_Hook(&_Connection->m_EventHandler, test, _Server);
+	EventHandler_Hook(&_Connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
 
 	LinkedList_Push(&_Server->m_Connections, _Connection);
+	return 0;
+}
+
+int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
+	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+
+	switch (_EventCall)
+	{
+		case Filesystem_Connection_Event_Disposed:
+		{
+			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+			return 0;
+		} break;
+
+		case Filesystem_Connection_Event_Disconnected:
+		{
+			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
+			{
+				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
+				{
+					char ip[16];
+					Payload_GetIP(&_Connection->m_Addrass, ip);
+					printf("TODO reconnect to \"%s\"\r\n", ip);
+				}
+				else
+				{
+					char mac[18];
+					Payload_GetMac(&_Connection->m_Addrass, mac);
+					printf("Connection \"%s\" got disconnected\r\n", mac);
+					return 1;
+				}
+			}
+			else
+			{
+				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+				Filesystem_Connection_Dispose(_Connection);
+				printf("Connection disconnected\r\n");
+				return 0;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -267,9 +311,9 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 			Filesystem_Connection* connection = NULL;
 			if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, socket, &_Server->m_Bus, &connection) == 0)
 			{
-				EventHandler_Hook(&connection->m_EventHandler, test, _Server);
-			connection->m_Socket = socket;
-			LinkedList_Push(&_Server->m_Connections, connection);
+				EventHandler_Hook(&connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
+				connection->m_Socket = socket;
+				LinkedList_Push(&_Server->m_Connections, connection);
 
 			}
 		}
