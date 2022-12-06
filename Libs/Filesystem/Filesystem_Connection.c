@@ -66,8 +66,28 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 	int readed = TCPSocket_Read((void*)_Connection->m_Socket, &_Connection->m_Buffer);
 
 	if(readed > 0)
+	{
+		if(_Connection->m_Addrass.m_Type == Payload_Address_Type_NONE)
+		{
+			void* ptr = _Connection->m_Buffer.m_ReadPtr;
+			ptr += Payload_SourcePosistion + 1; //1 because we skip to readed the flags
+			UInt8 type = 0;
+			ptr += Memory_ParseUInt8(ptr, &type);
+			_Connection->m_Addrass.m_Type = (Payload_Address_Type)type;
+
+			if(type != Payload_Address_Type_NONE)
+				Memory_ParseBuffer(&_Connection->m_Addrass.m_Address, ptr, sizeof(_Connection->m_Addrass.m_Address));
+			
+			printf("Added connection(%i) ", _Connection->m_Socket->m_FD);
+
+			for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
+				printf("%x.", _Connection->m_Addrass.m_Address.MAC[i]);
+
+			printf("\r\n");
+		}
 		EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Readed, _Connection);
-	
+	}
+
 	if(_MSTime > _Connection->m_NextCheck + Filesystem_Connection_Timeout)
 	{
 		_Connection->m_NextCheck = _MSTime;
@@ -98,7 +118,7 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
-	return TCPSocket_Write((void*)_Connection->m_Socket, _Buffer);
+	return TCPSocket_Write((void*)_Connection->m_Socket, _Buffer);	
 }
 
 void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
