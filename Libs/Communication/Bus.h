@@ -37,9 +37,9 @@ int Bus_AddFuncIn(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), in
 //! This is not implemented
 int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context, Payload_FuncIn** _FuncPtr);
 
-int BusRemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func);
+int Bus_RemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func);
 //! This is not implemented
-int BusRemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func);
+int Bus_RemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func);
 
 int Bus_OnRead(void* _Context, Buffer* _Buffer);
 int Bus_OnWrite(void* _Context, Buffer* _Buffer);

@@ -82,7 +82,7 @@ int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), i
 	return 0;
 }
 
-int BusRemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func)
+int Bus_RemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func)
 {
 	int success = LinkedList_RemoveItem(&_Bus->m_FuncIn, _Func);
 	if(success == 0)
@@ -91,7 +91,7 @@ int BusRemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func)
 	return success;
 }
 
-int BusRemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func)
+int Bus_RemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func)
 {
 	int success = LinkedList_RemoveItem(&_Bus->m_FuncOut, _Func);
 	if(success == 0)
