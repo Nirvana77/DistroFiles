@@ -166,8 +166,10 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 			if(uuid_Compere(_Payload->m_UUID, _Message->m_UUID) == True)
 			{
 				EventHandler_EventCall(&_Payload->m_EventHandler, (int)Payload_State_Replay, _Message);
-				SystemMonotonicMS(&_Payload->m_Time);
 				hasMessage = True;
+				LinkedList_RemoveItem(&_TransportLayer->m_Sent, _Payload);
+				Payload_Dispose(_Payload);
+				currentNode = NULL;
 			}
 		}
 				
