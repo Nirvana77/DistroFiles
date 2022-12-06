@@ -167,8 +167,8 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 			{
 				EventHandler_EventCall(&_Payload->m_EventHandler, (int)Payload_State_Replay, _Message);
 				hasMessage = True;
-				LinkedList_RemoveItem(&_TransportLayer->m_Sent, _Payload);
-				Payload_Dispose(_Payload);
+				SystemMonotonicMS(&_Payload->m_Time);
+				_Payload->m_State = Payload_State_Replay;
 				currentNode = NULL;
 			}
 		}
@@ -232,7 +232,11 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Removed: %s\n\r", str);
 			
-			_Payload->m_State = Payload_State_Timeout;
+			if(_Payload->m_State == Payload_State_Resived)
+				_Payload->m_State = Payload_State_Destroyed;
+			else
+				_Payload->m_State = Payload_State_Timeout;
+			
 			EventHandler_EventCall(&_Payload->m_EventHandler, (int)_Payload->m_State, _Payload);
 			
 			LinkedList_RemoveItem(&_TransportLayer->m_Sent, _Payload);
