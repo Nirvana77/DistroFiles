@@ -109,11 +109,14 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -5;
 	}
 
-	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, MS * 100);
+	Bus_Initialize(&_Server->m_Bus);
+
+	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, MS * 100);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
+		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -126,6 +129,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	{
 		printf("Failed to initialize the NetworkLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
+		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -139,6 +143,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	{
 		printf("Failed to initialize the TransportLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
+		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -1503,6 +1508,7 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 		Allocator_Free(connection);
 		LinkedList_RemoveFirst(&_Server->m_Connections);
 	}
+	Bus_Dispose(&_Server->m_Bus);
 
 	LinkedList_Dispose(&_Server->m_Connections);
 	EventHandler_Dispose(&_Server->m_EventHandler);
