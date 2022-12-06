@@ -84,9 +84,6 @@ int TCPSocket_Write(void* _Context, Buffer* _Buffer)
 	TCPSocket* _TCPSocket = (TCPSocket*) _Context;
 	int bytesSent = send(_TCPSocket->m_FD, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft, MSG_NOSIGNAL);
 
-	_Buffer->m_BytesLeft -= bytesSent;
-	_Buffer->m_ReadPtr += bytesSent;
-
 	if(bytesSent < 0)
 	{
 		if (errno == EWOULDBLOCK)
@@ -109,6 +106,11 @@ int TCPSocket_Write(void* _Context, Buffer* _Buffer)
 			_TCPSocket->m_Status = TCPSocket_Status_Failed;
 			return -1;
 		}
+	}
+	else
+	{
+		_Buffer->m_BytesLeft -= bytesSent;
+		_Buffer->m_ReadPtr += bytesSent;
 	}
 
 	return bytesSent;

@@ -76,7 +76,6 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 		if(readed == 0)
 		{
 			EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
-			return 1;
 		}
 	}
 
@@ -110,9 +109,11 @@ void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
 	_Connection->m_Disposed = True;
 	EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disposed, _Connection);
 
+	Bus_RemoveFuncIn(_Connection->m_Bus, _Connection->m_Func);
 	Buffer_Dispose(&_Connection->m_Buffer);
 
 	EventHandler_Dispose(&_Connection->m_EventHandler);
+	TCPSocket_Dispose(_Connection->m_Socket);
 	StateMachine_RemoveTask(_Connection->m_Worker, _Connection->m_Task);
 
 	if(_Connection->m_Allocated == True)
