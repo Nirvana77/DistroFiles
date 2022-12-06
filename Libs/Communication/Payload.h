@@ -44,6 +44,13 @@ typedef struct
 	int (*m_Send)(void* _Context, Payload** _PaylodePtr);
 } Payload_FuncOut;
 
+typedef struct
+{
+	void* m_Context;
+	int (*m_OnRead)(void* _Context, Buffer* _Buffer);
+	int (*m_OnWrite)(void* _Context, Buffer* _Buffer);
+} Payload_FuncIn;
+
 static inline void Payload_FuncOut_Set(Payload_FuncOut* _FuncOut, int (*_Receive)(void* _Context, Payload* _Message, Payload* _Replay), int (*_Send)(void* _Context, Payload** _PaylodePtr), void* _Context)
 {
 	_FuncOut->m_Context = _Context;

@@ -25,17 +25,19 @@ int Bus_Initialize(Bus* _Bus)
 
 	LinkedList_Initialize(&_Bus->m_FuncIn);
 	LinkedList_Initialize(&_Bus->m_FuncOut);
+	Buffer_Initialize(&_Bus->m_ReadBuffer, BUS_BUFFER_SIZE);
+	Buffer_Initialize(&_Bus->m_WriteBuffer, BUS_BUFFER_SIZE);
 	EventHandler_Initialize(&_Bus->m_EventHandler);
 	
 	return 0;
 }
 
-int Bus_AddFuncIn(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context)
+int Bus_AddFuncIn(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context, Payload_FuncIn** _FuncPtr)
 {
 	if(_OnRead == NULL && _OnWrite == NULL)
 		return -2;
 
-	Bus_Function* _Func = (Bus_Function*)Allocator_Malloc(sizeof(Bus_Function));
+	Payload_FuncIn* _Func = (Payload_FuncIn*)Allocator_Malloc(sizeof(Payload_FuncIn));
 	if(_Func == NULL)
 		return -1;
 
@@ -49,14 +51,18 @@ int Bus_AddFuncIn(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), in
 		return -3;
 	}
 
+	if(_FuncPtr != NULL)
+		*(_FuncPtr) = _Func;
+
 	return 0;
 }
-int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context)
+
+int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context, Payload_FuncIn** _FuncPtr)
 {
 	if(_OnRead == NULL && _OnWrite == NULL)
 		return -2;
 
-	Bus_Function* _Func = (Bus_Function*)Allocator_Malloc(sizeof(Bus_Function));
+	Payload_FuncIn* _Func = (Payload_FuncIn*)Allocator_Malloc(sizeof(Payload_FuncIn));
 	if(_Func == NULL)
 		return -1;
 
@@ -69,62 +75,79 @@ int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), i
 		Allocator_Free(_Func);
 		return -3;
 	}
+
+	if(_FuncPtr != NULL)
+		*(_FuncPtr) = _Func;
+
 	return 0;
 }
 
-int Bus_Read(void* _Context, Buffer* _Buffer)
+int BusRemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func)
 {
-	Bus* _Bus = (Bus*)_Context;
+	int success = LinkedList_RemoveItem(&_Bus->m_FuncIn, _Func);
+	if(success == 0)
+		Allocator_Free(_Func);
 
+	return success;
+}
+
+int BusRemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func)
+{
+	int success = LinkedList_RemoveItem(&_Bus->m_FuncOut, _Func);
+	if(success == 0)
+		Allocator_Free(_Func);
+
+	return success;
+}
+
+int Bus_OnRead(void* _Context, Buffer* _Buffer)
+{
+	Bus* _Bus = (Bus*) _Context;
 	int totalReaded = 0;
 
 	LinkedList_Node* currentNode = _Bus->m_FuncIn.m_Head;
 	while(currentNode != NULL)
 	{
-		Bus_Function* _Func = (Bus_Function*) currentNode->m_Item;
+		Payload_FuncIn* _Func = (Payload_FuncIn*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
-		
+
 		if(_Func->m_OnRead != NULL)
-		{
-			int size = Buffer_SizeLeft(_Buffer);
-			int readed = _Func->m_OnRead(_Func->m_Context, _Buffer);
-			totalReaded += readed;
-			while (readed == size)
-			{
-				Buffer_Extend(_Buffer);
-				size = Buffer_SizeLeft(_Buffer);
-				readed = _Func->m_OnRead(_Func->m_Context, _Buffer);
-				totalReaded += readed;
-			}
+			totalReaded += _Func->m_OnRead(_Func->m_Context, _Buffer);
+		
 
+	}
 
-		}
-
+	if(totalReaded > 0)
+	{
+		printf("Bus readed: %i\r\n", totalReaded);
 	}
 
 	return totalReaded;
-
 }
 
-int Bus_Write(void* _Context, Buffer* _Buffer)
+int Bus_OnWrite(void* _Context, Buffer* _Buffer)
 {
-	Bus* _Bus = (Bus*)_Context;
+	Bus* _Bus = (Bus*) _Context;
+	int totalWrited = 0;
 
 	LinkedList_Node* currentNode = _Bus->m_FuncIn.m_Head;
-	int success = 0;
 	while(currentNode != NULL)
 	{
-		Bus_Function* _Func = (Bus_Function*) currentNode->m_Item;
+		Payload_FuncIn* _Func = (Payload_FuncIn*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		if(_Func->m_OnWrite != NULL)
-		{
-			if(_Func->m_OnWrite(_Func->m_Context, _Buffer) != 0)
-				success--;
-		}
+			totalWrited += _Func->m_OnWrite(_Func->m_Context, _Buffer);
+		
+
 	}
 
-	return success;
+	if(totalWrited > 0)
+	{
+		printf("Bus writed: %i\r\n", totalWrited);
+	}
+
+	return totalWrited;
 }
 
 void Bus_Dispose(Bus* _Bus)
@@ -132,7 +155,7 @@ void Bus_Dispose(Bus* _Bus)
 	LinkedList_Node* currentNode = _Bus->m_FuncIn.m_Head;
 	while(currentNode != NULL)
 	{
-		Bus_Function* _Func = (Bus_Function*) currentNode->m_Item;
+		Payload_FuncIn* _Func = (Payload_FuncIn*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 		LinkedList_RemoveFirst(&_Bus->m_FuncIn);
 		Allocator_Free(_Func);
@@ -141,13 +164,15 @@ void Bus_Dispose(Bus* _Bus)
 	currentNode = _Bus->m_FuncOut.m_Head;
 	while(currentNode != NULL)
 	{
-		Bus_Function* _Func = (Bus_Function*) currentNode->m_Item;
+		Payload_FuncIn* _Func = (Payload_FuncIn*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 		LinkedList_RemoveFirst(&_Bus->m_FuncOut);
 		Allocator_Free(_Func);
 	}
 
 	EventHandler_Dispose(&_Bus->m_EventHandler);
+	Buffer_Dispose(&_Bus->m_ReadBuffer);
+	Buffer_Dispose(&_Bus->m_WriteBuffer);
 
 	if(_Bus->m_Allocated == True)
 		Allocator_Free(_Bus);

@@ -12,16 +12,10 @@ typedef struct T_Bus Bus;
 struct T_Bus_Function;
 typedef struct T_Bus_Function Bus_Function;
 
-#ifndef BUS_DATABUFFER_SIZE
-	#define BUS_DATABUFFER_SIZE 255
+#ifndef BUS_BUFFER_SIZE
+	#define BUS_BUFFER_SIZE 64
 #endif
 
-struct T_Bus_Function
-{
-	void* m_Context;
-	int (*m_OnRead)(void* _Context, Buffer* _Buffer);
-	int (*m_OnWrite)(void* _Context, Buffer* _Buffer);
-};
 
 struct T_Bus
 {
@@ -29,17 +23,26 @@ struct T_Bus
 	LinkedList m_FuncIn;
 	LinkedList m_FuncOut;
 
+	Buffer m_ReadBuffer;
+	Buffer m_WriteBuffer;
+
 	EventHandler m_EventHandler;
 };
 
 int Bus_InitializePtr(Bus** _BusPtr);
 int Bus_Initialize(Bus* _Bus);
 
-int Bus_AddFunction(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), void* _ReadContext, int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _WriteContext);
+int Bus_AddFuncIn(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context, Payload_FuncIn** _FuncPtr);
 
+//! This is not implemented
+int Bus_AddFuncOut(Bus* _Bus, int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), void* _Context, Payload_FuncIn** _FuncPtr);
 
-int Bus_Read(void* _Context, Buffer* _Buffer);
-int Bus_Write(void* _Context, Buffer* _Buffer);
+int BusRemoveFuncIn(Bus* _Bus, Payload_FuncIn* _Func);
+//! This is not implemented
+int BusRemoveFuncOut(Bus* _Bus, Payload_FuncIn* _Func);
+
+int Bus_OnRead(void* _Context, Buffer* _Buffer);
+int Bus_OnWrite(void* _Context, Buffer* _Buffer);
 
 void Bus_Dispose(Bus* _Bus);
 #endif // Bus_h__
