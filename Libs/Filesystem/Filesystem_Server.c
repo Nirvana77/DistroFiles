@@ -1442,6 +1442,11 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 	Payload* _Message = (Payload*) _Object;
 	Payload_State _Event = (Payload_Type)_EventCall;
 	int success = 0;
+
+	
+	char str[UUID_FULLSTRING_SIZE];
+	uuid_ToString(_Message->m_UUID, str);
+	printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 	
 	switch (_Event)
 	{/*
@@ -1452,10 +1457,6 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 		{
 			
 		} break;
-		case Payload_State_Replay:
-		{
-			
-		} break;
 		
 		case Payload_State_Init:
 		case Payload_State_Sented:
@@ -1463,6 +1464,10 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 		{
 			return 0;
 		} break;*/
+		case Payload_State_Replay:
+		{
+			return 1;
+		} break;
 
 		case Payload_State_Timeout:
 		{
@@ -1489,9 +1494,6 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 
 		default: 
 		{
-			char str[UUID_FULLSTRING_SIZE];
-			uuid_ToString(_Message->m_UUID, str);
-			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 		} break;
 	}
 
