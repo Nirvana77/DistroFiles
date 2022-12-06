@@ -187,7 +187,7 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	Buffer temp;
 	if(_Payload->m_Size != 0) 
 	{
-		Buffer_Initialize(&temp, False, _Payload->m_Size);
+		Buffer_Initialize(&temp, _Payload->m_Size);
 		Buffer_DeepCopy(&temp, &_Payload->m_Data, _Payload->m_Size);
 	}
 

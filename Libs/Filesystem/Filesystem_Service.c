@@ -64,7 +64,7 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		
 		return -4;
 	}
-	success = Buffer_Initialize(&_Service->m_Buffer, True, 64);
+	success = Buffer_Initialize(&_Service->m_Buffer, 64);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Buffer!\n\r");

@@ -39,7 +39,7 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 
 	Payload_FuncOut_Clear(&_DataLayer->m_FuncOut);
 
-	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, True, Payload_BufferSize);
+	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, Payload_BufferSize);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataBuffer!\n\r");
@@ -81,7 +81,7 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer buffer;
-	Buffer_Initialize(&buffer, True, 32);
+	Buffer_Initialize(&buffer, 32);
 
 	UInt8 flags = 0;
 	BitHelper_SetBit(&flags, 0, _Payload->m_Src.m_Type == Payload_Address_Type_NONE ? False : True);

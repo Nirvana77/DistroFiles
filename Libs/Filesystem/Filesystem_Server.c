@@ -89,7 +89,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -4;
 	}
 
-	success = Buffer_Initialize(&_Server->m_TempListBuffer, True, 64);
+	success = Buffer_Initialize(&_Server->m_TempListBuffer, 64);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Buffer!\n\r");
@@ -344,7 +344,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(f != NULL)
 		{
 			Buffer listData;
-			Buffer_Initialize(&listData, False, _Message->m_Data.m_BytesLeft + 8);
+			Buffer_Initialize(&listData, _Message->m_Data.m_BytesLeft + 8);
 			Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 			Buffer_WriteUInt16(&listData, size);
@@ -428,7 +428,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		size = 0;
 		Buffer folderContext;
-		Buffer_Initialize(&folderContext, True, 64);
+		Buffer_Initialize(&folderContext, 64);
 		while (dir.has_next)
 		{
 			tinydir_file file;
@@ -791,7 +791,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 
 	UInt16 size = 0;
 	Buffer folderContext;
-	Buffer_Initialize(&folderContext, True, 64);
+	Buffer_Initialize(&folderContext, 64);
 	while (dir.has_next)
 	{
 		tinydir_file file;
@@ -956,7 +956,7 @@ int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _
 
 	UInt16 size = 0;
 	Buffer folderContext;
-	Buffer_Initialize(&folderContext, True, 64);
+	Buffer_Initialize(&folderContext, 64);
 	while (dir.has_next)
 	{
 		tinydir_file file;
@@ -1034,7 +1034,7 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
-	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
+	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
 	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Write);
 	Buffer_WriteUInt8(&data, (UInt8) _IsFile);
@@ -1098,7 +1098,7 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
-	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
+	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
 	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Delete);
 	Buffer_WriteUInt8(&data, (UInt8)_IsFile);
