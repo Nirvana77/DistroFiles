@@ -326,5 +326,29 @@ static inline Bool CommperMAC(UInt8 _A[6], UInt8 _B[6])
 	return True;
 }
 
+static inline void Payload_GetIP(Payload_Address* _Addrass, char _Str[4*3 + 3 + 1])
+{
+	if (_Addrass->m_Type != Payload_Address_Type_IP)
+		return;
+
+	for (int i = 0; i < 4; i++)
+	{
+		_Str[i + 0] = (char)((int)(_Addrass->m_Address.IP[i] / 100));
+		_Str[i + 1] = (char)((int)(_Addrass->m_Address.IP[i] / 10));
+		_Str[i + 2] = (char)((int)(_Addrass->m_Address.IP[i] % 10));
+		if(i + 1 < 4)
+			_Str[i + 3] = '.';
+	}
+	_Str[4*3 + 3] = 0;
+}
+
+static inline void Payload_GetMac(Payload_Address* _Addrass, char _Str[6*2 + 5 + 1])
+{
+	if (_Addrass->m_Type != Payload_Address_Type_MAC)
+		return;
+	
+	sprintf(_Str, "%2x-%2x-%2x-%2x-%2x-%2x", _Addrass->m_Address.MAC[0], _Addrass->m_Address.MAC[1], _Addrass->m_Address.MAC[2], _Addrass->m_Address.MAC[3], _Addrass->m_Address.MAC[4], _Addrass->m_Address.MAC[5]);
+}
+
 void Payload_Dispose(Payload* _Payload);
 #endif // Payload_h__
