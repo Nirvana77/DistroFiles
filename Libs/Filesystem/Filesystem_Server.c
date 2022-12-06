@@ -174,12 +174,13 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+	Filesystem_Connection* _Connection = NULL;
+	if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, _TCPSocket, &_Server->m_Bus, &_Connection) != 0)
+		return 1;
 
-	connection->m_Socket = _TCPSocket;
-	memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
+	EventHandler_Hook(&_Connection->m_EventHandler, test, _Server);
 
-	LinkedList_Push(&_Server->m_Connections, connection);
+	LinkedList_Push(&_Server->m_Connections, _Connection);
 	return 0;
 }
 
@@ -261,11 +262,14 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		TCPSocket* socket = NULL;
 		if(TCPSocket_InitializePtr(charVal, port, NULL, &socket) == 0)
 		{
-			Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
-
+			Filesystem_Connection* connection = NULL;
+			if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, socket, &_Server->m_Bus, &connection) == 0)
+			{
+				EventHandler_Hook(&connection->m_EventHandler, test, _Server);
 			connection->m_Socket = socket;
-			memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
 			LinkedList_Push(&_Server->m_Connections, connection);
+
+			}
 		}
 		
 	}
@@ -1505,7 +1509,7 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 		currentNode = currentNode->m_Next;
 
 		TCPSocket_Dispose(connection->m_Socket);
-		Allocator_Free(connection);
+		Filesystem_Connection_Dispose(connection);
 		LinkedList_RemoveFirst(&_Server->m_Connections);
 	}
 	Bus_Dispose(&_Server->m_Bus);
