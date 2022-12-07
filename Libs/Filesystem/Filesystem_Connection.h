@@ -5,9 +5,8 @@ struct T_Filesystem_Connection;
 typedef struct T_Filesystem_Connection Filesystem_Connection;
 
 #include "Filesystem_Service.h"
-#include "../Communication/Bus.h"
 
-#define Filesystem_Connection_Timeout (SEC*10)
+#define Filesystem_Connection_Timeout MIN*10
 
 typedef enum
 {
@@ -20,15 +19,11 @@ typedef enum
 struct T_Filesystem_Connection
 {
 	Bool m_Allocated;
-	Bool m_Disposed;
 
 	Payload_Address m_Addrass;
 	TCPSocket* m_Socket;
 	StateMachine* m_Worker;
-	Bus* m_Bus;
-
-	Buffer m_Buffer;
-	Payload_FuncIn* m_Func;
+	Buffer* m_Buffer;
 
 	UInt64 m_NextCheck;
 
@@ -37,8 +32,8 @@ struct T_Filesystem_Connection
 	StateMachine_Task* m_Task;
 };
 
-int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus, Filesystem_Connection** _CommectionPtr);
-int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus);
+int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socket, Buffer* _Buffer, Filesystem_Connection** _CommectionPtr);
+int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Buffer* _Buffer);
 
 
 void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection);

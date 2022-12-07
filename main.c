@@ -32,7 +32,6 @@
 #include "Libs/uuid.c"
 
 #include "Libs/Communication/Payload.c"
-#include "Libs/Communication/Bus.c"
 #include "Libs/Communication/DataLayer.c"
 #include "Libs/Communication/NetworkLayer.c"
 #include "Libs/Communication/TransportLayer.c"
@@ -222,7 +221,7 @@ int main(int argc, char* argv[])
 
 					case 's':
 					{
-						Filesystem_Server_Sync(service->m_Server, NULL);
+						Filesystem_Server_Sync(service->m_Server);
 					} break;
 
 					case 't':
@@ -232,26 +231,6 @@ int main(int argc, char* argv[])
 						UInt64 time = 0;
 						Filesystem_Server_GetTimeFromPath(service->m_Server->m_FilesytemPath.m_Ptr, &time);
 						printf("Path: %s last modyfed %lu\r\n", service->m_Server->m_FilesytemPath.m_Ptr, time);
-					} break;
-
-					case 'j':
-					{
-						Payload* message = NULL;
-						if(TransportLayer_CreateMessage(&service->m_Server->m_TransportLayer, Payload_Type_Broadcast, 2, SEC * 10, &message) == 0)
-						{
-							Buffer_WriteUInt16(&message->m_Data, 1);
-
-							Payload_SetMessageType(message, Payload_Message_Type_String, "Test", strlen("Test"));
-							Payload_Address des;
-							des.m_Type = Payload_Address_Type_MAC;
-							des.m_Address.MAC[0] = 0x22;
-							des.m_Address.MAC[1] = 0x24;
-							des.m_Address.MAC[2] = 0x0d;
-							des.m_Address.MAC[3] = 0x26;
-							des.m_Address.MAC[4] = 0xf4;
-							des.m_Address.MAC[5] = 0x40;
-							Payload_FilAddress(&message->m_Des, &des);
-						}
 					} break;
 				
 					case 'l':

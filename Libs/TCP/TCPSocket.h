@@ -50,8 +50,8 @@ struct T_TCPSocket
 int TCPSocket_InitializePtr(const char* _IP, int _Port, TCPSocket_FD* _FD, TCPSocket** _TCPSocketPtr);
 int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPSocket_FD* _FD);
 
-int TCPSocket_Read(void* _Context, Buffer* _Buffer);
-int TCPSocket_Write(void* _Context, Buffer* _Buffer);
+int TCPSocket_Read(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize);
+int TCPSocket_Write(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize);
 
 void TCPSocket_Dispose(TCPSocket* _TCPSocket);
 
