@@ -128,7 +128,6 @@ int Bus_OnRead(void* _Context, Buffer* _Buffer)
 int Bus_OnWrite(void* _Context, Buffer* _Buffer)
 {
 	Bus* _Bus = (Bus*) _Context;
-	int totalWrited = 0;
 
 	LinkedList_Node* currentNode = _Bus->m_FuncIn.m_Head;
 	while(currentNode != NULL)
@@ -137,17 +136,21 @@ int Bus_OnWrite(void* _Context, Buffer* _Buffer)
 		currentNode = currentNode->m_Next;
 
 		if(_Func->m_OnWrite != NULL)
-			totalWrited += _Func->m_OnWrite(_Func->m_Context, _Buffer);
+		{
+			Buffer_ResetReadPtr(_Buffer);
+			int writed = _Func->m_OnWrite(_Func->m_Context, _Buffer);
+
+			if(writed < 0)
+			{
+				printf("Bus writed error: %i\r\n", writed);
+				return -1;
+			}
+		}
 		
 
 	}
 
-	if(totalWrited > 0)
-	{
-		printf("Bus writed: %i\r\n", totalWrited);
-	}
-
-	return totalWrited;
+	return 0;
 }
 
 void Bus_Dispose(Bus* _Bus)
