@@ -117,11 +117,6 @@ int Bus_OnRead(void* _Context, Buffer* _Buffer)
 
 	}
 
-	if(totalReaded > 0)
-	{
-		printf("Bus readed: %i\r\n", totalReaded);
-	}
-
 	return totalReaded;
 }
 
