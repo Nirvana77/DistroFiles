@@ -1,7 +1,6 @@
 #include "Filesystem_Server.h"
 
 int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
-int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
@@ -90,7 +89,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -4;
 	}
 
-	success = Buffer_Initialize(&_Server->m_TempListBuffer, 64);
+	success = Buffer_Initialize(&_Server->m_TempListBuffer, True, 64);
 	if(success != 0)
 	{
 		printf("Failed to initialize the Buffer!\n\r");
@@ -110,14 +109,11 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -5;
 	}
 
-	Bus_Initialize(&_Server->m_Bus);
-
-	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, MS * 100);
+	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Filesystem_Server_TCPRead, Filesystem_Server_TCPWrite, NULL, _Server, MS * 100);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
-		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -130,7 +126,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	{
 		printf("Failed to initialize the NetworkLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
-		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -144,7 +139,6 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	{
 		printf("Failed to initialize the TransportLayer for server!\n\r");
 		printf("Error code: %i\n\r", success);
-		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
 		Filesystem_Checking_Dispose(&_Server->m_Checking);
@@ -175,61 +169,15 @@ int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
 
-	Filesystem_Connection* _Connection = NULL;
-	if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, _TCPSocket, &_Server->m_Bus, &_Connection) != 0)
-		return 1;
+	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
 
-	EventHandler_Hook(&_Connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
+	connection->m_Socket = _TCPSocket;
+	memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
 
-	LinkedList_Push(&_Server->m_Connections, _Connection);
+	LinkedList_Push(&_Server->m_Connections, connection);
 	return 0;
 }
 
-int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
-{
-	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-
-	switch (_EventCall)
-	{
-		case Filesystem_Connection_Event_Disposed:
-		{
-			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-			return 0;
-		} break;
-
-		case Filesystem_Connection_Event_Disconnected:
-		{
-			printf("Server: ");
-			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
-			{
-				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
-				{
-					char ip[16];
-					Payload_GetIP(&_Connection->m_Addrass, ip);
-					printf("TODO reconnect to \"%s\"\r\n", ip);
-				}
-				else
-				{
-					char mac[18];
-					Payload_GetMac(&_Connection->m_Addrass, mac);
-					printf("Connection \"%s\" got disconnected\r\n", mac);
-					return 1;
-				}
-			}
-			else
-			{
-				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-				Filesystem_Connection_Dispose(_Connection);
-				printf("Connection disconnected\r\n");
-				return 0;
-			}
-		}
-	}
-	return 0;
-}
-
-/*
 int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
@@ -289,7 +237,6 @@ int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
 	LinkedList_Dispose(&list);
 	return success;
 }
-*/
 
 int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 {
@@ -309,14 +256,11 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		TCPSocket* socket = NULL;
 		if(TCPSocket_InitializePtr(charVal, port, NULL, &socket) == 0)
 		{
-			Filesystem_Connection* connection = NULL;
-			if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, socket, &_Server->m_Bus, &connection) == 0)
-			{
-				EventHandler_Hook(&connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
-				connection->m_Socket = socket;
-				LinkedList_Push(&_Server->m_Connections, connection);
+			Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
 
-			}
+			connection->m_Socket = socket;
+			memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
+			LinkedList_Push(&_Server->m_Connections, connection);
 		}
 		
 	}
@@ -400,7 +344,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		if(f != NULL)
 		{
 			Buffer listData;
-			Buffer_Initialize(&listData, _Message->m_Data.m_BytesLeft + 8);
+			Buffer_Initialize(&listData, False, _Message->m_Data.m_BytesLeft + 8);
 			Buffer_ReadUInt16(&_Message->m_Data, &size);
 
 			Buffer_WriteUInt16(&listData, size);
@@ -484,7 +428,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		size = 0;
 		Buffer folderContext;
-		Buffer_Initialize(&folderContext, 64);
+		Buffer_Initialize(&folderContext, True, 64);
 		while (dir.has_next)
 		{
 			tinydir_file file;
@@ -591,7 +535,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server, NULL);
+			Filesystem_Server_Sync(_Server);
 		else
 			Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, hash);
 
@@ -635,7 +579,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server, NULL);
+			Filesystem_Server_Sync(_Server);
 		else
 			Filesystem_Server_ForwordDelete(_Server, &_Message->m_Src, isFile, path, hash);
 		
@@ -685,7 +629,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReSync") == 0)
 	{
-		Filesystem_Server_Sync(_Server, NULL);
+		Filesystem_Server_Sync(_Server);
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
@@ -847,7 +791,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 
 	UInt16 size = 0;
 	Buffer folderContext;
-	Buffer_Initialize(&folderContext, 64);
+	Buffer_Initialize(&folderContext, True, 64);
 	while (dir.has_next)
 	{
 		tinydir_file file;
@@ -1012,7 +956,7 @@ int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _
 
 	UInt16 size = 0;
 	Buffer folderContext;
-	Buffer_Initialize(&folderContext, 64);
+	Buffer_Initialize(&folderContext, True, 64);
 	while (dir.has_next)
 	{
 		tinydir_file file;
@@ -1090,7 +1034,7 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
-	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
+	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
 	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Write);
 	Buffer_WriteUInt8(&data, (UInt8) _IsFile);
@@ -1154,7 +1098,7 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
-	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
+	Buffer_Initialize(&data, False, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
 	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Delete);
 	Buffer_WriteUInt8(&data, (UInt8)_IsFile);
@@ -1413,23 +1357,8 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_ReSync:
 		{
+			Filesystem_Server_Sync(_Server);
 			_Server->m_State = Filesystem_Server_State_ReSyncing;
-			LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
-			while (currentNode != NULL)
-			{
-				Filesystem_Connection* _Connection = (Filesystem_Connection*) currentNode->m_Item;
-				currentNode = currentNode->m_Next;
-
-				if(Filesystem_Checking_CanUseConnection(&_Server->m_Checking, _Connection) == True)
-				{
-					Payload* message = NULL;
-					if(Filesystem_Server_Sync(_Server, &message) == 0)
-						Payload_FilAddress(&message->m_Des, &_Connection->m_Addrass);
-					
-				}
-
-			}
-			
 		} break;
 
 		case Filesystem_Server_State_Idel:
@@ -1438,7 +1367,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			if(_Server->m_Service->m_Settings.m_AutoSync == True)
 			{
 				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
-					Filesystem_Server_Sync(_Server, NULL);
+					Filesystem_Server_Sync(_Server);
 				
 			}
 			
@@ -1471,7 +1400,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 }
 
-int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
+void Filesystem_Server_Sync(Filesystem_Server* _Server)
 {
 	Payload* message = NULL;
 	char* path = "root";
@@ -1492,13 +1421,7 @@ int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
 
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
 		EventHandler_Hook(&message->m_EventHandler, Filesystem_Server_MessageEvent, _Server);
-
-		if(_MessagePtr != NULL)
-			*(_MessagePtr) = message;
-		return 0;
 	}
-
-	return -1;
 }
 
 //note: Then return 1 the event gets unhooked;
@@ -1508,11 +1431,6 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 	Payload* _Message = (Payload*) _Object;
 	Payload_State _Event = (Payload_Type)_EventCall;
 	int success = 0;
-
-	
-	char str[UUID_FULLSTRING_SIZE];
-	uuid_ToString(_Message->m_UUID, str);
-	printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 	
 	switch (_Event)
 	{/*
@@ -1523,6 +1441,10 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 		{
 			
 		} break;
+		case Payload_State_Replay:
+		{
+			
+		} break;
 		
 		case Payload_State_Init:
 		case Payload_State_Sented:
@@ -1530,10 +1452,6 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 		{
 			return 0;
 		} break;*/
-		case Payload_State_Replay:
-		{
-			return 1;
-		} break;
 
 		case Payload_State_Timeout:
 		{
@@ -1560,6 +1478,9 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 
 		default: 
 		{
+			char str[UUID_FULLSTRING_SIZE];
+			uuid_ToString(_Message->m_UUID, str);
+			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 		} break;
 	}
 
@@ -1579,10 +1500,9 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 		currentNode = currentNode->m_Next;
 
 		TCPSocket_Dispose(connection->m_Socket);
-		Filesystem_Connection_Dispose(connection);
+		Allocator_Free(connection);
 		LinkedList_RemoveFirst(&_Server->m_Connections);
 	}
-	Bus_Dispose(&_Server->m_Bus);
 
 	LinkedList_Dispose(&_Server->m_Connections);
 	EventHandler_Dispose(&_Server->m_EventHandler);

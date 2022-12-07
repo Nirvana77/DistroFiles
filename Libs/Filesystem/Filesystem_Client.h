@@ -18,7 +18,6 @@ struct T_Filesystem_Client
 
 	LinkedList m_Connections;
 
-	Bus m_Bus;
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;
 	NetworkLayer m_NetworkLayer;

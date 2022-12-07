@@ -30,7 +30,7 @@ int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 
 	_Payload->m_Type = Payload_Type_UnSafe;
 
-	Buffer_Initialize(&_Payload->m_Data, 64);
+	Buffer_Initialize(&_Payload->m_Data, True, 64);
 	EventHandler_Initialize(&_Payload->m_EventHandler);
 
 	if(_UUID == NULL)

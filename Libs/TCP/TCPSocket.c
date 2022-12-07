@@ -56,10 +56,9 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 	return 0;
 }
 
-int TCPSocket_Read(void* _Context, Buffer* _Buffer)
+int TCPSocket_Read(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
-	TCPSocket* _TCPSocket = (TCPSocket*) _Context;
-	int bytesRead = recv(_TCPSocket->m_FD, _Buffer->m_WritePtr, Buffer_SizeLeft(_Buffer), 0);
+	int bytesRead = recv(_TCPSocket->m_FD, _Buffer, _BufferSize, 0);
 
 	if(bytesRead < 0)
 	{
@@ -73,17 +72,14 @@ int TCPSocket_Read(void* _Context, Buffer* _Buffer)
 	}
 	else
 	{
-		_Buffer->m_BytesLeft = bytesRead;
 		return bytesRead;
 	}
 
 }
 
-int TCPSocket_Write(void* _Context, Buffer* _Buffer)
+int TCPSocket_Write(TCPSocket* _TCPSocket, unsigned char* _Buffer, unsigned int _BufferSize)
 {
-	TCPSocket* _TCPSocket = (TCPSocket*) _Context;
-	int bytesSent = send(_TCPSocket->m_FD, _Buffer->m_ReadPtr, _Buffer->m_BytesLeft, MSG_NOSIGNAL);
-
+	int bytesSent = send(_TCPSocket->m_FD, _Buffer, _BufferSize, MSG_NOSIGNAL);
 	if(bytesSent < 0)
 	{
 		if (errno == EWOULDBLOCK)
@@ -106,11 +102,6 @@ int TCPSocket_Write(void* _Context, Buffer* _Buffer)
 			_TCPSocket->m_Status = TCPSocket_Status_Failed;
 			return -1;
 		}
-	}
-	else
-	{
-		_Buffer->m_BytesLeft -= bytesSent;
-		_Buffer->m_ReadPtr += bytesSent;
 	}
 
 	return bytesSent;
