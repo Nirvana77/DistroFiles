@@ -1,6 +1,7 @@
 #include "Filesystem_Client.h"
 
 int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
+int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
@@ -100,20 +101,60 @@ int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
 	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
-	char ip[17];
-	memset(ip, 0, sizeof(ip));
-	inet_ntop(AF_INET, &_TCPSocket->m_Addr.sin_addr.s_addr, ip, sizeof(ip));
-	
-	printf("Filesystem_Client: Connected socket(%u): %s\n\r", (unsigned int)ntohs(_TCPSocket->m_Addr.sin_port), ip);
+	Filesystem_Connection* _Connection = NULL;
+	if(Filesystem_Connection_InitializePtr(_Client->m_Service->m_Worker, _TCPSocket, &_Client->m_Bus, &_Connection) != 0)
+		return 1;
 
-	Filesystem_Connection* connection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+	EventHandler_Hook(&_Connection->m_EventHandler, Filesystem_Client_ConnectionEvent, _Client);
 
-	connection->m_Socket = _TCPSocket;
-	memset(&connection->m_Addrass, 0, sizeof(Payload_Address));
-
-	LinkedList_Push(&_Client->m_Connections, connection);
+	LinkedList_Push(&_Client->m_Connections, _Connection);
 	return 0;
 }
+
+int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
+	Filesystem_Client* _Server = (Filesystem_Client*) _Context;
+
+	switch (_EventCall)
+	{
+		case Filesystem_Connection_Event_Disposed:
+		{
+			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+			return 0;
+		} break;
+
+		case Filesystem_Connection_Event_Disconnected:
+		{
+			printf("Client: ");
+			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
+			{
+				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
+				{
+					char ip[16];
+					Payload_GetIP(&_Connection->m_Addrass, ip);
+					printf("TODO reconnect to \"%s\"\r\n", ip);
+				}
+				else
+				{
+					char mac[18];
+					Payload_GetMac(&_Connection->m_Addrass, mac);
+					printf("Connection \"%s\" got disconnected\r\n", mac);
+					return 1;
+				}
+			}
+			else
+			{
+				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+				Filesystem_Connection_Dispose(_Connection);
+				printf("Connection disconnected\r\n");
+				return 0;
+			}
+		}
+	}
+	return 0;
+}
+
 
 /*
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
@@ -249,8 +290,7 @@ void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 		currentNode = currentNode->m_Next;
 
 		LinkedList_RemoveFirst(&_Client->m_Connections);
-		TCPSocket_Dispose(connection->m_Socket);
-		Allocator_Free(connection);
+		Filesystem_Connection_Dispose(connection);
 	}
 	LinkedList_Dispose(&_Client->m_Connections);
 	EventHandler_Dispose(&_Client->m_EventHandler);

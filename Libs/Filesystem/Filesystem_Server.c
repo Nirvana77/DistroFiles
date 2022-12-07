@@ -200,6 +200,7 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 
 		case Filesystem_Connection_Event_Disconnected:
 		{
+			printf("Server: ");
 			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
 			{
 				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
