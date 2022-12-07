@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 
 					case 's':
 					{
-						Filesystem_Server_Sync(service->m_Server);
+						Filesystem_Server_Sync(service->m_Server, NULL);
 					} break;
 
 					case 't':

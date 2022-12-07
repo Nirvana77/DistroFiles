@@ -590,7 +590,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server);
+			Filesystem_Server_Sync(_Server, NULL);
 		else
 			Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, hash);
 
@@ -634,7 +634,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
 		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server);
+			Filesystem_Server_Sync(_Server, NULL);
 		else
 			Filesystem_Server_ForwordDelete(_Server, &_Message->m_Src, isFile, path, hash);
 		
@@ -684,7 +684,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReSync") == 0)
 	{
-		Filesystem_Server_Sync(_Server);
+		Filesystem_Server_Sync(_Server, NULL);
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
@@ -1422,7 +1422,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			if(_Server->m_Service->m_Settings.m_AutoSync == True)
 			{
 				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
-					Filesystem_Server_Sync(_Server);
+					Filesystem_Server_Sync(_Server, NULL);
 				
 			}
 			
@@ -1455,7 +1455,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 }
 
-void Filesystem_Server_Sync(Filesystem_Server* _Server)
+int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
 {
 	Payload* message = NULL;
 	char* path = "root";
@@ -1476,7 +1476,13 @@ void Filesystem_Server_Sync(Filesystem_Server* _Server)
 
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
 		EventHandler_Hook(&message->m_EventHandler, Filesystem_Server_MessageEvent, _Server);
+
+		if(_MessagePtr != NULL)
+			*(_MessagePtr) = message;
+		return 0;
 	}
+
+	return -1;
 }
 
 //note: Then return 1 the event gets unhooked;
