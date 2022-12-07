@@ -92,7 +92,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	else if(_Message->m_Type != Payload_Type_Broadcast && _Message->m_Type != Payload_Type_BroadcastRespons)
 	{
 		printf("Ignored Not Broadcast or BroadcastRespons\r\n");
-		printf("_Message Type is %s and des type is %i\r\n", _Message->m_Type, _Message->m_Des.m_Type);
+		printf("_Message Type is %i and des type is %i\r\n", _Message->m_Type, _Message->m_Des.m_Type);
 		return 0;
 	}
 

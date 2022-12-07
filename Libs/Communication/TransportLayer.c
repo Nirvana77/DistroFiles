@@ -94,6 +94,7 @@ int TransportLayer_ResendMessage(TransportLayer* _TransportLayer, Payload* _Payl
 	Payload* message = NULL;
 	if(TransportLayer_CreateMessage(_TransportLayer, _Payload->m_Type, _Payload->m_Size, _Payload->m_Timeout, &message) == 0)
 	{
+		uuid_copy(message->m_UUID, _Payload->m_UUID);
 		Payload_Copy(message, _Payload);
 		if(_PayloadPtr != NULL)
 			*(_PayloadPtr) = message;
