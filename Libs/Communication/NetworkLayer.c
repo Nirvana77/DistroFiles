@@ -69,7 +69,7 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		GetIP(addrass);
 		if(CommperIP(addrass, _Message->m_Des.m_Address.IP) == False)
 		{
-			printf("Ignored\r\n");
+			printf("Ignored IP\r\n");
 			return 0;
 		}
 		
@@ -80,13 +80,13 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		GetMAC(mac);
 		if(CommperMAC(mac, _Message->m_Des.m_Address.MAC) == False)
 		{
-			printf("Ignored\r\n");
+			printf("Ignored MAC\r\n");
 			return 0;
 		}
 	}
 	else if(_Message->m_Type != Payload_Type_Broadcast && _Message->m_Type != Payload_Type_BroadcastRespons)
 	{
-		printf("Ignored\r\n");
+		printf("Ignored Not Broadcast or BroadcastRespons\r\n");
 		return 0;
 	}
 
