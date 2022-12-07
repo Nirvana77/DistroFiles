@@ -330,6 +330,7 @@ int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall
 			return 1;
 		} break;
 
+		case Payload_State_Sented:
 		case Payload_State_Replay:
 		{
 			return 1;
