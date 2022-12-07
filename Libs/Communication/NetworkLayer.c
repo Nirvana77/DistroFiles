@@ -54,13 +54,18 @@ int NetworkLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
+	UInt8 type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Type = type;
 	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
-	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Src.m_Type);
+	type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Src.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Src, &_Message->m_Data);
 	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Des.m_Type);
+	type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Des.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Des, &_Message->m_Data);
 
 	if(_Message->m_Des.m_Type == Payload_Address_Type_IP)
