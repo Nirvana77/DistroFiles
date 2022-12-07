@@ -80,7 +80,6 @@ void EventHandler_Dispose(EventHandler* _EventHandler)
 	{
 		EventHandler_Event* _Event = (EventHandler_Event*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
-		printf("Dont not unhook all\r\n");
 		LinkedList_RemoveFirst(&_EventHandler->m_Events);
 		Allocator_Free(_Event);
 	}

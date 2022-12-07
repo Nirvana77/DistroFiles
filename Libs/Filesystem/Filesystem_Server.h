@@ -8,6 +8,7 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #include "Filesystem_Checking.h"
 #include "../BitHelper.h"
 #include "../Memory.h"
+#include "../Communication/Bus.h"
 
 #define Filesystem_Server_TempFlag_HasList 0
 #define Filesystem_Server_TempFlag_WorkonList 1
@@ -52,6 +53,7 @@ struct T_Filesystem_Server
 	
 	String m_FilesytemPath;
 
+	Bus m_Bus;
 	TCPServer m_TCPServer;
 	DataLayer m_DataLayer;
 	NetworkLayer m_NetworkLayer;
@@ -104,7 +106,7 @@ static inline void Filesystem_Server_PrintHash(const char* _Name, unsigned char 
 	printf("\r\n");
 }
 
-void Filesystem_Server_Sync(Filesystem_Server* _Server);
+int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr);
 
 int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer);
 int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer);

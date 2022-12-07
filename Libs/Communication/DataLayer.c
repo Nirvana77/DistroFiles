@@ -5,7 +5,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload);
 
 int DataLayer_CalculateSize(DataLayer* _DataLayer);
 
-int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr)
+int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr)
 {
 	DataLayer* _DataLayer = (DataLayer*)Allocator_Malloc(sizeof(DataLayer));
 	if(_DataLayer == NULL)
@@ -24,7 +24,7 @@ int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(vo
 	return 0;
 }
 
-int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout)
+int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout)
 {
 	_DataLayer->m_Allocated = False;
 	_DataLayer->m_DataContext = _DataContext;
@@ -39,7 +39,7 @@ int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context
 
 	Payload_FuncOut_Clear(&_DataLayer->m_FuncOut);
 
-	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, True, Payload_BufferSize);
+	int success = Buffer_Initialize(&_DataLayer->m_DataBuffer, Payload_BufferSize);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataBuffer!\n\r");
@@ -81,7 +81,7 @@ void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer)
 int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 {
 	Buffer buffer;
-	Buffer_Initialize(&buffer, True, 32);
+	Buffer_Initialize(&buffer, 32);
 
 	UInt8 flags = 0;
 	BitHelper_SetBit(&flags, 0, _Payload->m_Src.m_Type == Payload_Address_Type_NONE ? False : True);
@@ -112,7 +112,7 @@ int DataLayer_SendMessage(DataLayer* _DataLayer, Payload* _Payload)
 	
 	Payload_Print(_Payload, "Datalayer");
 
-	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &buffer, buffer.m_BytesLeft);
+	int success = _DataLayer->m_OnWrite(_DataLayer->m_DataContext, &buffer);
 	Buffer_Dispose(&buffer);
 	if(success < 0)
 	{
@@ -134,7 +134,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 	else
 	{
 		Buffer_Clear(&_DataLayer->m_DataBuffer);
-		readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer, Payload_BufferSize);
+		readed = _DataLayer->m_OnRead(_DataLayer->m_DataContext, &_DataLayer->m_DataBuffer);
 	}
 	
 	if(readed > 0)

@@ -51,16 +51,16 @@ int TCPClient_Connect(TCPClient* _TCPClient)
 	return 0;
 }
 
-int TCPClient_Read(void* _Context, unsigned char* _Buffer, int _Size)
+int TCPClient_Read(void* _Context, Buffer* _Buffer)
 {
 	TCPClient* _TCPClient = (TCPClient*) _Context;
 	if(_TCPClient->m_Socket == NULL)
 		return -1;
 
-	return TCPSocket_Read(_TCPClient->m_Socket, _Buffer, _Size);
+	return TCPSocket_Read(_TCPClient->m_Socket, _Buffer);
 }
 
-int TCPClient_Write(void* _Context, unsigned char* _Buffer, int _Size)
+int TCPClient_Write(void* _Context, Buffer* _Buffer)
 {
 	TCPClient* _TCPClient = (TCPClient*) _Context;
 
@@ -68,7 +68,7 @@ int TCPClient_Write(void* _Context, unsigned char* _Buffer, int _Size)
 	if(_TCPClient->m_Socket == NULL)
 		return -1;
 
-	return TCPSocket_Write(_TCPClient->m_Socket, _Buffer, _Size);
+	return TCPSocket_Write(_TCPClient->m_Socket, _Buffer);
 }
 
 void TCPClient_Disconnect(TCPClient* _TCPClient)

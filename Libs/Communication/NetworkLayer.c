@@ -54,13 +54,18 @@ int NetworkLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
+	UInt8 type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Type = type;
 	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Type);
-	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Src.m_Type);
+	type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Src.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Src, &_Message->m_Data);
 	
-	Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&_Message->m_Des.m_Type);
+	type = 0;
+	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	_Message->m_Des.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Des, &_Message->m_Data);
 
 	if(_Message->m_Des.m_Type == Payload_Address_Type_IP)
@@ -68,7 +73,10 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		UInt8 addrass[4];
 		GetIP(addrass);
 		if(CommperIP(addrass, _Message->m_Des.m_Address.IP) == False)
+		{
+			printf("Ignored IP\r\n");
 			return 0;
+		}
 		
 	}
 	else if(_Message->m_Des.m_Type == Payload_Address_Type_MAC)
@@ -76,10 +84,14 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		UInt8 mac[6];
 		GetMAC(mac);
 		if(CommperMAC(mac, _Message->m_Des.m_Address.MAC) == False)
+		{
+			printf("Ignored MAC\r\n");
 			return 0;
+		}
 	}
 	else if(_Message->m_Type != Payload_Type_Broadcast && _Message->m_Type != Payload_Type_BroadcastRespons)
 	{
+		printf("Ignored Not Broadcast or BroadcastRespons\r\n");
 		return 0;
 	}
 
@@ -187,7 +199,7 @@ int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 	Buffer temp;
 	if(_Payload->m_Size != 0) 
 	{
-		Buffer_Initialize(&temp, False, _Payload->m_Size);
+		Buffer_Initialize(&temp, _Payload->m_Size);
 		Buffer_DeepCopy(&temp, &_Payload->m_Data, _Payload->m_Size);
 	}
 
