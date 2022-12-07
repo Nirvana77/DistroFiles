@@ -6,6 +6,8 @@ typedef struct T_Filesystem_Checking Filesystem_Checking;
 
 #include "Filesystem_Server.h"
 
+#define  Filesystem_Checking_Timeout (SEC * 10)
+
 #ifndef Filesystem_Checking_CheckError
 	#define Filesystem_Checking_CheckError 50 //This is in %
 #endif
@@ -29,6 +31,7 @@ typedef struct
 	Bool m_IsUsed;
 	Filesystem_Connection* m_Connection;
 	Filesystem_Checking_Check_Satus m_IsOk;
+	UInt64 m_Timeout;
 
 } Filesystem_Checking_Check;
 

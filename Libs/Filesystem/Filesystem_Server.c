@@ -1181,7 +1181,7 @@ void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _
 		if (Payload_ComperAddresses(&connection->m_Addrass, _IgnoreAddress) == False)
 		{
 			Payload* msg = NULL;
-			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Data->m_BytesLeft, SEC, &msg) == 0)
+			if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Safe, _Data->m_BytesLeft, SEC * 10, &msg) == 0)
 			{
 				
 				Buffer_Copy(&msg->m_Data, _Data, _Data->m_BytesLeft);

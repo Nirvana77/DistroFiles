@@ -2,6 +2,7 @@
 
 void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking);
 int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check);
 
 int Filesystem_Checking_InitializePtr(Filesystem_Server* _Server, Filesystem_Checking** _CheckingPtr)
 {
@@ -86,6 +87,8 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 			check->m_Connection = NULL;
 			LinkedList_UnlinkNode(&_Checking->m_List, currentNode);
 			LinkedList_LinkFirst(&_Checking->m_List, currentNode);
+
+			SystemMonotonicMS(&check->m_Timeout);
 			*(_CheckPtr) = check;
 			return 0;
 		}
@@ -103,6 +106,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 	check->m_IsUsed = True;
 
 	LinkedList_AddFirst(&_Checking->m_List, check);	
+	SystemMonotonicMS(&check->m_Timeout);
 	*(_CheckPtr) = check;
 	return 0;
 }
@@ -331,7 +335,6 @@ int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall
 		} break;
 
 		case Payload_State_Sented:
-		case Payload_State_Replay:
 		{
 			return 1;
 		} break;
@@ -383,6 +386,11 @@ Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesy
 	return True;
 }
 
+void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check)
+{
+	printf("TODO: do resend check");
+}
+
 void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 {
 
@@ -402,6 +410,9 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 
 		else if(check->m_IsOk == 2)
 			notSync++;
+		
+		else if(_MSTime > check->m_Timeout + Filesystem_Checking_Timeout)
+			Filesystem_Checking_ResendCheck(_Checking, check);
 
 		size++;
 		currentNode = currentNode->m_Next;
