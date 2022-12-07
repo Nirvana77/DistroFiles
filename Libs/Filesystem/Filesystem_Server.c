@@ -1412,8 +1412,23 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_ReSync:
 		{
-			Filesystem_Server_Sync(_Server);
 			_Server->m_State = Filesystem_Server_State_ReSyncing;
+			LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+			while (currentNode != NULL)
+			{
+				Filesystem_Connection* _Connection = (Filesystem_Connection*) currentNode->m_Item;
+				currentNode = currentNode->m_Next;
+
+				if(Filesystem_Checking_CanUseConnection(&_Server->m_Checking, _Connection) == True)
+				{
+					Payload* message = NULL;
+					if(Filesystem_Server_Sync(_Server, &message) == 0)
+						Payload_FilAddress(&message->m_Des, &_Connection->m_Addrass);
+					
+				}
+
+			}
+			
 		} break;
 
 		case Filesystem_Server_State_Idel:
