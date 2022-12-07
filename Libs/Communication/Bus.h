@@ -17,6 +17,11 @@ typedef struct T_Bus_Function Bus_Function;
 #endif
 
 
+typedef enum {
+	Bus_Event_OnWriteError = 0,
+	Bus_Event_OnReadError = 1
+} Bus_Event;
+
 struct T_Bus
 {
 	Bool m_Allocated;

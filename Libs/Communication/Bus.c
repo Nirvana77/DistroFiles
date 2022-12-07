@@ -111,9 +111,20 @@ int Bus_OnRead(void* _Context, Buffer* _Buffer)
 		Payload_FuncIn* _Func = (Payload_FuncIn*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
+		int readed = 0;
 		if(_Func->m_OnRead != NULL)
-			totalReaded += _Func->m_OnRead(_Func->m_Context, _Buffer);
-		
+		{
+			readed = _Func->m_OnRead(_Func->m_Context, _Buffer);
+			if(readed < 0)
+			{
+				EventHandler_EventCall(&_Bus->m_EventHandler, Bus_Event_OnReadError, _Func);
+				printf("Bus readed error: %i\r\n", readed);
+			}
+			else
+			{
+				totalReaded += readed;
+			}
+		}
 
 	}
 
@@ -137,8 +148,8 @@ int Bus_OnWrite(void* _Context, Buffer* _Buffer)
 
 			if(writed < 0)
 			{
+				EventHandler_EventCall(&_Bus->m_EventHandler, Bus_Event_OnWriteError, _Func);
 				printf("Bus writed error: %i\r\n", writed);
-				return -1;
 			}
 		}
 		
