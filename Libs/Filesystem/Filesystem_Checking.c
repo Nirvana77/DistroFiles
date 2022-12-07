@@ -384,6 +384,7 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 		}
 	}
 
+	_Checking->m_Type = Filesystem_Checking_Type_None;
 	_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
 
 	currentNode = _Checking->m_List.m_Head;

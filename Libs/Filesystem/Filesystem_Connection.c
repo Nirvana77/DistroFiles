@@ -127,7 +127,7 @@ int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 	ptr += Memory_ParseUInt8(ptr, &flag);
 	ptr += Payload_DestinationPosistion;
 
-	if(BitHelper_GetBit(flag, DataLayer_HasDestinationBit) == True)
+	if(BitHelper_GetBit(&flag, DataLayer_HasDestinationBit) == True)
 	{
 		ptr += Payload_DestinationPosistion;
 		ptr += Memory_ParseUInt8(ptr, &type);
