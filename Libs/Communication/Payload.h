@@ -330,14 +330,18 @@ static inline void Payload_GetIP(Payload_Address* _Addrass, char _Str[4*3 + 3 + 
 {
 	if (_Addrass->m_Type != Payload_Address_Type_IP)
 		return;
-
+	int j = 0;
 	for (int i = 0; i < 4; i++)
 	{
-		_Str[i + 0] = (char)((int)(_Addrass->m_Address.IP[i] / 100));
-		_Str[i + 1] = (char)((int)(_Addrass->m_Address.IP[i] / 10));
-		_Str[i + 2] = (char)((int)(_Addrass->m_Address.IP[i] % 10));
+		int value = _Addrass->m_Address.IP[i];
+		for(int k = j + 2; k >= j; k--)
+		{
+			_Str[k] = (char)(value % 10) + 48;
+			value /= 10;
+		}
 		if(i + 1 < 4)
-			_Str[i + 3] = '.';
+			_Str[j+3] = '.';
+		j += 3 + 1; 
 	}
 	_Str[4*3 + 3] = 0;
 }
@@ -348,6 +352,33 @@ static inline void Payload_GetMac(Payload_Address* _Addrass, char _Str[6*2 + 5 +
 		return;
 	
 	sprintf(_Str, "%2x-%2x-%2x-%2x-%2x-%2x", _Addrass->m_Address.MAC[0], _Addrass->m_Address.MAC[1], _Addrass->m_Address.MAC[2], _Addrass->m_Address.MAC[3], _Addrass->m_Address.MAC[4], _Addrass->m_Address.MAC[5]);
+}
+
+static inline int Payload_StrToIP(Payload_Address* _Addrass, const char* _Str)
+{
+	int length = strlen(_Str);
+	if(length > 4*3 + 3 + 1)
+		return -1;
+	
+	_Addrass->m_Type = Payload_Address_Type_IP;
+	int index = 0;
+
+	for (int i = 0; i < length; i++)
+	{
+		int value = 0;
+		while (_Str[i] != '.' && i < length)
+		{
+			value += (int)(_Str[i] - 48);
+			value *= 10;
+			i++;
+		}
+		value /= 10;
+		_Addrass->m_Address.IP[index++] = value;
+	}
+	
+	
+
+	return 0;
 }
 
 void Payload_Dispose(Payload* _Payload);
