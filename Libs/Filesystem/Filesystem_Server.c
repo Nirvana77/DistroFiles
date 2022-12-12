@@ -323,7 +323,12 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 	}
 
 	Payload* message = NULL;
-	TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 0, SEC, &message);
+	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, 2, SEC, &message) == 0)
+	{
+		Buffer_WriteUInt16(&message->m_Data, _Server->m_Service->m_Settings.m_Host);
+
+		Payload_SetMessageType(message, Payload_Message_Type_String, "Discover", strlen("Discover"));
+	}
 	
 	_Server->m_State = Filesystem_Server_State_Conneced;
 	return 0;
@@ -780,6 +785,22 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		String_Dispose(&fullPath);
 		return success;
+	}
+	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Discover") == 0)
+	{
+		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+		while (currentNode != NULL)
+		{
+			Filesystem_Connection* _Connection = (Filesystem_Connection*) currentNode->m_Item;
+			if(Payload_ComperAddresses(&_Message->m_Src, &_Connection->m_Addrass) == True)
+			{
+				Buffer_ReadUInt16(&_Message->m_Data, &_Connection->m_Port);
+				return 0;
+			}
+
+			currentNode = currentNode->m_Next;
+		}
+		
 	}
 	else
 	{

@@ -23,6 +23,8 @@ struct T_Filesystem_Connection
 	Bool m_Disposed;
 
 	Payload_Address m_Addrass;
+	UInt16 m_Port;
+	
 	TCPSocket* m_Socket;
 	StateMachine* m_Worker;
 	Bus* m_Bus;
