@@ -94,9 +94,8 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 		readed = recv(_Connection->m_Socket->m_FD, NULL, 1, MSG_PEEK | MSG_DONTWAIT);
 
 		if(readed == 0)
-		{
 			EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
-		}
+		
 	}
 
 	return 0;
