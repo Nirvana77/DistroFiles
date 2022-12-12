@@ -49,7 +49,8 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 	_Server->m_TempFlag = 0;
 	_Server->m_TempListSize = 0;
 	_Server->m_NextCheck = 0;
-	_Server->m_Timeout = SEC * 10;
+	_Server->m_Timeout = Filesystem_Server_SyncTimeout;
+	_Server->m_ErrorTimeout = Filesystem_Server_SyncErrorTimeout;
 	_Server->m_Service = _Service;
 	_Server->m_State = Filesystem_Server_State_Init;
 
@@ -1212,7 +1213,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Conneced:
 		{
-			_Server->m_State = Filesystem_Server_State_ReSync;
+			_Server->m_State = Filesystem_Server_State_Idel;
 		} break;
 
 		case Filesystem_Server_State_ReSyncing:
@@ -1401,6 +1402,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Synced:
 		{
+			_Server->m_NextCheck = 0;
 			SystemMonotonicMS(&_Server->m_LastSynced);
 			_Server->m_State = Filesystem_Server_State_Idel;
 			
@@ -1441,6 +1443,18 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 					Filesystem_Server_Sync(_Server, NULL);
 				
 			}
+			else if(_Server->m_LastSynced == 0)
+			{
+				Filesystem_Server_Sync(_Server, NULL);
+			}
+			
+		} break;
+		case Filesystem_Server_State_SyncError:
+		{
+			if(_MSTime > _Server->m_NextCheck && _Server->m_NextCheck != 0)
+			{
+				Filesystem_Server_Sync(_Server, NULL);
+			}
 			
 		} break;
 
@@ -1449,6 +1463,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 	}
 	
+	/*
 	if(_MSTime > _Server->m_NextCheck)
 	{
 		_Server->m_NextCheck = _MSTime + _Server->m_Timeout;
@@ -1468,7 +1483,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		}
 		
 	}
-
+	*/
 }
 
 int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
@@ -1508,11 +1523,9 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 	Payload* _Message = (Payload*) _Object;
 	Payload_State _Event = (Payload_Type)_EventCall;
 	int success = 0;
-
 	
 	char str[UUID_FULLSTRING_SIZE];
 	uuid_ToString(_Message->m_UUID, str);
-	printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 	
 	switch (_Event)
 	{/*
@@ -1537,10 +1550,13 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 
 		case Payload_State_Timeout:
 		{
+			printf("Event: Timeout UUID: %s Server status: %i\r\n", str, _Server->m_State);
 			if(_Message->m_Message.m_Type == Payload_Message_Type_String)
 			{
 				if(strcmp(_Message->m_Message.m_Method.m_Str, "Sync") == 0)
 				{
+					
+					printf("Resanding sync\r\n");
 					Payload* message = NULL;
 					if(TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, &message) == 0)
 					{
@@ -1551,15 +1567,29 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 			return 1;
 		} break;
 
-		case Payload_State_Removed:
 		case Payload_State_Destroyed:
 		case Payload_State_Failed:
 		{
+			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
+			if(_Server->m_State == Filesystem_Server_State_Syncing || _Server->m_State == Filesystem_Server_State_ReSyncing)
+			{
+				if(_Server->m_ErrorTimeout == 0)
+					_Server->m_ErrorTimeout = Filesystem_Server_SyncErrorTimeout;
+
+				_Server->m_State = Filesystem_Server_State_SyncError;
+				_Server->m_ErrorTimeout = Payload_TimeoutAlgorithm(_Server->m_ErrorTimeout);
+				SystemMonotonicMS(&_Server->m_NextCheck);
+				_Server->m_NextCheck += _Server->m_ErrorTimeout;
+			}
 			success = 1;
 		} break;
+		
+		case Payload_State_Removed:
+		{ return 1; } break;
 
 		default: 
 		{
+			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
 		} break;
 	}
 

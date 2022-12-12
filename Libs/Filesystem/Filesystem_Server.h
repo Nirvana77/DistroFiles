@@ -18,6 +18,9 @@ typedef struct T_Filesystem_Server Filesystem_Server;
 #ifndef Filesystem_Server_SyncTimeout
 	#define Filesystem_Server_SyncTimeout (SEC*10)
 #endif
+#ifndef Filesystem_Server_SyncErrorTimeout
+	#define Filesystem_Server_SyncErrorTimeout (SEC)
+#endif
 typedef enum
 {
 	Filesystem_Server_State_Init = 0, // Initializeing
@@ -29,6 +32,7 @@ typedef enum
 	Filesystem_Server_State_Syncing = 6, // Syncing with servers
 	Filesystem_Server_State_ReSync = 7, // Sends sync message.
 	Filesystem_Server_State_ReSyncing = 8, // Sends sync message.
+	Filesystem_Server_State_SyncError = 9, //Error when doing Resyncing or Syncing
 } Filesystem_Server_State;
 
 const char* Filesystem_Server_States[] = {
@@ -40,7 +44,8 @@ const char* Filesystem_Server_States[] = {
 	"Filesystem_Server_State_Synced",
 	"Filesystem_Server_State_Syncing",
 	"Filesystem_Server_State_ReSync",
-	"Filesystem_Server_State_ReSyncing"
+	"Filesystem_Server_State_ReSyncing",
+	"Filesystem_Server_State_SyncError"
 };
 
 
@@ -64,6 +69,7 @@ struct T_Filesystem_Server
 	
 	UInt64 m_NextCheck;
 	UInt64 m_Timeout;
+	UInt64 m_ErrorTimeout;
 
 	Byte m_TempFlag;
 	Buffer m_TempListBuffer;
