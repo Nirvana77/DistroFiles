@@ -194,8 +194,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 
 int NetworkLayer_PayloadBuilder(NetworkLayer* _NetworLayer, Payload* _Payload)
 {
-	_Payload->m_Src.m_Type = Payload_Address_Type_MAC;
-	GetMAC((UInt8*)&_Payload->m_Src.m_Address);
+	_Payload->m_Src.m_Type = Payload_Address_Type_IP;
+	GetIP((UInt8*)&_Payload->m_Src.m_Address);
 	/*
 	Buffer temp;
 	if(_Payload->m_Size != 0) 
