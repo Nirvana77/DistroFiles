@@ -209,6 +209,9 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 					char ip[16];
 					Payload_GetIP(&_Connection->m_Addrass, ip);
 					printf("TODO reconnect to \"%s\"\r\n", ip);
+					LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+					Filesystem_Connection_Dispose(_Connection);
+					return 0;
 				}
 				else
 				{
@@ -315,8 +318,13 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 			{
 				EventHandler_Hook(&connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
 				connection->m_Socket = socket;
+				Payload_StrToIP(&connection->m_Addrass, charVal);
 				LinkedList_Push(&_Server->m_Connections, connection);
 
+			}
+			else
+			{
+				TCPSocket_Dispose(socket);
 			}
 		}
 		
