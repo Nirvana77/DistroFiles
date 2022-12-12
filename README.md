@@ -5,7 +5,7 @@
 [![GitHub issues](https://img.shields.io/github/issues-raw/nirvana77/filesystem)](https://github.com/Nirvana77/Filesystem/issues)
 
 # Filesystem
-Easy to use, user based file shearing system. [Doc](https://www.overleaf.com/read/wskjmkvbnwpy)
+Easy to use, user based file shearing system. Full documentation [here](https://www.overleaf.com/read/wskjmkvbnwpy).
 
 
 # Build Instructions
