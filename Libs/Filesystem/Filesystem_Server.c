@@ -233,68 +233,6 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 	return 0;
 }
 
-/*
-int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
-{
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-	return Filesystem_Service_TCPRead(_Server->m_Service, &_Server->m_Connections, _Buffer, _Size);
-}
-
-//note: This is a bite janked
-int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
-{
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
-	LinkedList list;
-	LinkedList_Initialize(&list);
-	if(_Server->m_State == Filesystem_Server_State_ReSyncing)
-	{
-		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
-		while (currentNode != NULL)
-		{
-			Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
-
-			Bool isAllowed = Filesystem_Checking_CanUseConnection(&_Server->m_Checking, connection);
-
-			if(isAllowed == True)
-			{
-				LinkedList_Node* node = currentNode;
-				currentNode = currentNode->m_Next;
-				LinkedList_UnlinkNode(&_Server->m_Connections, node);
-				LinkedList_LinkFirst(&list, node);
-			}
-			else
-			{
-				currentNode = currentNode->m_Next;
-			}
-			
-		}
-		
-	}
-	else
-	{
-		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
-		while (currentNode != NULL)
-		{
-			currentNode = currentNode->m_Next;
-			LinkedList_LinkFirst(&list, LinkedList_UnlinkFirst(&_Server->m_Connections));
-		}
-	}
-
-	int success = Filesystem_Service_TCPWrite(_Server->m_Service, &list, _Buffer, _Size);
-
-	LinkedList_Node* currentNode = list.m_Head;
-	while (currentNode != NULL)
-	{
-		currentNode = currentNode->m_Next;
-		LinkedList_LinkFirst(&_Server->m_Connections, LinkedList_UnlinkFirst(&list));
-	}
-	
-
-	LinkedList_Dispose(&list);
-	return success;
-}
-*/
-
 int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 {
 	printf("Filesystem_Server_LoadServer\n\r");
@@ -1491,28 +1429,6 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 		{ } break;
 
 	}
-	
-	/*
-	if(_MSTime > _Server->m_NextCheck)
-	{
-		_Server->m_NextCheck = _MSTime + _Server->m_Timeout;
-		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
-		while (currentNode != NULL)
-		{
-			TCPSocket* socket = (TCPSocket*)currentNode->m_Item;
-			currentNode = currentNode->m_Next;
-
-			int succeess = recv(socket->m_FD,NULL,1, MSG_PEEK | MSG_DONTWAIT);
-
-			if(succeess == 0)
-			{
-				LinkedList_RemoveItem(&_Server->m_Connections, socket);
-				TCPSocket_Dispose(socket);
-			}
-		}
-		
-	}
-	*/
 }
 
 int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
