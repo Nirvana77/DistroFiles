@@ -143,7 +143,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 		if(size > readed)
 		{
-			
+			//TODO: #74 improve
 			printf("Size check Failed!\n\r");
 			printf("S/R: %i/%i\n\r", size, readed);
 			printf("Discarding message: \n\r");

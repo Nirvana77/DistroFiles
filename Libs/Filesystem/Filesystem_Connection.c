@@ -81,7 +81,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			printf("Added connection(%i) ", _Connection->m_Socket->m_FD);
 
 			for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
-				printf("%x.", _Connection->m_Addrass.m_Address.MAC[i]);
+				printf("%i.", _Connection->m_Addrass.m_Address.IP[i]);
 
 			printf("\r\n");
 		}
@@ -118,6 +118,7 @@ int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
 	
+	//Note: is this usefull?
 	void* ptr = _Buffer->m_ReadPtr;
 	UInt8 flag = 0;
 	Payload_Address des;
