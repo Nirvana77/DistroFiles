@@ -56,15 +56,23 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 	NetworkLayer* _NetworkLayer = (NetworkLayer*) _Context;
 	UInt8 type = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	if(type < Payload_Type_Min || type > Payload_Type_Max)
+		return -1;
+	
 	_Message->m_Type = type;
 	
 	type = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, &type);
+		
+	if(type < Payload_Address_Type_Min || type > Payload_Address_Type_Max)
+		return -2;
 	_Message->m_Src.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Src, &_Message->m_Data);
 	
 	type = 0;
 	Buffer_ReadUInt8(&_Message->m_Data, &type);
+	if(type < Payload_Address_Type_Min || type > Payload_Address_Type_Max)
+		return -3;
 	_Message->m_Des.m_Type = type;
 	Payload_ReadAddress(&_Message->m_Des, &_Message->m_Data);
 
@@ -103,8 +111,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 		
 		replay.m_Src.m_Type = Payload_Address_Type_MAC;
 		GetMAC(replay.m_Src.m_Address.MAC);
-		
-		if(_NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay) == 1)
+		int success = _NetworkLayer->m_FuncOut.m_Receive(_NetworkLayer->m_FuncOut.m_Context, _Message, &replay);
+		if(success == 1)
 		{//Whant to send replay
 
 			Payload_FilAddress(&replay.m_Des, &_Message->m_Src);
@@ -118,6 +126,8 @@ int NetworkLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _Rep
 			return 1;
 		}
 		Payload_Dispose(&replay);
+		if(success < 0)
+			return success - 3;
 	}
 
 	return 0;

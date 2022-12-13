@@ -92,8 +92,12 @@ typedef enum
 
 typedef enum
 {
+	Payload_Message_Type_Min = 0,
+
 	Payload_Message_Type_None = 0,
-	Payload_Message_Type_String = 1
+	Payload_Message_Type_String = 1,
+	
+	Payload_Message_Type_Max = 1
 } Payload_Message_Type;
 
 typedef struct
@@ -110,9 +114,13 @@ typedef struct
 
 typedef enum
 {
+	Payload_Address_Type_Min = 0,
+
 	Payload_Address_Type_NONE = 0,
 	Payload_Address_Type_IP = 1,
-	Payload_Address_Type_MAC = 2
+	Payload_Address_Type_MAC = 2,
+
+	Payload_Address_Type_Max = 2
 } Payload_Address_Type;
 
 typedef struct

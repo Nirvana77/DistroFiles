@@ -195,7 +195,8 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 
 			Payload replay;
 			Payload_Initialize(&replay, frame.m_UUID);
-			if(_DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &frame, &replay) == 1)//Whants to send replay
+			int success = _DataLayer->m_FuncOut.m_Receive(_DataLayer->m_FuncOut.m_Context, &frame, &replay);
+			if(success == 1)//Whants to send replay
 			{
 				//send message/payload
 				int success = DataLayer_SendMessage(_DataLayer, &replay);
@@ -208,6 +209,10 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 					Payload_Dispose(&frame);
 					return -4;
 				}
+			}
+			else if(success < 0)
+			{
+				printf("Receive frame error: %i\r\n", success);
 			}
 
 			Payload_Dispose(&replay);

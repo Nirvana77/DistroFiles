@@ -149,7 +149,9 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 	Buffer_ReadBuffer(&_Message->m_Data, UUID, UUID_DATA_SIZE);
 	memcpy(_Message->m_UUID, UUID, UUID_DATA_SIZE);
 
-	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+	int success = Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+	if(success < 0)
+		return success;
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
 

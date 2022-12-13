@@ -106,11 +106,14 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		return -1;
 
 	readed += success;
+	
+	if(type < Payload_Message_Type_Min || type > Payload_Message_Type_Max)
+		return -2;
 	_Message->m_Type = (Payload_Message_Type)type;
 
 	Buffer_ReadUInt16(_Buffer, &_Message->m_Size);
 	if(success < 0)
-		return -2;
+		return -3;
 
 	readed += success;
 
@@ -120,7 +123,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		{
 			Buffer_ReadBuffer(_Buffer, (UInt8*)_Message->m_Method.m_Str, _Message->m_Size);
 			if(success < 0)
-				return -3;
+				return -4;
 
 			_Message->m_Method.m_Str[_Message->m_Size] = 0;
 
