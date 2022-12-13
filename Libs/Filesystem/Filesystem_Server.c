@@ -196,7 +196,7 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 		case Filesystem_Connection_Event_Disposed:
 		{
 			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-			return 0;
+			return 1;
 		} break;
 
 		case Filesystem_Connection_Event_Disconnected:
@@ -256,9 +256,10 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 			{
 				EventHandler_Hook(&connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
 				connection->m_Socket = socket;
+				connection->m_Port = port;
 				Payload_StrToIP(&connection->m_Addrass, charVal);
 				LinkedList_Push(&_Server->m_Connections, connection);
-
+				printf("Added connection: %s:%i\r\n", charVal, port);
 			}
 			else
 			{
@@ -1552,10 +1553,9 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	{
 		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
-
-		TCPSocket_Dispose(connection->m_Socket);
-		Filesystem_Connection_Dispose(connection);
 		LinkedList_RemoveFirst(&_Server->m_Connections);
+
+		Filesystem_Connection_Dispose(connection);
 	}
 	Bus_Dispose(&_Server->m_Bus);
 
