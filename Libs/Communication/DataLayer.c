@@ -212,6 +212,7 @@ int DataLayer_ReceiveMessage(DataLayer* _DataLayer)
 			}
 			else if(success < 0)
 			{
+				Payload_Print(&frame, "Error");
 				printf("Receive frame error: %i\r\n", success);
 			}
 

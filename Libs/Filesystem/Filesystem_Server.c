@@ -208,7 +208,7 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 				{
 					char ip[16];
 					Payload_GetIP(&_Connection->m_Addrass, ip);
-					printf("TODO reconnect to \"%s\"\r\n", ip);
+					printf("TODO reconnect to \"%s:%i\"\r\n", ip, _Connection->m_Port);
 					LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
 					Filesystem_Connection_Dispose(_Connection);
 					return 0;
