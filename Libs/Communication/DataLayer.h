@@ -37,6 +37,7 @@ struct T_DataLayer
 };
 
 //Creds: https://quickbirdstudios.com/blog/validate-data-with-crc/
+//TODO: #72 Fix to the CRC
 static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Result)
 {
 	unsigned char* ptr = _Data;
