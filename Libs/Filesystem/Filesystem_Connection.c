@@ -26,12 +26,14 @@ int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socke
 int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus)
 {
 	_Connection->m_Allocated = False;
-	_Connection->m_Disposed = False;
+
 	_Connection->m_Socket = _Socket;
 	_Connection->m_Worker = _Worker;
 	_Connection->m_Bus = _Bus;
 	
 	_Connection->m_Func = NULL;
+	_Connection->m_Disposed = False;
+	_Connection->m_HasReaded = False;
 
 	memset(&_Connection->m_Addrass, 0, sizeof(Payload_Address));
 	
@@ -62,10 +64,33 @@ int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMa
 int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
+	if(_Connection->m_Disposed == True)
+		return 0;
 
-	int readed = TCPSocket_Read((void*)_Connection->m_Socket, &_Connection->m_Buffer);
+	TCPSocket_Error error;
+	int readed = TCPSocket_Read((void*)_Connection->m_Socket, _Connection->m_DataBuffer, TCP_BufferSize, &error);
 
-	if(readed > 0)
+	if(error.m_HasError == True)
+	{
+		switch (error.m_Error)
+		{
+			case 32: //* Broken pipe
+			{
+				EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
+				
+			} break;
+
+			case EWOULDBLOCK:
+			{ } break;
+
+			case 0:
+			default:
+			{
+				printf("Other Read error: %i, read is: %i\r\n", error.m_Error, readed);
+			} break;
+		}
+	}
+	else if(readed > 0)
 	{
 		if(_Connection->m_Addrass.m_Type == Payload_Address_Type_NONE)
 		{
@@ -85,7 +110,13 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 
 			printf("\r\n");
 		}
+
 		EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Readed, _Connection);
+		Buffer_WriteBuffer(&_Connection->m_Buffer, _Connection->m_DataBuffer, readed);
+		
+		if(readed != TCP_BufferSize)
+			_Connection->m_HasReaded = True;
+
 	}
 
 	if(_MSTime > _Connection->m_NextCheck + Filesystem_Connection_Timeout)
@@ -104,8 +135,9 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
-	if(_Connection->m_Buffer.m_BytesLeft != 0)
+	if(_Connection->m_HasReaded  == True)
 	{
+		_Connection->m_HasReaded = False;
 		int readed = Buffer_DeepCopy(_Buffer, &_Connection->m_Buffer, 0);
 		Buffer_Clear(&_Connection->m_Buffer);
 		return readed;
@@ -117,25 +149,56 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
-	
-	//Note: is this usefull?
+
 	void* ptr = _Buffer->m_ReadPtr;
-	UInt8 flag = 0;
-	Payload_Address des;
-	UInt8 type = 0;
+	int bytesLeft = _Buffer->m_BytesLeft;
+	int bytesWrite = 0;
+	int totalWrite = 0;
+	int bytesToWrite = 0;
+	unsigned char dataBuffer[TCP_BufferSize];
 
-	ptr += Memory_ParseUInt8(ptr, &flag);
-	ptr += Payload_DestinationPosistion;
-
-	if(BitHelper_GetBit(&flag, DataLayer_HasDestinationBit) == True)
+	while(bytesLeft > 0)
 	{
-		ptr += Payload_DestinationPosistion;
-		ptr += Memory_ParseUInt8(ptr, &type);
-		des.m_Type = type;
-		Memory_ParseBuffer(&des.m_Address, ptr, sizeof(des.m_Address));
+		bytesToWrite = bytesLeft;
+		if(bytesToWrite > TCP_BufferSize - totalWrite)
+			bytesToWrite = TCP_BufferSize - totalWrite;
+		else if(bytesToWrite > TCP_BufferSize)
+			bytesToWrite = TCP_BufferSize;
+
+		Memory_Copy(dataBuffer, ptr, bytesToWrite);
+		TCPSocket_Error error;
+		bytesWrite = TCPSocket_Write(_Connection->m_Socket, dataBuffer, bytesToWrite, &error);
+		if(error.m_HasError == True)
+		{
+			switch (error.m_Error)
+			{
+				case 0:
+				case EWOULDBLOCK:
+				{
+					bytesWrite = 0;
+				} break;
+				case 32: //* Broken pipe
+				{
+					EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
+					return -1;
+				} break;
+
+				default:
+				{
+					return -2;
+				} break;
+			}
+		}
+
+		bytesLeft -= bytesWrite;
+		totalWrite += bytesWrite;
+		ptr += bytesWrite;
 	}
 	
-	return TCPSocket_Write((void*)_Connection->m_Socket, _Buffer);	
+	_Buffer->m_ReadPtr += _Buffer->m_BytesLeft;
+	_Buffer->m_BytesLeft = 0;
+
+	return totalWrite;
 }
 
 void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)

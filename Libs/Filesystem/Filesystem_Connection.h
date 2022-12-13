@@ -9,6 +9,10 @@ typedef struct T_Filesystem_Connection Filesystem_Connection;
 
 #define Filesystem_Connection_Timeout (SEC*10)
 
+#ifndef TCP_BufferSize
+	#define TCP_BufferSize 256
+#endif
+
 typedef enum
 {
 	Filesystem_Connection_Event_Readed = 0,
@@ -30,6 +34,8 @@ struct T_Filesystem_Connection
 	Bus* m_Bus;
 
 	Buffer m_Buffer;
+	unsigned char m_DataBuffer[TCP_BufferSize];
+	Bool m_HasReaded;
 	Payload_FuncIn* m_Func;
 
 	UInt64 m_NextCheck;
