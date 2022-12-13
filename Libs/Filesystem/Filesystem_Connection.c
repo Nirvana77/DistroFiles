@@ -139,6 +139,7 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 	{
 		_Connection->m_HasReaded = False;
 		int readed = Buffer_DeepCopy(_Buffer, &_Connection->m_Buffer, 0);
+		printf("Filesystem_Connection_OnRead(%i)\r\n", readed);
 		Buffer_Clear(&_Connection->m_Buffer);
 		return readed;
 	}
@@ -148,6 +149,7 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 
 int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
+	printf("Filesystem_Connection_OnWrite(%i)\r\n", _Buffer->m_BytesLeft);
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
 
 	void* ptr = _Buffer->m_ReadPtr;

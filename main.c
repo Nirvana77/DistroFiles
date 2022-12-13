@@ -281,6 +281,8 @@ int main(int argc, char* argv[])
 		nanosleep(&tim, &tim2);
 	}
 
+	printf("Quiting....\r\n");
+
 	if(service != NULL)
 		Filesystem_Service_Dispose(service);
 

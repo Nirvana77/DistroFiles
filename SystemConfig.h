@@ -10,6 +10,6 @@
 
 #define Filesystem_Service_BufferMax 1024
 #define Payload_BufferSize 256
-#define TCP_BufferSize 256
+#define TCP_BufferSize 1024
 
 #endif // SystemConfig_h__

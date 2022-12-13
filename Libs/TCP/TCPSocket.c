@@ -59,6 +59,7 @@ int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPS
 int TCPSocket_Read(void* _Context, unsigned char* _Buffer, int _Size, TCPSocket_Error* _Error)
 {
 	TCPSocket* _TCPSocket = (TCPSocket*) _Context;
+	_Error->m_HasError = False;
 	int bytesRead = recv(_TCPSocket->m_FD, _Buffer, _Size, 0);
 
 	if(bytesRead < 0)
