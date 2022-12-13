@@ -98,17 +98,19 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			ptr += Payload_SourcePosistion + 1; //1 because we skip to readed the flags
 			UInt8 type = 0;
 			ptr += Memory_ParseUInt8(ptr, &type);
-			_Connection->m_Addrass.m_Type = (Payload_Address_Type)type;
-
-			if(type != Payload_Address_Type_NONE)
+			if(!(type < Payload_Address_Type_Min || type > Payload_Address_Type_Max))
+			{
+				_Connection->m_Addrass.m_Type = (Payload_Address_Type)type;
 				Memory_ParseBuffer(&_Connection->m_Addrass.m_Address, ptr, sizeof(_Connection->m_Addrass.m_Address));
-			
-			printf("Added connection(%i) ", _Connection->m_Socket->m_FD);
+				
+				printf("Added connection(%i) ", _Connection->m_Socket->m_FD);
 
-			for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
-				printf("%i.", _Connection->m_Addrass.m_Address.IP[i]);
+				for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
+					printf("type(%i):%i.", type, _Connection->m_Addrass.m_Address.IP[i]);
 
-			printf("\r\n");
+				printf("\r\n");
+
+			}
 		}
 
 		EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Readed, _Connection);
