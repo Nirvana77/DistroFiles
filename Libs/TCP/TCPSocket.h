@@ -11,8 +11,6 @@ typedef struct T_TCPSocket TCPSocket;
 	#include <unistd.h>
 	#include <sys/fcntl.h>
 	#include <arpa/inet.h>
-
-	#define TCPSocket_Error -1
 	
 	typedef int TCPSocket_FD;
 
@@ -37,6 +35,12 @@ typedef enum
 	
 } TCPSocket_Status;
 
+typedef struct
+{
+	Bool m_HasError;
+	int m_Error;
+} TCPSocket_Error;
+
 struct T_TCPSocket
 {
 	Bool m_Allocated;
@@ -50,8 +54,8 @@ struct T_TCPSocket
 int TCPSocket_InitializePtr(const char* _IP, int _Port, TCPSocket_FD* _FD, TCPSocket** _TCPSocketPtr);
 int TCPSocket_Initialize(TCPSocket* _TCPSocket, const char* _IP, int _Port, TCPSocket_FD* _FD);
 
-int TCPSocket_Read(void* _Context, Buffer* _Buffer);
-int TCPSocket_Write(void* _Context, Buffer* _Buffer);
+int TCPSocket_Read(void* _Context, Buffer* _Buffer, TCPSocket_Error* _Error);
+int TCPSocket_Write(void* _Context, Buffer* _Buffer, TCPSocket_Error* _Error);
 
 void TCPSocket_Dispose(TCPSocket* _TCPSocket);
 

@@ -55,7 +55,7 @@ void TCPServer_Work(TCPServer* _TCPServer)
 		int client_sock = accept(_TCPServer->m_Socket, (struct sockaddr*)&client_addr, &addr_size);
 	#endif
 	
-	if(client_sock != TCPSocket_Error)
+	if(client_sock >= 0)
 	{
 		TCPSocket* newSocket;
 		int result = TCPSocket_InitializePtr(0, 0, &client_sock, &newSocket);
