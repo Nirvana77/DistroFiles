@@ -74,6 +74,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 	{
 		switch (error.m_Error)
 		{
+			case ENOTSOCK: //* Not a socket
 			case 32: //* Broken pipe
 			{
 				EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
