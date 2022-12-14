@@ -202,28 +202,27 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 		case Filesystem_Connection_Event_Disconnected:
 		{
 			printf("Server: ");
-			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
+			if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
 			{
-				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
-				{
-					Connection_Reconnect(_Connection);
-					return 0;
-				}
-				else
-				{
-					char mac[18];
-					Payload_GetMac(&_Connection->m_Addrass, mac);
-					printf("Connection \"%s\" got disconnected\r\n", mac);
-					LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-					Filesystem_Connection_Dispose(_Connection);
-					return 0;
-				}
+				Connection_Reconnect(_Connection);
+				return 0;
 			}
 			else
 			{
+				printf("Connection ");
+				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_MAC)
+				{
+					char mac[18];
+					Payload_GetMac(&_Connection->m_Addrass, mac);
+					printf("\"%s\" ", mac);
+				}
+				else
+				{
+					printf("\"\"");
+				}
+				printf("got disconnected\r\n");
 				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
 				Filesystem_Connection_Dispose(_Connection);
-				printf("Connection disconnected\r\n");
 				return 0;
 			}
 		}

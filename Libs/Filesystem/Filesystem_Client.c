@@ -114,40 +114,40 @@ int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
-	Filesystem_Client* _Server = (Filesystem_Client*) _Context;
+	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
 
 	switch (_EventCall)
 	{
 		case Filesystem_Connection_Event_Disposed:
 		{
-			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+			LinkedList_RemoveItem(&_Client->m_Connections, _Connection);
 			return 1;
 		} break;
 
 		case Filesystem_Connection_Event_Disconnected:
 		{
 			printf("Client: ");
-			if(_Connection->m_Addrass.m_Type != Payload_Address_Type_NONE)
+			if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
 			{
-				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
-				{
-					char ip[16];
-					Payload_GetIP(&_Connection->m_Addrass, ip);
-					printf("TODO reconnect to \"%s\"\r\n", ip);
-				}
-				else
-				{
-					char mac[18];
-					Payload_GetMac(&_Connection->m_Addrass, mac);
-					printf("Connection \"%s\" got disconnected\r\n", mac);
-					return 1;
-				}
+				Connection_Reconnect(_Connection);
+				return 0;
 			}
 			else
 			{
-				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+				printf("Connection ");
+				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_MAC)
+				{
+					char mac[18];
+					Payload_GetMac(&_Connection->m_Addrass, mac);
+					printf("\"%s\" ", mac);
+				}
+				else
+				{
+					printf("\"\" ");
+				}
+				printf("got disconnected\r\n");
+				LinkedList_RemoveItem(&_Client->m_Connections, _Connection);
 				Filesystem_Connection_Dispose(_Connection);
-				printf("Connection disconnected\r\n");
 				return 0;
 			}
 		}
@@ -253,27 +253,6 @@ void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 	TCPServer_Work(&_Client->m_TCPServer);
 	DataLayer_Work(_MSTime, &_Client->m_DataLayer);
 	TransportLayer_Work(_MSTime, &_Client->m_TransportLayer);
-	
-	if(_MSTime > _Client->m_NextCheck)
-	{
-		_Client->m_NextCheck = _MSTime + _Client->m_Timeout;
-		LinkedList_Node* currentNode = _Client->m_Connections.m_Head;
-		while (currentNode != NULL)
-		{
-			Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
-			currentNode = currentNode->m_Next;
-
-			int succeess = recv(connection->m_Socket->m_FD,NULL,1, MSG_PEEK | MSG_DONTWAIT);
-
-			if(succeess == 0)
-			{
-				LinkedList_RemoveItem(&_Client->m_Connections, connection);
-				TCPSocket_Dispose(connection->m_Socket);
-				Allocator_Free(connection);
-			}
-		}
-		
-	}
 
 }
 

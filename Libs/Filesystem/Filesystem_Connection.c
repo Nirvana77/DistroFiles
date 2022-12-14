@@ -65,7 +65,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 {
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
 	if(_Connection->m_Disposed == True)
-		return 0;
+		return 1;
 
 	TCPSocket_Error error;
 	int readed = TCPSocket_Read((void*)_Connection->m_Socket, _Connection->m_DataBuffer, TCP_BufferSize, &error);
@@ -78,7 +78,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			case 32: //* Broken pipe
 			{
 				EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
-				
+				return 0;
 			} break;
 
 			case 0:
@@ -238,8 +238,12 @@ void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
 	StateMachine_RemoveTask(_Connection->m_Worker, _Connection->m_Task);
 
 	if(_Connection->m_Allocated == True)
+	{
 		Allocator_Free(_Connection);
+	}
 	else
+	{
 		memset(_Connection, 0, sizeof(Filesystem_Connection));
-
+		_Connection->m_Disposed = True;
+	}
 }
