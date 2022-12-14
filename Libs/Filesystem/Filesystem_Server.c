@@ -218,7 +218,9 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 					char mac[18];
 					Payload_GetMac(&_Connection->m_Addrass, mac);
 					printf("Connection \"%s\" got disconnected\r\n", mac);
-					return 1;
+					LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+					Filesystem_Connection_Dispose(_Connection);
+					return 0;
 				}
 			}
 			else
@@ -281,7 +283,7 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 	return 0;
 }
 
-//TODO: Fix sync quantity check
+//TODO: #75 Fix sync quantity check
 int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
 	Filesystem_Server* _Server = (Filesystem_Server*) _Context;

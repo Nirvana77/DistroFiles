@@ -80,10 +80,10 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 				
 			} break;
 
+			case 0:
 			case EWOULDBLOCK:
 			{ } break;
 
-			case 0:
 			default:
 			{
 				printf("Other Read error: %i, read is: %i\r\n", error.m_Error, readed);
@@ -141,7 +141,6 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 	{
 		_Connection->m_HasReaded = False;
 		int readed = Buffer_WriteBuffer(_Buffer, _Connection->m_Buffer.m_ReadPtr, _Connection->m_Buffer.m_BytesLeft);
-		printf("Filesystem_Connection_OnRead(%i)\r\n", readed);
 		Buffer_Clear(&_Connection->m_Buffer);
 		return readed;
 	}
@@ -151,7 +150,6 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 
 int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
-	printf("Filesystem_Connection_OnWrite(%i)\r\n", _Buffer->m_BytesLeft);
 	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
 
 	void* ptr = _Buffer->m_ReadPtr;
@@ -212,6 +210,20 @@ void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
 	
 	_Connection->m_Disposed = True;
 	EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disposed, _Connection);
+
+	if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
+	{
+		char ip[16];
+		Payload_GetIP(&_Connection->m_Addrass, ip);
+		printf("Connection \"%s:%i\" got dispose\r\n", ip, _Connection->m_Port);
+
+	}
+	else if(_Connection->m_Addrass.m_Type == Payload_Address_Type_MAC)
+	{
+		char mac[18];
+		Payload_GetMac(&_Connection->m_Addrass, mac);
+		printf("Connection \"%s:%i\" got dispose\r\n", mac, _Connection->m_Port);
+	}
 
 	Bus_RemoveFuncIn(_Connection->m_Bus, _Connection->m_Func);
 	Buffer_Dispose(&_Connection->m_Buffer);

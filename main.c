@@ -232,7 +232,19 @@ int main(int argc, char* argv[])
 						UInt64 time = 0;
 						Filesystem_Server_GetTimeFromPath(service->m_Server->m_FilesytemPath.m_Ptr, &time);
 						printf("Path: %s last modyfed %lu\r\n", service->m_Server->m_FilesytemPath.m_Ptr, time);
-					} break;
+					}
+					case 'l':
+					{
+						String str;
+						String_Initialize(&str, 32);
+
+						String_Set(&str, "tree ");
+						String_Append(&str, service->m_Server->m_FilesytemPath.m_Ptr, service->m_Server->m_FilesytemPath.m_Length);
+						printf("\r\n");
+						system(str.m_Ptr);
+
+						String_Dispose(&str);
+					}break;
 
 					case 'j':
 					{
@@ -253,19 +265,6 @@ int main(int argc, char* argv[])
 							Payload_FilAddress(&message->m_Des, &des);
 						}
 					} break;
-				
-					case 'l':
-					{
-						String str;
-						String_Initialize(&str, 32);
-
-						String_Set(&str, "tree ");
-						String_Append(&str, service->m_Server->m_FilesytemPath.m_Ptr, service->m_Server->m_FilesytemPath.m_Length);
-						printf("\r\n");
-						system(str.m_Ptr);
-
-						String_Dispose(&str);
-					}break;
 				
 					default:
 					{

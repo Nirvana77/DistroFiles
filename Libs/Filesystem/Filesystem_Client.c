@@ -121,7 +121,7 @@ int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 		case Filesystem_Connection_Event_Disposed:
 		{
 			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-			return 0;
+			return 1;
 		} break;
 
 		case Filesystem_Connection_Event_Disconnected:
