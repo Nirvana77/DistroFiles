@@ -12,14 +12,17 @@ typedef struct T_DataLayer DataLayer;
 	#define DataLayer_CRC (0b11011)
 #endif
 
+#define DataLayer_HasSourceBit 0
+#define DataLayer_HasDestinationBit 1
+#define DataLayer_HasMethodBit 2
 
 struct T_DataLayer
 {
 	Bool m_Allocated;
 
 	void* m_DataContext;
-	int (*m_OnRead)(void* _Context, Buffer* _Buffer, int _Size);
-	int (*m_OnWrite)(void* _Context, Buffer* _Buffer, int _Size);
+	int (*m_OnRead)(void* _Context, Buffer* _Buffer);
+	int (*m_OnWrite)(void* _Context, Buffer* _Buffer);
 	int (*m_OnConnect)(void* _Context);
 	int (*m_OnDisconnect)(void* _Context);
 
@@ -34,6 +37,7 @@ struct T_DataLayer
 };
 
 //Creds: https://quickbirdstudios.com/blog/validate-data-with-crc/
+//TODO: #72 Fix to the CRC
 static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Result)
 {
 	unsigned char* ptr = _Data;
@@ -63,8 +67,8 @@ static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Res
 		*(_Result) = (UInt8)(result);
 }
 
-int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr);
-int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnWrite)(void* _Context, Buffer* _Buffer, int _Size), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout);
+int DataLayer_InitializePtr(int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout, DataLayer** _DataLayerPtr);
+int DataLayer_Initialize(DataLayer* _DataLayer, int (*_OnConnect)(void* _Context), int (*_OnRead)(void* _Context, Buffer* _Buffer), int (*_OnWrite)(void* _Context, Buffer* _Buffer), int (*_OnDisconnect)(void* _Context), void* _DataContext, UInt64 _Timeout);
 
 void DataLayer_Work(UInt64 _MSTime, DataLayer* _DataLayer);
 

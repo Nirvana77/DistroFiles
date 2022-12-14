@@ -30,7 +30,7 @@ int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 
 	_Payload->m_Type = Payload_Type_UnSafe;
 
-	Buffer_Initialize(&_Payload->m_Data, True, 64);
+	Buffer_Initialize(&_Payload->m_Data, 64);
 	EventHandler_Initialize(&_Payload->m_EventHandler);
 
 	if(_UUID == NULL)
@@ -106,11 +106,14 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		return -1;
 
 	readed += success;
+	
+	if(type < Payload_Message_Type_Min || type > Payload_Message_Type_Max)
+		return -2;
 	_Message->m_Type = (Payload_Message_Type)type;
 
 	Buffer_ReadUInt16(_Buffer, &_Message->m_Size);
 	if(success < 0)
-		return -2;
+		return -3;
 
 	readed += success;
 
@@ -120,7 +123,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		{
 			Buffer_ReadBuffer(_Buffer, (UInt8*)_Message->m_Method.m_Str, _Message->m_Size);
 			if(success < 0)
-				return -3;
+				return -4;
 
 			_Message->m_Method.m_Str[_Message->m_Size] = 0;
 

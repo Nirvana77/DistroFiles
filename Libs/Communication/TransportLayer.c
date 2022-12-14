@@ -94,6 +94,7 @@ int TransportLayer_ResendMessage(TransportLayer* _TransportLayer, Payload* _Payl
 	Payload* message = NULL;
 	if(TransportLayer_CreateMessage(_TransportLayer, _Payload->m_Type, _Payload->m_Size, _Payload->m_Timeout, &message) == 0)
 	{
+		uuid_copy(message->m_UUID, _Payload->m_UUID);
 		Payload_Copy(message, _Payload);
 		if(_PayloadPtr != NULL)
 			*(_PayloadPtr) = message;
@@ -148,7 +149,9 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 	Buffer_ReadBuffer(&_Message->m_Data, UUID, UUID_DATA_SIZE);
 	memcpy(_Message->m_UUID, UUID, UUID_DATA_SIZE);
 
-	Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+	int success = Payload_ReadMessage(&_Message->m_Message, &_Message->m_Data);
+	if(success < 0)
+		return success;
 
 	Buffer_ReadUInt16(&_Message->m_Data, &_Message->m_Size);
 
@@ -166,8 +169,10 @@ int TransportLayer_ReveicePayload(void* _Context, Payload* _Message, Payload* _R
 			if(uuid_Compere(_Payload->m_UUID, _Message->m_UUID) == True)
 			{
 				EventHandler_EventCall(&_Payload->m_EventHandler, (int)Payload_State_Replay, _Message);
-				SystemMonotonicMS(&_Payload->m_Time);
 				hasMessage = True;
+				SystemMonotonicMS(&_Payload->m_Time);
+				_Payload->m_State = Payload_State_Replay;
+				currentNode = NULL;
 			}
 		}
 				
@@ -230,7 +235,11 @@ void TransportLayer_Work(UInt64 _MSTime, TransportLayer* _TransportLayer)
 			uuid_ToString(_Payload->m_UUID, str);
 			printf("Removed: %s\n\r", str);
 			
-			_Payload->m_State = Payload_State_Timeout;
+			if(_Payload->m_State == Payload_State_Resived)
+				_Payload->m_State = Payload_State_Destroyed;
+			else
+				_Payload->m_State = Payload_State_Timeout;
+			
 			EventHandler_EventCall(&_Payload->m_EventHandler, (int)_Payload->m_State, _Payload);
 			
 			LinkedList_RemoveItem(&_TransportLayer->m_Sent, _Payload);

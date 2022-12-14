@@ -44,6 +44,13 @@ typedef struct
 	int (*m_Send)(void* _Context, Payload** _PaylodePtr);
 } Payload_FuncOut;
 
+typedef struct
+{
+	void* m_Context;
+	int (*m_OnRead)(void* _Context, Buffer* _Buffer);
+	int (*m_OnWrite)(void* _Context, Buffer* _Buffer);
+} Payload_FuncIn;
+
 static inline void Payload_FuncOut_Set(Payload_FuncOut* _FuncOut, int (*_Receive)(void* _Context, Payload* _Message, Payload* _Replay), int (*_Send)(void* _Context, Payload** _PaylodePtr), void* _Context)
 {
 	_FuncOut->m_Context = _Context;
@@ -85,8 +92,12 @@ typedef enum
 
 typedef enum
 {
+	Payload_Message_Type_Min = 0,
+
 	Payload_Message_Type_None = 0,
-	Payload_Message_Type_String = 1
+	Payload_Message_Type_String = 1,
+	
+	Payload_Message_Type_Max = 1
 } Payload_Message_Type;
 
 typedef struct
@@ -103,9 +114,13 @@ typedef struct
 
 typedef enum
 {
+	Payload_Address_Type_Min = 0,
+
 	Payload_Address_Type_NONE = 0,
 	Payload_Address_Type_IP = 1,
-	Payload_Address_Type_MAC = 2
+	Payload_Address_Type_MAC = 2,
+
+	Payload_Address_Type_Max = 2
 } Payload_Address_Type;
 
 typedef struct
@@ -317,6 +332,61 @@ static inline Bool CommperMAC(UInt8 _A[6], UInt8 _B[6])
 	}
 	
 	return True;
+}
+
+static inline void Payload_GetIP(Payload_Address* _Addrass, char _Str[4*3 + 3 + 1])
+{
+	if (_Addrass->m_Type != Payload_Address_Type_IP)
+		return;
+	int j = 0;
+	for (int i = 0; i < 4; i++)
+	{
+		int value = _Addrass->m_Address.IP[i];
+		for(int k = j + 2; k >= j; k--)
+		{
+			_Str[k] = (char)(value % 10) + 48;
+			value /= 10;
+		}
+		if(i + 1 < 4)
+			_Str[j+3] = '.';
+		j += 3 + 1; 
+	}
+	_Str[4*3 + 3] = 0;
+}
+
+static inline void Payload_GetMac(Payload_Address* _Addrass, char _Str[6*2 + 5 + 1])
+{
+	if (_Addrass->m_Type != Payload_Address_Type_MAC)
+		return;
+	
+	sprintf(_Str, "%2x-%2x-%2x-%2x-%2x-%2x", _Addrass->m_Address.MAC[0], _Addrass->m_Address.MAC[1], _Addrass->m_Address.MAC[2], _Addrass->m_Address.MAC[3], _Addrass->m_Address.MAC[4], _Addrass->m_Address.MAC[5]);
+}
+
+static inline int Payload_StrToIP(Payload_Address* _Addrass, const char* _Str)
+{
+	int length = strlen(_Str);
+	if(length > 4*3 + 3 + 1)
+		return -1;
+	
+	_Addrass->m_Type = Payload_Address_Type_IP;
+	int index = 0;
+
+	for (int i = 0; i < length; i++)
+	{
+		int value = 0;
+		while (_Str[i] != '.' && i < length)
+		{
+			value += (int)(_Str[i] - 48);
+			value *= 10;
+			i++;
+		}
+		value /= 10;
+		_Addrass->m_Address.IP[index++] = value;
+	}
+	
+	
+
+	return 0;
 }
 
 void Payload_Dispose(Payload* _Payload);

@@ -1,6 +1,8 @@
 #include "Filesystem_Checking.h"
 
 void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking);
+int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check);
 
 int Filesystem_Checking_InitializePtr(Filesystem_Server* _Server, Filesystem_Checking** _CheckingPtr)
 {
@@ -85,6 +87,8 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 			check->m_Connection = NULL;
 			LinkedList_UnlinkNode(&_Checking->m_List, currentNode);
 			LinkedList_LinkFirst(&_Checking->m_List, currentNode);
+
+			SystemMonotonicMS(&check->m_Timeout);
 			*(_CheckPtr) = check;
 			return 0;
 		}
@@ -102,6 +106,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 	check->m_IsUsed = True;
 
 	LinkedList_AddFirst(&_Checking->m_List, check);	
+	SystemMonotonicMS(&check->m_Timeout);
 	*(_CheckPtr) = check;
 	return 0;
 }
@@ -179,6 +184,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 				}
 			}
 			else
@@ -192,6 +198,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 				}
 			}
 			
@@ -258,6 +265,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 				}
 
 			}
@@ -272,6 +280,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 				}
 			}
 			
@@ -293,13 +302,44 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
 				Buffer_WriteUInt8(&msg->m_Data, 2);
 
-					uuid_Copy(msg->m_UUID, _Message->m_UUID);
+				uuid_Copy(msg->m_UUID, _Message->m_UUID);
 				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+				EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 			}
 			
 			return -1;
 		} break;
+	}
+
+	return 0;
+}
+
+int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	Filesystem_Checking* _Checking = (Filesystem_Checking*) _Context;
+	Payload* _Message = (Payload*) _Object;
+	Payload_State state = (Payload_State) _EventCall;
+	
+	switch (state)
+	{
+		case Payload_State_Failed:
+		case Payload_State_Timeout:
+		{
+			Payload_Print(_Message, "Checking Failed");
+			Payload* message = NULL;
+			if(TransportLayer_ResendMessage(&_Checking->m_Server->m_TransportLayer, _Message, &message) == 0)
+				EventHandler_Hook(&message->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+
+			return 1;
+		} break;
+
+		case Payload_State_Sented:
+		{
+			return 1;
+		} break;
+
+		default: { };
 	}
 
 	return 0;
@@ -346,6 +386,11 @@ Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesy
 	return True;
 }
 
+void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check)
+{
+	printf("TODO: do resend check");
+}
+
 void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 {
 
@@ -365,6 +410,9 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 
 		else if(check->m_IsOk == 2)
 			notSync++;
+		
+		else if(_MSTime > check->m_Timeout + Filesystem_Checking_Timeout)
+			Filesystem_Checking_ResendCheck(_Checking, check);
 
 		size++;
 		currentNode = currentNode->m_Next;
@@ -401,6 +449,7 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 			{
 				Payload_FilAddress(&_Checking->m_Message.m_Des, &check->m_Connection->m_Addrass);
 				Payload_Copy(message, &_Checking->m_Message);
+				EventHandler_Hook(&message->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
 			}
 		}
 
