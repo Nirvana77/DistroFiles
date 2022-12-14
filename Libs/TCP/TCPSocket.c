@@ -78,7 +78,7 @@ int TCPSocket_Read(void* _Context, unsigned char* _Buffer, int _Size, TCPSocket_
 			_TCPSocket->m_Status = TCPSocket_Status_Connected;
 			return bytesRead;
 		}
-		else if(errno == 32)
+		else if(errno == 32 || errno == ENOTSOCK)
 		{
 			_TCPSocket->m_Status = TCPSocket_Status_Closed;
 			return bytesRead;
