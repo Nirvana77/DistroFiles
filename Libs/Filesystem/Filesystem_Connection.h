@@ -18,6 +18,8 @@ typedef enum
 	Filesystem_Connection_Event_Readed = 0,
 	Filesystem_Connection_Event_Disposed = 1,
 	Filesystem_Connection_Event_Disconnected = 2,
+	Filesystem_Connection_Event_Reconnected = 3,
+	Filesystem_Connection_Event_ReconnectError = 4,
 
 } Filesystem_Connection_Event;
 
@@ -48,6 +50,7 @@ struct T_Filesystem_Connection
 int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus, Filesystem_Connection** _CommectionPtr);
 int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus);
 
+int Connection_Reconnect(Filesystem_Connection* _Connection);
 
 void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection);
 #endif // Filesystem_Connection_h__

@@ -203,6 +203,18 @@ int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 	return totalWrite;
 }
 
+int Connection_Reconnect(Filesystem_Connection* _Connection)
+{
+	
+	char ip[16];
+	Payload_GetIP(&_Connection->m_Addrass, ip);
+	printf("TODO reconnect to \"%s:%i\"\r\n", ip, _Connection->m_Port);
+
+	EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_ReconnectError, _Connection);
+
+	return 0;
+}
+
 void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
 {
 	if(_Connection->m_Disposed == True)

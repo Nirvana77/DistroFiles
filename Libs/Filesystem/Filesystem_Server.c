@@ -206,11 +206,7 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 			{
 				if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
 				{
-					char ip[16];
-					Payload_GetIP(&_Connection->m_Addrass, ip);
-					printf("TODO reconnect to \"%s:%i\"\r\n", ip, _Connection->m_Port);
-					LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-					Filesystem_Connection_Dispose(_Connection);
+					Connection_Reconnect(_Connection);
 					return 0;
 				}
 				else
@@ -231,6 +227,18 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 				return 0;
 			}
 		}
+
+		case Filesystem_Connection_Event_Reconnected:
+		{
+			
+		} break;
+
+		case Filesystem_Connection_Event_ReconnectError:
+		{
+			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
+			Filesystem_Connection_Dispose(_Connection);
+			return 0;
+		} break;
 	}
 	return 0;
 }
