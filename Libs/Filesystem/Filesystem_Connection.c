@@ -94,7 +94,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 	{
 		if(_Connection->m_Addrass.m_Type == Payload_Address_Type_NONE)
 		{
-			void* ptr = _Connection->m_Buffer.m_ReadPtr;
+			void* ptr = _Connection->m_DataBuffer;
 			ptr += Payload_SourcePosistion + 1; //1 because we skip to readed the flags
 			UInt8 type = 0;
 			ptr += Memory_ParseUInt8(ptr, &type);
