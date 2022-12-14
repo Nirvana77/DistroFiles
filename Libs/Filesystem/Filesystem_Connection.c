@@ -103,14 +103,6 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			{
 				_Connection->m_Addrass.m_Type = (Payload_Address_Type)type;
 				Memory_ParseBuffer(&_Connection->m_Addrass.m_Address, ptr, sizeof(_Connection->m_Addrass.m_Address));
-				
-				printf("Added connection(%i) ", _Connection->m_Socket->m_FD);
-
-				for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
-					printf("type(%i):%i.", type, _Connection->m_Addrass.m_Address.IP[i]);
-
-				printf("\r\n");
-
 			}
 		}
 

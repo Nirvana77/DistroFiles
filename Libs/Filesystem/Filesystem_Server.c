@@ -752,6 +752,14 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			if(Payload_ComperAddresses(&_Message->m_Src, &_Connection->m_Addrass) == True)
 			{
 				Buffer_ReadUInt16(&_Message->m_Data, &_Connection->m_Port);
+				
+				
+				printf("Added connection(%i) type(%i): ", _Connection->m_Socket->m_FD, _Connection->m_Addrass.m_Type);
+
+				for (int i = 0; i < sizeof(_Connection->m_Addrass.m_Address); i++)
+					printf("%i%s", _Connection->m_Addrass.m_Address.IP[i], i + 1 < sizeof(_Connection->m_Addrass.m_Address) ? "." : "");
+
+				printf(":%i\r\n", _Connection->m_Port);
 				return 0;
 			}
 
