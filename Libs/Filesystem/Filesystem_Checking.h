@@ -6,7 +6,9 @@ typedef struct T_Filesystem_Checking Filesystem_Checking;
 
 #include "Filesystem_Server.h"
 
-#define  Filesystem_Checking_Timeout (SEC * 10)
+#ifndef Filesystem_Checking_Timeout
+	#define  Filesystem_Checking_Timeout (SEC * 10)
+#endif
 
 #ifndef Filesystem_Checking_CheckError
 	#define Filesystem_Checking_CheckError 50 //This is in %

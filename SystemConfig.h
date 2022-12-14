@@ -2,7 +2,7 @@
 #define SystemConfig_h__
 
 #define Filesystem_Server_SyncTimeout 10000
-#define Filesystem_Server_SyncErrorTimeout (SEC)
+#define Filesystem_Server_SyncErrorTimeout (SEC) //TODO: One SEC might be too short.
 
 #define DataLayer_CRC (0b11011)
 

@@ -113,7 +113,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 
 	Bus_Initialize(&_Server->m_Bus);
 
-	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, MS * 100);
+	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, Filesystem_DatalayerWorkTime);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
