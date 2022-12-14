@@ -140,7 +140,7 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 	if(_Connection->m_HasReaded  == True)
 	{
 		_Connection->m_HasReaded = False;
-		int readed = Buffer_DeepCopy(_Buffer, &_Connection->m_Buffer, 0);
+		int readed = Buffer_WriteBuffer(_Buffer, _Connection->m_Buffer.m_ReadPtr, _Connection->m_Buffer.m_BytesLeft);
 		printf("Filesystem_Connection_OnRead(%i)\r\n", readed);
 		Buffer_Clear(&_Connection->m_Buffer);
 		return readed;
