@@ -1521,16 +1521,20 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 					
 					printf("Resanding sync\r\n");
 					Payload* message = NULL;
-					if(TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, &message) == 0)
+					if(Filesystem_Server_Sync(_Server, &message) == 0)
 					{
-						message->m_Timeout = Payload_TimeoutAlgorithm(message->m_Timeout);
+						message->m_Timeout = Payload_TimeoutAlgorithm(_Message->m_Timeout);
 					}
 				}
 			}
 			return 1;
 		} break;
-
+		
 		case Payload_State_Destroyed:
+		{
+			if(_Message->m_State == Payload_State_Resived)
+				return 1;
+		}
 		case Payload_State_Failed:
 		{
 			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
@@ -1544,11 +1548,15 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 				SystemMonotonicMS(&_Server->m_NextCheck);
 				_Server->m_NextCheck += _Server->m_ErrorTimeout;
 			}
-			success = 1;
-		} break;
+			return 1;
+		}
 		
 		case Payload_State_Removed:
 		{ return 1; } break;
+
+		case Payload_State_Sending:
+		case Payload_State_Sented:
+		{ return 0; } break;
 
 		default: 
 		{
