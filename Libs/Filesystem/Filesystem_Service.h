@@ -6,6 +6,8 @@ typedef struct T_Filesystem_Service Filesystem_Service;
 
 #define Filesystem_Service_VERSION 1u
 
+#define Filesystem_DatalayerWorkTime (MS * 100)
+
 #ifndef Filesystem_Service_BufferMax
 	#define Filesystem_Service_BufferMax 1024
 #endif

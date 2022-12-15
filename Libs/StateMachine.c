@@ -137,8 +137,6 @@ void StateMachine_Dispose(StateMachine* _StateMachine)
 		Allocator_Free(task);
 	}
 
-	pthread_exit(NULL);
-
 	LinkedList_Dispose(&_StateMachine->m_List);
 	
 

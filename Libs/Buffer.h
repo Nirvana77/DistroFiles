@@ -10,7 +10,6 @@ typedef struct T_Buffer Buffer;
 struct T_Buffer
 {
 	Bool m_Allocated;
-	Bool m_Dynamic;
 
 	unsigned char* m_Ptr;
 	unsigned char* m_ReadPtr;
@@ -22,8 +21,8 @@ struct T_Buffer
 
 };
 
-int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr);
-int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize);
+int Buffer_InitializePtr(int _ExtentionSize, Buffer** _BufferPtr);
+int Buffer_Initialize(Buffer* _Buffer, int _ExtentionSize);
 
 void Buffer_Clear(Buffer* _Buffer);
 

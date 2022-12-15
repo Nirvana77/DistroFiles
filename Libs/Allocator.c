@@ -52,8 +52,8 @@
 		if(node == NULL)
 			return -1;
 
-		strncpy((char*)node->m_Data.m_FileString, _FileString, sizeof(node->m_Data.m_FileString));
-		strncpy((char*)node->m_Data.m_FunctionString, _FunctionString, sizeof(node->m_Data.m_FunctionString));
+		strncpy((char*)node->m_Data.m_FileString, _FileString, strlen(_FileString));
+		strncpy((char*)node->m_Data.m_FunctionString, _FunctionString, strlen(_FunctionString));
 		
 		node->m_Data.m_LineNumber = _LineNumber;
 		node->m_Data.m_Size = _Size;
