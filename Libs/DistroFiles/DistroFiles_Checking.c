@@ -1,16 +1,16 @@
-#include "Filesystem_Checking.h"
+#include "DistroFiles_Checking.h"
 
-void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking);
-int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
-void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check);
+void DistroFiles_Checking_ResetCheckingState(DistroFiles_Checking* _Checking);
+int DistroFiles_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+void DistroFiles_Checking_ResendCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* check);
 
-int Filesystem_Checking_InitializePtr(Filesystem_Server* _Server, Filesystem_Checking** _CheckingPtr)
+int DistroFiles_Checking_InitializePtr(DistroFiles_Server* _Server, DistroFiles_Checking** _CheckingPtr)
 {
-	Filesystem_Checking* _Checking = (Filesystem_Checking*)Allocator_Malloc(sizeof(Filesystem_Checking));
+	DistroFiles_Checking* _Checking = (DistroFiles_Checking*)Allocator_Malloc(sizeof(DistroFiles_Checking));
 	if(_Checking == NULL)
 		return -1;
 	
-	int success = Filesystem_Checking_Initialize(_Checking, _Server);
+	int success = DistroFiles_Checking_Initialize(_Checking, _Server);
 	if(success != 0)
 	{
 		Allocator_Free(_Checking);
@@ -23,7 +23,7 @@ int Filesystem_Checking_InitializePtr(Filesystem_Server* _Server, Filesystem_Che
 	return 0;
 }
 
-int Filesystem_Checking_Initialize(Filesystem_Checking* _Checking, Filesystem_Server* _Server)
+int DistroFiles_Checking_Initialize(DistroFiles_Checking* _Checking, DistroFiles_Server* _Server)
 {
 	_Checking->m_Allocated = False;
 	_Checking->m_Server = _Server;
@@ -43,7 +43,7 @@ int Filesystem_Checking_Initialize(Filesystem_Checking* _Checking, Filesystem_Se
 }
 
 
-void Filesystem_Checking_RemoveCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* _Check)
+void DistroFiles_Checking_RemoveCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* _Check)
 {
 	_Check->m_IsUsed = False;
 	_Check->m_Connection = NULL;
@@ -53,12 +53,12 @@ void Filesystem_Checking_RemoveCheck(Filesystem_Checking* _Checking, Filesystem_
 		LinkedList_LinkLast(&_Checking->m_List, node);
 }
 
-void Filesystem_Checking_Clear(Filesystem_Checking* _Checking)
+void DistroFiles_Checking_Clear(DistroFiles_Checking* _Checking)
 {
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*)currentNode->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*)currentNode->m_Item;
 
 		if(check->m_IsUsed == False)
 			return;
@@ -68,10 +68,10 @@ void Filesystem_Checking_Clear(Filesystem_Checking* _Checking)
 		currentNode = currentNode->m_Next;
 	}
 	
-	_Checking->m_Type = Filesystem_Checking_Type_None;
+	_Checking->m_Type = DistroFiles_Checking_Type_None;
 }
 
-int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_Address* _Address, Filesystem_Checking_Check** _CheckPtr)
+int DistroFiles_Checking_SpawnWriteCheck(DistroFiles_Checking* _Checking, Payload_Address* _Address, DistroFiles_Checking_Check** _CheckPtr)
 {
 	if(_CheckPtr == NULL)
 		return -1;
@@ -79,7 +79,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*)currentNode->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*)currentNode->m_Item;
 
 		if(check->m_IsUsed == False)
 		{
@@ -100,7 +100,7 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 		currentNode = currentNode->m_Next;
 	}
 	
-	Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) Allocator_Malloc(sizeof(Filesystem_Checking_Check));
+	DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) Allocator_Malloc(sizeof(DistroFiles_Checking_Check));
 
 	check->m_Connection = NULL;
 	check->m_IsUsed = True;
@@ -112,16 +112,16 @@ int Filesystem_Checking_SpawnWriteCheck(Filesystem_Checking* _Checking, Payload_
 }
 
 //TODO: make this rturn if made an respons
-int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem_Checking_Type _Type, Payload* _Message)
+int DistroFiles_Checking_WorkOnPayload(DistroFiles_Checking* _Checking, DistroFiles_Checking_Type _Type, Payload* _Message)
 {
-	if(_Checking->m_Type != Filesystem_Checking_Type_None && (_Checking->m_Type != _Type || _Checking->m_Server->m_State == Filesystem_Server_State_Connecting))
+	if(_Checking->m_Type != DistroFiles_Checking_Type_None && (_Checking->m_Type != _Type || _Checking->m_Server->m_State == DistroFiles_Server_State_Connecting))
 		return 1;
 
-	Filesystem_Checking_ResetCheckingState(_Checking);
+	DistroFiles_Checking_ResetCheckingState(_Checking);
 
 	switch (_Type)
 	{
-		case Filesystem_Checking_Type_Write:
+		case DistroFiles_Checking_Type_Write:
 		{
 			Bool isFile = True;
 			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
@@ -163,7 +163,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 
 			if(exist == True)
 			{
-				Bool isSame = Filesystem_Server_HashCheck(serverHash, hash);
+				Bool isSame = DistroFiles_Server_HashCheck(serverHash, hash);
 
 				Payload* msg = NULL;
 				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
@@ -184,7 +184,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 				}
 			}
 			else
@@ -198,14 +198,14 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 				}
 			}
 			
 			String_Dispose(&fullPath);
 		} break;
 
-		case Filesystem_Checking_Type_Delete:
+		case DistroFiles_Checking_Type_Delete:
 		{
 			Bool isFile = True;
 			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
@@ -244,7 +244,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 				Folder_Hash(fullPath.m_Ptr, hash);
 
-				Bool isSame = Filesystem_Server_HashCheck(bufferHash, hash);
+				Bool isSame = DistroFiles_Server_HashCheck(bufferHash, hash);
 
 				Payload* msg = NULL;
 				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
@@ -265,7 +265,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 				}
 
 			}
@@ -280,22 +280,22 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 					uuid_Copy(msg->m_UUID, _Message->m_UUID);
 					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-					EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 				}
 			}
 			
 			String_Dispose(&fullPath);
 		} break;
 
-		case Filesystem_Checking_Type_Syncing:
+		case DistroFiles_Checking_Type_Syncing:
 		{
-			printf("Checking_Type is Filesystem_Checking_Type_Syncing!\r\n");
+			printf("Checking_Type is DistroFiles_Checking_Type_Syncing!\r\n");
 
 		} break;
 
-		case Filesystem_Checking_Type_None:
+		case DistroFiles_Checking_Type_None:
 		{
-			printf("Checking_Type is Filesystem_Checking_Type_None!\r\n");
+			printf("Checking_Type is DistroFiles_Checking_Type_None!\r\n");
 			Payload* msg = NULL;
 			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
 			{
@@ -305,7 +305,7 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 				uuid_Copy(msg->m_UUID, _Message->m_UUID);
 				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
 				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
-				EventHandler_Hook(&msg->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+				EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 			}
 			
 			return -1;
@@ -315,9 +315,9 @@ int Filesystem_Checking_WorkOnPayload(Filesystem_Checking* _Checking, Filesystem
 	return 0;
 }
 
-int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+int DistroFiles_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
-	Filesystem_Checking* _Checking = (Filesystem_Checking*) _Context;
+	DistroFiles_Checking* _Checking = (DistroFiles_Checking*) _Context;
 	Payload* _Message = (Payload*) _Object;
 	Payload_State state = (Payload_State) _EventCall;
 	
@@ -329,7 +329,7 @@ int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall
 			Payload_Print(_Message, "Checking Failed");
 			Payload* message = NULL;
 			if(TransportLayer_ResendMessage(&_Checking->m_Server->m_TransportLayer, _Message, &message) == 0)
-				EventHandler_Hook(&message->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+				EventHandler_Hook(&message->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 
 			return 1;
 		} break;
@@ -345,12 +345,12 @@ int Filesystem_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall
 	return 0;
 }
 
-void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking)
+void DistroFiles_Checking_ResetCheckingState(DistroFiles_Checking* _Checking)
 {
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
 		if(check->m_IsUsed == False)
 			break;
 
@@ -359,12 +359,12 @@ void Filesystem_Checking_ResetCheckingState(Filesystem_Checking* _Checking)
 	}
 }
 
-Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesystem_Connection* _Connection)
+Bool DistroFiles_Checking_CanUseConnection(DistroFiles_Checking* _Checking, DistroFiles_Connection* _Connection)
 {
 	LinkedList_Node* node = _Checking->m_List.m_Head;
 	while (node != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) node->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) node->m_Item;
 
 		if(check->m_IsUsed == False)
 		{
@@ -372,7 +372,7 @@ Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesy
 		}
 		else if(_Connection == check->m_Connection)
 		{
-			if(check->m_IsOk != Filesystem_Checking_Check_Satus_OK)
+			if(check->m_IsOk != DistroFiles_Checking_Check_Satus_OK)
 				return False;
 			
 			return True;
@@ -386,12 +386,12 @@ Bool Filesystem_Checking_CanUseConnection(Filesystem_Checking* _Checking, Filesy
 	return True;
 }
 
-void Filesystem_Checking_ResendCheck(Filesystem_Checking* _Checking, Filesystem_Checking_Check* check)
+void DistroFiles_Checking_ResendCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* check)
 {
 	printf("TODO: do resend check");
 }
 
-void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
+void DistroFiles_Checking_Work(UInt64 _MSTime, DistroFiles_Checking* _Checking)
 {
 
 	int size = 0;
@@ -400,7 +400,7 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
 
 		if(check->m_IsUsed == False)
 			break;
@@ -411,8 +411,8 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 		else if(check->m_IsOk == 2)
 			notSync++;
 		
-		else if(_MSTime > check->m_Timeout + Filesystem_Checking_Timeout)
-			Filesystem_Checking_ResendCheck(_Checking, check);
+		else if(_MSTime > check->m_Timeout + DistroFiles_Checking_Timeout)
+			DistroFiles_Checking_ResendCheck(_Checking, check);
 
 		size++;
 		currentNode = currentNode->m_Next;
@@ -424,32 +424,32 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 	if(size - notSync != 0)
 	{
 		int error = (int)((double)(1 - oks / (size - notSync)) * 100);
-		if(error >= Filesystem_Checking_CheckError)
+		if(error >= DistroFiles_Checking_CheckError)
 		{
-			_Checking->m_Type = Filesystem_Checking_Type_None;
-			_Checking->m_Server->m_State = Filesystem_Server_State_ReSync;
+			_Checking->m_Type = DistroFiles_Checking_Type_None;
+			_Checking->m_Server->m_State = DistroFiles_Server_State_ReSync;
 			return;
 		}
 	}
 
-	_Checking->m_Server->m_State = Filesystem_Server_State_Synced;
+	_Checking->m_Server->m_State = DistroFiles_Server_State_Synced;
 
 	currentNode = _Checking->m_List.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Checking_Check* check = (Filesystem_Checking_Check*) currentNode->m_Item;
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
 
 		if(check->m_IsUsed == False)
 			break;
 
-		if(check->m_IsOk == Filesystem_Checking_Check_Satus_DontHave)
+		if(check->m_IsOk == DistroFiles_Checking_Check_Satus_DontHave)
 		{
 			Payload* message = NULL;
 			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, SEC, &message) == 0)
 			{
 				Payload_FilAddress(&_Checking->m_Message.m_Des, &check->m_Connection->m_Addrass);
 				Payload_Copy(message, &_Checking->m_Message);
-				EventHandler_Hook(&message->m_EventHandler, Filesystem_Checking_MessageEvent, _Checking);
+				EventHandler_Hook(&message->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
 			}
 		}
 
@@ -457,17 +457,17 @@ void Filesystem_Checking_Work(UInt64 _MSTime, Filesystem_Checking* _Checking)
 		currentNode = currentNode->m_Next;
 	}
 
-	Filesystem_Checking_Clear(_Checking);
+	DistroFiles_Checking_Clear(_Checking);
 			
 
 }
 
-void Filesystem_Checking_Dispose(Filesystem_Checking* _Checking)
+void DistroFiles_Checking_Dispose(DistroFiles_Checking* _Checking)
 {
 	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
 	while(currentNode != NULL)
 	{
-		Filesystem_Checking_Check* _Check = (Filesystem_Checking_Check*)currentNode->m_Item;
+		DistroFiles_Checking_Check* _Check = (DistroFiles_Checking_Check*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		_Check->m_Connection = NULL;
@@ -480,6 +480,6 @@ void Filesystem_Checking_Dispose(Filesystem_Checking* _Checking)
 	if(_Checking->m_Allocated == True)
 		Allocator_Free(_Checking);
 	else
-		memset(_Checking, 0, sizeof(Filesystem_Checking));
+		memset(_Checking, 0, sizeof(DistroFiles_Checking));
 
 }

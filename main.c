@@ -41,11 +41,11 @@
 #include "Libs/TCP/TCPServer.c"
 #include "Libs/TCP/TCPClient.c"
 
-#include "Libs/Filesystem/Filesystem_Server.c"
-#include "Libs/Filesystem/Filesystem_Client.c"
-#include "Libs/Filesystem/Filesystem_Service.c"
-#include "Libs/Filesystem/Filesystem_Checking.c"
-#include "Libs/Filesystem/Filesystem_Connection.c"
+#include "Libs/DistroFiles/DistroFiles_Server.c"
+#include "Libs/DistroFiles/DistroFiles_Client.c"
+#include "Libs/DistroFiles/DistroFiles_Service.c"
+#include "Libs/DistroFiles/DistroFiles_Checking.c"
+#include "Libs/DistroFiles/DistroFiles_Connection.c"
 
 void printHash(unsigned char result[16]);
 int kbhit(void);
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
 
 				freopen("/dev/null", "a", stdout);
 				freopen("/dev/null", "a", stderr);
-				freopen("Filesystem.inp", "r", stdin);
+				freopen("DistroFiles.inp", "r", stdin);
 
 			}*/
 
@@ -125,8 +125,8 @@ int main(int argc, char* argv[])
 	Folder_Remove("Shared/temp");
 	File_Remove("payload_dump.txt");
 	
-	Filesystem_Service* service = NULL;
-	int success = Filesystem_Service_InitializePtr(&g_StateMachine, path, &service);
+	DistroFiles_Service* service = NULL;
+	int success = DistroFiles_Service_InitializePtr(&g_StateMachine, path, &service);
 	
 	printf("Success: %i\r\n", success);
 	if(success == 0)
@@ -222,15 +222,15 @@ int main(int argc, char* argv[])
 
 					case 's':
 					{
-						Filesystem_Server_Sync(service->m_Server, NULL);
+						DistroFiles_Server_Sync(service->m_Server, NULL);
 					} break;
 
 					case 't':
 					{
-						printf("\r\nServer State is: %s\r\n", Filesystem_Server_States[service->m_Server->m_State]);
+						printf("\r\nServer State is: %s\r\n", DistroFiles_Server_States[service->m_Server->m_State]);
 						printf("Checking State is: %i\r\n", (int)service->m_Server->m_Checking.m_Type);
 						UInt64 time = 0;
-						Filesystem_Server_GetTimeFromPath(service->m_Server->m_FilesytemPath.m_Ptr, &time);
+						DistroFiles_Server_GetTimeFromPath(service->m_Server->m_FilesytemPath.m_Ptr, &time);
 						printf("Path: %s last modyfed %lu\r\n", service->m_Server->m_FilesytemPath.m_Ptr, time);
 					}
 					case 'l':
@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
 	printf("Quiting....\r\n");
 
 	if(service != NULL)
-		Filesystem_Service_Dispose(service);
+		DistroFiles_Service_Dispose(service);
 
 	StateMachine_Dispose(&g_StateMachine);
 

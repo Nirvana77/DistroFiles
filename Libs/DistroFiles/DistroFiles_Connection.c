@@ -1,16 +1,16 @@
-#include "Filesystem_Connection.h"
+#include "DistroFiles_Connection.h"
 
-int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context);
-int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer);
-int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer);
+int DistroFiles_Connection_Work(UInt64 _MSTime, void* _Context);
+int DistroFiles_Connection_OnRead(void* _Context, Buffer* _Buffer);
+int DistroFiles_Connection_OnWrite(void* _Context, Buffer* _Buffer);
 
-int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus, Filesystem_Connection** _CommectionPtr)
+int DistroFiles_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus, DistroFiles_Connection** _CommectionPtr)
 {
-	Filesystem_Connection* _Commection = (Filesystem_Connection*)Allocator_Malloc(sizeof(Filesystem_Connection));
+	DistroFiles_Connection* _Commection = (DistroFiles_Connection*)Allocator_Malloc(sizeof(DistroFiles_Connection));
 	if(_Commection == NULL)
 		return -1;
 	
-	int success = Filesystem_Connection_Initialize(_Commection, _Worker, _Socket, _Bus);
+	int success = DistroFiles_Connection_Initialize(_Commection, _Worker, _Socket, _Bus);
 	if(success != 0)
 	{
 		Allocator_Free(_Commection);
@@ -23,7 +23,7 @@ int Filesystem_Connection_InitializePtr(StateMachine* _Worker, TCPSocket* _Socke
 	return 0;
 }
 
-int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus)
+int DistroFiles_Connection_Initialize(DistroFiles_Connection* _Connection, StateMachine* _Worker, TCPSocket* _Socket, Bus* _Bus)
 {
 	_Connection->m_Allocated = False;
 
@@ -40,7 +40,7 @@ int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMa
 	EventHandler_Initialize(&_Connection->m_EventHandler);
 	Buffer_Initialize(&_Connection->m_Buffer, 255); //TODO Make this a define
 
-	int success = Bus_AddFuncIn(_Connection->m_Bus, Filesystem_Connection_OnRead, Filesystem_Connection_OnWrite, _Connection, &_Connection->m_Func);
+	int success = Bus_AddFuncIn(_Connection->m_Bus, DistroFiles_Connection_OnRead, DistroFiles_Connection_OnWrite, _Connection, &_Connection->m_Func);
 	if(success != 0)
 	{
 		printf("Error when createing FuncIn\r\n");
@@ -49,7 +49,7 @@ int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMa
 		return -2;
 	}
 	
-	success = StateMachine_CreateTask(_Connection->m_Worker, NULL, Filesystem_Connection_Work, _Connection, &_Connection->m_Task);
+	success = StateMachine_CreateTask(_Connection->m_Worker, NULL, DistroFiles_Connection_Work, _Connection, &_Connection->m_Task);
 	if(success != 0)
 	{
 		printf("Error when createing task\r\n");
@@ -61,9 +61,9 @@ int Filesystem_Connection_Initialize(Filesystem_Connection* _Connection, StateMa
 	return 0;
 }
 
-int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
+int DistroFiles_Connection_Work(UInt64 _MSTime, void* _Context)
 {
-	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
+	DistroFiles_Connection* _Connection = (DistroFiles_Connection*)_Context;
 	if(_Connection->m_Disposed == True)
 		return 1;
 
@@ -77,7 +77,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			case ENOTSOCK: //* Not a socket
 			case 32: //* Broken pipe
 			{
-				EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
+				EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Disconnected, _Connection);
 				return 0;
 			} break;
 
@@ -106,7 +106,7 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 			}
 		}
 
-		EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Readed, _Connection);
+		EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Readed, _Connection);
 		Buffer_WriteBuffer(&_Connection->m_Buffer, _Connection->m_DataBuffer, readed);
 		
 		if(readed != TCP_BufferSize)
@@ -114,22 +114,22 @@ int Filesystem_Connection_Work(UInt64 _MSTime, void* _Context)
 
 	}
 
-	if(_MSTime > _Connection->m_NextCheck + Filesystem_Connection_Timeout)
+	if(_MSTime > _Connection->m_NextCheck + DistroFiles_Connection_Timeout)
 	{
 		_Connection->m_NextCheck = _MSTime;
 		readed = recv(_Connection->m_Socket->m_FD, NULL, 1, MSG_PEEK | MSG_DONTWAIT);
 
 		if(readed == 0)
-			EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
+			EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Disconnected, _Connection);
 		
 	}
 
 	return 0;
 }
 
-int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
+int DistroFiles_Connection_OnRead(void* _Context, Buffer* _Buffer)
 {
-	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
+	DistroFiles_Connection* _Connection = (DistroFiles_Connection*)_Context;
 	if(_Connection->m_HasReaded  == True)
 	{
 		_Connection->m_HasReaded = False;
@@ -141,9 +141,9 @@ int Filesystem_Connection_OnRead(void* _Context, Buffer* _Buffer)
 	return 0;
 }
 
-int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
+int DistroFiles_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 {
-	Filesystem_Connection* _Connection = (Filesystem_Connection*)_Context;
+	DistroFiles_Connection* _Connection = (DistroFiles_Connection*)_Context;
 
 	void* ptr = _Buffer->m_ReadPtr;
 	int bytesLeft = _Buffer->m_BytesLeft;
@@ -174,7 +174,7 @@ int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 				} break;
 				case 32: //* Broken pipe
 				{
-					EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disconnected, _Connection);
+					EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Disconnected, _Connection);
 					return -1;
 				} break;
 
@@ -196,25 +196,25 @@ int Filesystem_Connection_OnWrite(void* _Context, Buffer* _Buffer)
 	return totalWrite;
 }
 
-int Connection_Reconnect(Filesystem_Connection* _Connection)
+int Connection_Reconnect(DistroFiles_Connection* _Connection)
 {
 	
 	char ip[16];
 	Payload_GetIP(&_Connection->m_Addrass, ip);
 	printf("TODO reconnect to \"%s:%i\"\r\n", ip, _Connection->m_Port);
 
-	EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_ReconnectError, _Connection);
+	EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_ReconnectError, _Connection);
 
 	return 0;
 }
 
-void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
+void DistroFiles_Connection_Dispose(DistroFiles_Connection* _Connection)
 {
 	if(_Connection->m_Disposed == True)
 		return;
 	
 	_Connection->m_Disposed = True;
-	EventHandler_EventCall(&_Connection->m_EventHandler, Filesystem_Connection_Event_Disposed, _Connection);
+	EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Disposed, _Connection);
 
 	if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
 	{
@@ -243,7 +243,7 @@ void Filesystem_Connection_Dispose(Filesystem_Connection* _Connection)
 	}
 	else
 	{
-		memset(_Connection, 0, sizeof(Filesystem_Connection));
+		memset(_Connection, 0, sizeof(DistroFiles_Connection));
 		_Connection->m_Disposed = True;
 	}
 }
