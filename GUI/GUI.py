@@ -170,6 +170,11 @@ class GUI:
 					directory.append(obj)
 				
 				self.draw_Directory(directory, "")
+			else:
+				print("Cant handel method: '", method, "'")
+		elif method == "Update":
+			msg = p.get_list("root")
+			self.client.socket.sendall(p.messag_builder("", "list", msg))
 
 	def uri_validator(self, x):
 		try:
