@@ -17,6 +17,7 @@ struct T_Filesystem_Client
 	UInt64 m_NextCheck;
 
 	LinkedList m_Connections;
+	EventHandler_Event* m_Hook;
 
 	Bus m_Bus;
 	TCPServer m_TCPServer;

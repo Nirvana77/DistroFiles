@@ -2,6 +2,7 @@
 
 int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
 int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+int Filesystem_Client_ServerEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
 int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
@@ -34,6 +35,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	_Client->m_Timeout = SEC * 10;
 	_Client->m_Service = _Service;
 	_Client->m_Server = _Service->m_Server;
+	_Client->m_Hook = NULL;
 
 	int success = TCPServer_Initialize(&_Client->m_TCPServer, Filesystem_Client_ConnectedSocket, _Client);
 	if(success != 0)
@@ -93,6 +95,8 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 	Payload_FuncOut_Set(&_Client->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Client->m_NetworkLayer);
 	Payload_FuncOut_Set(&_Client->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Client->m_TransportLayer);
 	Payload_FuncOut_Set(&_Client->m_TransportLayer.m_FuncOut, Filesystem_Client_ReveicePayload, NULL, _Client);
+
+	_Client->m_Hook = EventHandler_Hook(&_Client->m_Server->m_EventHandler, Filesystem_Client_ServerEvent, _Client);
 
 	return 0;
 }
@@ -155,6 +159,28 @@ int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 	return 0;
 }
 
+
+int Filesystem_Client_ServerEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	Filesystem_Server_Event _Event = (Filesystem_Server_Event) _EventCall;
+	Filesystem_Server* _Server = (Filesystem_Server*) _Object;
+
+	switch (_Event)
+	{
+		case Filesystem_Server_Event_Update:
+		{
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_Type_ACK, 0, SEC * 10, &message) == 0)
+			{
+				printf("send update\r\n");
+				Payload_SetMessageType(message, Payload_Message_Type_String, "Update", strlen("Update"));
+			}
+		} break;
+	}
+
+	return 0;
+}
 
 /*
 int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
@@ -258,6 +284,12 @@ void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 
 void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 {
+	if(_Client->m_Hook != NULL)
+	{
+		EventHandler_UnHook(&_Client->m_Server->m_EventHandler, _Client->m_Hook);
+		_Client->m_Hook = NULL;
+	}
+
 	TransportLayer_Dispose(&_Client->m_TransportLayer);
 	NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 	DataLayer_Dispose(&_Client->m_DataLayer);

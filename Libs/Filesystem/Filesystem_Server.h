@@ -48,6 +48,10 @@ const char* Filesystem_Server_States[] = {
 	"Filesystem_Server_State_SyncError"
 };
 
+typedef enum
+{
+	Filesystem_Server_Event_Update = 0
+} Filesystem_Server_Event;
 
 struct T_Filesystem_Server
 {

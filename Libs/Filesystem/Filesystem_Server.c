@@ -1060,7 +1060,8 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 
 				Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
 			}
-
+			
+			EventHandler_EventCall(&_Server->m_EventHandler, Filesystem_Server_Event_Update, _Server);
 		}
 	}
 	else
@@ -1131,6 +1132,8 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 
 			Payload_SetMessageType(message, Payload_Message_Type_String, "Delete", strlen("Delete"));
 		}
+
+		EventHandler_EventCall(&_Server->m_EventHandler, Filesystem_Server_Event_Update, _Server);
 	}
 
 	String_Dispose(&fullPath);
@@ -1373,6 +1376,13 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 					}
 					tinydir_next(&dir);
 				}
+				String str;
+				String_Initialize(&str, 32);
+				String_Set(&str, "root");
+
+				EventHandler_EventCall(&_Server->m_EventHandler, Filesystem_Server_Event_Update, &str);
+
+				String_Dispose(&str);
 
 				tinydir_close(&dir);
 
@@ -1387,6 +1397,9 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		case Filesystem_Server_State_Synced:
 		{
+			
+			EventHandler_EventCall(&_Server->m_EventHandler, Filesystem_Server_Event_Update, _Server);
+			
 			_Server->m_NextCheck = 0;
 			SystemMonotonicMS(&_Server->m_LastSynced);
 			_Server->m_State = Filesystem_Server_State_Idel;
