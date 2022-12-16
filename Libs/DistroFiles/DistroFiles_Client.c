@@ -164,7 +164,7 @@ int DistroFiles_Client_ServerEvent(EventHandler* _EventHandler, int _EventCall, 
 {
 	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
 	DistroFiles_Server_Event _Event = (DistroFiles_Server_Event) _EventCall;
-	DistroFiles_Server* _Server = (DistroFiles_Server*) _Object;
+	//DistroFiles_Server* _Server = (DistroFiles_Server*) _Object;
 
 	switch (_Event)
 	{

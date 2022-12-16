@@ -36,6 +36,7 @@
 #include "Libs/Communication/DataLayer.c"
 #include "Libs/Communication/NetworkLayer.c"
 #include "Libs/Communication/TransportLayer.c"
+#include "Libs/Communication/Segmentation.c"
 
 #include "Libs/TCP/TCPSocket.c"
 #include "Libs/TCP/TCPServer.c"
@@ -202,21 +203,47 @@ int main(int argc, char* argv[])
 
 					case 'f':
 					{
-						unsigned char hash[16];
-						memset(hash, 0, 16);
-						Folder_Hash("Shared/root/", hash);
-						printf("Hash:\t");
-						printHash(hash);
-						
-						memset(hash, 0, 16);
-						Folder_Hash("Shared/root", hash);
-						printf("Hash:\t");
-						printHash(hash);
-						
-						memset(hash, 0, 16);
-						Folder_Hash(service->m_Server->m_FilesytemPath.m_Ptr, hash);
-						printf("Hash:\t");
-						printHash(hash);
+						UInt8 uuid[UUID_DATA_SIZE];
+						uuid_generate(uuid);
+
+						Segmentation* seg = NULL;
+						int success = Segmentation_InitializePtr(uuid, &seg);
+						if(success == 0)
+						{
+							unsigned char writeBuffer[64];
+							unsigned char readBuffer[64];
+							int size = strlen("hej,hej,hej,hej,hej,hej,hej");
+							Memory_Copy(writeBuffer, "hej,hej,hej,hej,hej,hej,hej", size);
+
+							success = Segmentation_Write(seg, writeBuffer, size);
+							printf("Write: %i\r\n", success);
+
+							Segmentation_End(seg);
+
+							success = Segmentation_Read(seg, readBuffer, size + 1);
+							printf("Read: %i\r\n", success);
+
+							printf("writeBuffer: ");
+							for (int i = 0; i < size; i++)
+							{
+								printf("%c", writeBuffer[i]);
+							}
+							printf("\r\nreadBuffer: ");
+							for (int i = 0; i < size; i++)
+							{
+								printf("%c", readBuffer[i]);
+							}
+							printf(" with crc: %x\r\n", readBuffer[size]);
+							UInt8 crc = 0;
+							DataLayer_GetCRC(writeBuffer, size, &crc);
+							printf("Real crc: %x\r\n", crc);
+
+							Segmentation_Dispose(seg);
+						}
+						else
+						{
+							printf("success: %i\r\n", success);
+						}
 
 					} break;
 

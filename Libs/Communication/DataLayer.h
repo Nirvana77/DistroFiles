@@ -43,7 +43,7 @@ static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Res
 	unsigned char* ptr = _Data;
 	UInt8 CRC = DataLayer_CRC;
 	BitHelper_SetBit(&CRC, 4, False);
-	UInt16 result = 0;
+	UInt16 result = *_Result;
 	
 	for (int i = 0; i < _Size; i++)
 	{
