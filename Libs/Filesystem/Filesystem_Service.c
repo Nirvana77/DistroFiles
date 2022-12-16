@@ -422,16 +422,16 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Task = NULL;
 	}
 
-	if(_Service->m_Server != NULL)
-	{
-		Filesystem_Server_Dispose(_Service->m_Server);
-		_Service->m_Server = NULL;
-	}
-
 	if(_Service->m_Client != NULL)
 	{
 		Filesystem_Client_Dispose(_Service->m_Client);
 		_Service->m_Client = NULL;
+	}
+
+	if(_Service->m_Server != NULL)
+	{
+		Filesystem_Server_Dispose(_Service->m_Server);
+		_Service->m_Server = NULL;
 	}
 
 	Buffer_Dispose(&_Service->m_Buffer);

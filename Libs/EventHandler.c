@@ -46,8 +46,8 @@ EventHandler_Event* EventHandler_Hook(EventHandler* _EventHandler, int (*_Callba
 
 int EventHandler_UnHook(EventHandler* _EventHandler, EventHandler_Event* _Event)
 {
-	LinkedList_RemoveItem(&_EventHandler->m_Events, _Event);
-	Allocator_Free(_Event);
+	if(LinkedList_RemoveItem(&_EventHandler->m_Events, _Event) == 0)
+		Allocator_Free(_Event);
 	return 0;
 }
 
