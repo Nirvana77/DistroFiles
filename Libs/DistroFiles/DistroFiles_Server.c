@@ -331,7 +331,6 @@ int DistroFiles_Server_ReveicePayload(void* _Context, Payload* _Message, Payload
 		Buffer_ReadUInt8(&_Message->m_Data, &isOk);
 
 		if(isOk == 0) {
-			SystemMonotonicMS(&_Server->m_LastSynced);
 			_Server->m_State = DistroFiles_Server_State_Synced;
 			return 0;
 		}
@@ -358,6 +357,8 @@ int DistroFiles_Server_ReveicePayload(void* _Context, Payload* _Message, Payload
 				return 0;
 
 		}
+
+		printf("Path: %s\r\n", path);
 
 		String filePath;
 		String_Initialize(&filePath, 64);
