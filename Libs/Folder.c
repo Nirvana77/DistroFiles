@@ -145,6 +145,43 @@ int Folder_Remove(const char* _Path)
 	return -2;
 }
 
+int Folder_Copy(char* _Source, char* _Destination)
+{
+	if(Folder_Create(_Destination) < 0)
+		return -1;
+
+	tinydir_dir dir;
+	if(tinydir_open(&dir, _Source) != 0)
+		return -2;
+		
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			char des[strlen(_Destination) + 1 + strlen(file.name)];
+			strcpy(des, _Destination);
+			des[strlen(_Destination)] = '/';
+			strcpy(&des[strlen(_Destination) + 1], file.name);
+			if(file.is_dir)
+				Folder_Copy(file.path, des);
+			
+			else
+				File_Copy(file.path, des);
+					
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	if(remove(_Source) == 0)
+		return 0;
+	
+	return -3;
+}
+
 int Folder_Move(char* _Source, char* _Destination)
 {
 	if(Folder_Create(_Destination) < 0)
