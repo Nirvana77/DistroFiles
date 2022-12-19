@@ -232,6 +232,27 @@ int DistroFiles_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCa
 			
 		} break;
 
+		case DistroFiles_Connection_Event_GotInfo:
+		{
+			LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+			while (currentNode != NULL)
+			{
+				DistroFiles_Connection* connection = (DistroFiles_Connection*) currentNode->m_Item;
+				currentNode = currentNode->m_Next;
+				
+				if(connection != _Connection && Payload_ComperAddresses(&connection->m_Addrass, &_Connection->m_Addrass) == True)
+				{
+					char ip[16];
+					Payload_GetIP(&_Connection->m_Addrass, ip);
+					printf("Server: Old connection \"%s\" got desposed\r\n", ip);
+					LinkedList_RemoveItem(&_Server->m_Connections, connection);
+					DistroFiles_Connection_Dispose(connection);
+				}
+
+			}
+			
+		} break;
+
 		case DistroFiles_Connection_Event_ReconnectError:
 		{
 			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);

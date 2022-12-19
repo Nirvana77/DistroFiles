@@ -20,6 +20,7 @@ typedef enum
 	DistroFiles_Connection_Event_Disconnected = 2,
 	DistroFiles_Connection_Event_Reconnected = 3,
 	DistroFiles_Connection_Event_ReconnectError = 4,
+	DistroFiles_Connection_Event_GotInfo = 5
 
 } DistroFiles_Connection_Event;
 

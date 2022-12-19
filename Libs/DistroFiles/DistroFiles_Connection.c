@@ -103,6 +103,7 @@ int DistroFiles_Connection_Work(UInt64 _MSTime, void* _Context)
 			{
 				_Connection->m_Addrass.m_Type = (Payload_Address_Type)type;
 				Memory_ParseBuffer(&_Connection->m_Addrass.m_Address, ptr, sizeof(_Connection->m_Addrass.m_Address));
+				EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_GotInfo, _Connection);
 			}
 		}
 
