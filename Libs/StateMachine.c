@@ -75,7 +75,7 @@ int StateMachine_RemoveTask(StateMachine* _StateMachine, StateMachine_Task* _Tas
 	while (currentNode != NULL)
 	{
 		StateMachine_Task* task = (StateMachine_Task*) currentNode->m_Item;
-		if(_Task == task)
+		if(_Task == task && task->m_Disposed == False)
 		{
 			StateMachine_DisposeThread(task);
 			LinkedList_RemoveNode(&_StateMachine->m_List, currentNode);
