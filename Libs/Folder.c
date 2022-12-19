@@ -1,5 +1,7 @@
 #include "Folder.h"
 
+int Folder_InternalHash(const char* _Path, MD5_CTX* _MD5);
+
 int Folder_Create(const char* _Path)
 {
 	int check;
@@ -27,12 +29,21 @@ int Folder_Create(const char* _Path)
 
 int Folder_Hash(const char* _Path, unsigned char _Result[16])
 {
+	MD5_CTX md5;
+	MD5_Init(&md5);
+
+	Folder_InternalHash(_Path, &md5);
+
+	MD5_Final(_Result, &md5);
+	return 0;
+}
+
+int Folder_InternalHash(const char* _Path, MD5_CTX* _MD5)
+{
+
 	tinydir_dir dir;
 	if(tinydir_open(&dir, _Path) != 0)
 		return -1;
-
-	MD5_CTX md5;
-	MD5_Init(&md5);
 
 	while (dir.has_next)
 	{
@@ -40,6 +51,17 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 		tinydir_readfile(&dir, &file);
 		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 		{
+			if(file.is_dir)
+			{
+				char des[strlen(_Path) + 1 + strlen(file.name)];
+				strcpy(des, _Path);
+				des[strlen(_Path)] = '/';
+				strcpy(&des[strlen(_Path) + 1], file.name);
+				
+				//Folder_InternalHash(des, _MD5);
+			}
+			else
+			{
 			FILE* f = NULL;
 			File_Open(file.path, File_Mode_ReadBinary, &f);
 
@@ -58,7 +80,7 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 					int bytesRead = fread(buffer, 1, bytesToRead, f);
 					if(bytesRead > 0)
 					{
-						MD5_Update(&md5, buffer, bytesRead);
+							MD5_Update(_MD5, buffer, bytesRead);
 						bytesLeft -= bytesRead;
 					}
 				}
@@ -68,13 +90,13 @@ int Folder_Hash(const char* _Path, unsigned char _Result[16])
 
 			if(f != NULL)
 				File_Close(f);
+			}
 			
 		}
 		tinydir_next(&dir);
 	}
 
 	tinydir_close(&dir);
-	MD5_Final(_Result, &md5);
 	return 0;
 }
 
