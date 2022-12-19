@@ -62,34 +62,34 @@ int Folder_InternalHash(const char* _Path, MD5_CTX* _MD5)
 			}
 			else
 			{
-			FILE* f = NULL;
-			File_Open(file.path, File_Mode_ReadBinary, &f);
+				FILE* f = NULL;
+				File_Open(file.path, File_Mode_ReadBinary, &f);
 
-			unsigned int totalSize = File_GetSize(f);
-			
-			char buffer[16];
-			if(totalSize != 0)
-			{
-				int bytesLeft = totalSize;
-				while(bytesLeft > 0)
+				unsigned int totalSize = File_GetSize(f);
+				
+				char buffer[16];
+				if(totalSize != 0)
 				{
-					int bytesToRead = sizeof(buffer);
-					if(bytesToRead > bytesLeft)
-						bytesToRead = bytesLeft;
-					
-					int bytesRead = fread(buffer, 1, bytesToRead, f);
-					if(bytesRead > 0)
+					int bytesLeft = totalSize;
+					while(bytesLeft > 0)
 					{
+						int bytesToRead = sizeof(buffer);
+						if(bytesToRead > bytesLeft)
+							bytesToRead = bytesLeft;
+						
+						int bytesRead = fread(buffer, 1, bytesToRead, f);
+						if(bytesRead > 0)
+						{
 							MD5_Update(_MD5, buffer, bytesRead);
-						bytesLeft -= bytesRead;
+							bytesLeft -= bytesRead;
+						}
 					}
+
 				}
+				
 
-			}
-			
-
-			if(f != NULL)
-				File_Close(f);
+				if(f != NULL)
+					File_Close(f);
 			}
 			
 		}
@@ -143,4 +143,41 @@ int Folder_Remove(const char* _Path)
 		return 0;
 
 	return -2;
+}
+
+int Folder_Move(char* _Source, char* _Destination)
+{
+	if(Folder_Create(_Destination) < 0)
+		return -1;
+
+	tinydir_dir dir;
+	if(tinydir_open(&dir, _Source) != 0)
+		return -2;
+		
+	while (dir.has_next)
+	{
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+		if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
+		{
+			char des[strlen(_Destination) + 1 + strlen(file.name)];
+			strcpy(des, _Destination);
+			des[strlen(_Destination)] = '/';
+			strcpy(&des[strlen(_Destination) + 1], file.name);
+			if(file.is_dir)
+				Folder_Move(file.path, des);
+			
+			else
+				File_Move(file.path, des);
+					
+		}
+		tinydir_next(&dir);
+	}
+
+	tinydir_close(&dir);
+
+	if(remove(_Source) == 0)
+		return 0;
+	
+	return -3;
 }
