@@ -136,7 +136,7 @@ int Bus_OnWrite(void* _Context, Buffer* _Buffer)
 
 	Bus* _Bus = (Bus*) _Context;
 	if(_Bus->m_FuncIn.m_Size == 0)
-		return -1;
+		return 1;
 
 	LinkedList_Node* currentNode = _Bus->m_FuncIn.m_Head;
 	while(currentNode != NULL)
