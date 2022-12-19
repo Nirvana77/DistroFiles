@@ -216,6 +216,8 @@ void DistroFiles_Connection_Dispose(DistroFiles_Connection* _Connection)
 	
 	_Connection->m_Disposed = True;
 	EventHandler_EventCall(&_Connection->m_EventHandler, DistroFiles_Connection_Event_Disposed, _Connection);
+	
+	StateMachine_RemoveTask(_Connection->m_Worker, _Connection->m_Task);
 
 	if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
 	{
@@ -236,7 +238,6 @@ void DistroFiles_Connection_Dispose(DistroFiles_Connection* _Connection)
 
 	EventHandler_Dispose(&_Connection->m_EventHandler);
 	TCPSocket_Dispose(_Connection->m_Socket);
-	StateMachine_RemoveTask(_Connection->m_Worker, _Connection->m_Task);
 
 	if(_Connection->m_Allocated == True)
 	{
