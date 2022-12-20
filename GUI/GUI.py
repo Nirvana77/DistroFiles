@@ -169,7 +169,12 @@ class GUI:
 					}
 					directory.append(obj)
 				
-				self.draw_Directory(directory, "root")
+				self.draw_Directory(directory, "")
+			else:
+				print("Cant handel method: '", method, "'")
+		elif method == "Update":
+			msg = p.get_list("root")
+			self.client.socket.sendall(p.messag_builder("", "list", msg))
 
 	def uri_validator(self, x):
 		try:
@@ -297,9 +302,10 @@ class GUI:
 	
 	class File(Icon):
 
+		#? tuple?
 		def __init__(self, gui, canvas, x: int, y: int, w: int, h: int, name: str, path: str):
 			super().__init__(gui, canvas, x, y, w, h, name, path)
-			self.canvas.itemconfig(self.rec, fill="RED")
+			self.canvas.itemconfig(self.rec, fill="RED") 
 
 		def click(self, event) -> list:
 			if event.num == 1:
@@ -319,7 +325,12 @@ class GUI:
 				return (method, msg)
 			elif event.num == 3:
 				print("Rigth Click File")
-				self.gui.client.delete(self.path + "/" + self.name)
+				path = self.path
+				if not path == "":
+					path += "/"
+
+				path += self.name
+				self.gui.client.delete(path)
 
 			return list()
 

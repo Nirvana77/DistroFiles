@@ -2,6 +2,7 @@ import hashlib
 import memory as m
 import struct
 import uuid
+import time as t
 
 def send_file(filepath, filename):
 	# file = input("filename > ")
@@ -17,7 +18,7 @@ def send_file(filepath, filename):
 	length = len(file_arr)
 
 	if length > 256*256 - 1:
-		raise Exception("To bit of file, implement chuncking!")
+		raise Exception("To big of a file, implement chuncking!")
 
 	message.append(int(length/256))
 	message.append(length%256)
@@ -110,14 +111,21 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 
 	flag += 1 << 0 # src
 
-	UUID = uuid.uuid4()
-
 	array.append(flag)
 
-	array = array + uuid.uuid4().bytes
-		
-	for v in [0, 1,2,3,4,5,6,7,8]:
-		array.append(v)
+	time = (int)(t.time())
+	timeList = []
+	while not time == 0:
+		timeList.append((int)(time%255))
+		time = (int)(time/255)
+
+	while not len(timeList) == 8:
+		timeList.append(0)
+
+	for i in reversed(range(len(timeList))):
+		array.append(timeList[i])
+
+	array.append(0)
 	
 	array.append(2)
 	src = bytearray.fromhex(hex(uuid.getnode())[2:])
@@ -132,6 +140,9 @@ def messag_builder(des, method, message, willPrint = False) -> bytearray:
 		array.append(0)
 		for x in range(1,7):
 			array.append(0)
+	
+	UUID = uuid.uuid4()
+	array = array + UUID.bytes
 
 	if(method != ""):
 		array.append(1)
