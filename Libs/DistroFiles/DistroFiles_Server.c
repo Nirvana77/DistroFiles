@@ -1,36 +1,36 @@
-#include "Filesystem_Server.h"
+#include "DistroFiles_Server.h"
 
-int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
-int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+int DistroFiles_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
+int DistroFiles_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
-int Filesystem_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
-int Filesystem_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
-int Filesystem_Server_LoadServer(Filesystem_Server* _Server);
+int DistroFiles_Server_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
+int DistroFiles_Server_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
+int DistroFiles_Server_LoadServer(DistroFiles_Server* _Server);
 
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
+int DistroFiles_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
-int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr);
+int DistroFiles_Server_GetConnection(DistroFiles_Server* _Server, Payload_Address* _Address, DistroFiles_Connection** _ConnectionPtr);
 
-int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
-int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
-int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
-int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
-
-
-int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16]);
-int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16]);
-void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data);
-
-int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+int DistroFiles_Server_ReadFile(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
+int DistroFiles_Server_ReadFolder(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay);
+int DistroFiles_Server_WriteFile(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
+int DistroFiles_Server_WriteFolder(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer);
 
 
-int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Server** _ServerPtr)
+int DistroFiles_Server_ForwordWrite(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16]);
+int DistroFiles_Server_ForwordDelete(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16]);
+void DistroFiles_Server_Forwording(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data);
+
+int DistroFiles_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+
+
+int DistroFiles_Server_InitializePtr(DistroFiles_Service* _Service, DistroFiles_Server** _ServerPtr)
 {
-	Filesystem_Server* _Server = (Filesystem_Server*)Allocator_Malloc(sizeof(Filesystem_Server));
+	DistroFiles_Server* _Server = (DistroFiles_Server*)Allocator_Malloc(sizeof(DistroFiles_Server));
 	if(_Server == NULL)
 		return -1;
 	
-	int success = Filesystem_Server_Initialize(_Server, _Service);
+	int success = DistroFiles_Server_Initialize(_Server, _Service);
 	if(success != 0)
 	{
 		Allocator_Free(_Server);
@@ -43,23 +43,23 @@ int Filesystem_Server_InitializePtr(Filesystem_Service* _Service, Filesystem_Ser
 	return 0;
 }
 
-int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service* _Service)
+int DistroFiles_Server_Initialize(DistroFiles_Server* _Server, DistroFiles_Service* _Service)
 {
 	_Server->m_Allocated = False;
 	_Server->m_TempFlag = 0;
 	_Server->m_TempListSize = 0;
 	_Server->m_NextCheck = 0;
-	_Server->m_Timeout = Filesystem_Server_SyncTimeout;
-	_Server->m_ErrorTimeout = Filesystem_Server_SyncErrorTimeout;
+	_Server->m_Timeout = DistroFiles_Server_SyncTimeout;
+	_Server->m_ErrorTimeout = DistroFiles_Server_SyncErrorTimeout;
 	_Server->m_Service = _Service;
-	_Server->m_State = Filesystem_Server_State_Init;
+	_Server->m_State = DistroFiles_Server_State_Init;
 
-	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
-	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
-	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, False);
-	BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
+	BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList, False);
+	BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList, False);
+	BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend, False);
+	BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillClear, False);
 
-	int success = TCPServer_Initialize(&_Server->m_TCPServer, Filesystem_Server_ConnectedSocket, _Server);
+	int success = TCPServer_Initialize(&_Server->m_TCPServer, DistroFiles_Server_ConnectedSocket, _Server);
 	if(success != 0)
 	{
 		printf("Failed to initialize the TCPServer for Server!\n\r");
@@ -101,7 +101,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		return -4;
 	}
 
-	success = Filesystem_Checking_Initialize(&_Server->m_Checking, _Server);
+	success = DistroFiles_Checking_Initialize(&_Server->m_Checking, _Server);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
@@ -113,7 +113,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 
 	Bus_Initialize(&_Server->m_Bus);
 
-	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, Filesystem_DatalayerWorkTime);
+	success = DataLayer_Initialize(&_Server->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Server->m_Bus, DistroFiles_DatalayerWorkTime);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
@@ -121,7 +121,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		Filesystem_Checking_Dispose(&_Server->m_Checking);
+		DistroFiles_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		return -5;
 	}
@@ -134,7 +134,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		Filesystem_Checking_Dispose(&_Server->m_Checking);
+		DistroFiles_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		return -6;
@@ -148,7 +148,7 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 		Bus_Dispose(&_Server->m_Bus);
 		TCPServer_Disconnect(&_Server->m_TCPServer);
 		String_Dispose(&_Server->m_FilesytemPath);
-		Filesystem_Checking_Dispose(&_Server->m_Checking);
+		DistroFiles_Checking_Dispose(&_Server->m_Checking);
 		Buffer_Dispose(&_Server->m_TempListBuffer);
 		DataLayer_Dispose(&_Server->m_DataLayer);
 		NetworkLayer_Dispose(&_Server->m_NetworkLayer);
@@ -161,45 +161,45 @@ int Filesystem_Server_Initialize(Filesystem_Server* _Server, Filesystem_Service*
 
 	Payload_FuncOut_Set(&_Server->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Server->m_NetworkLayer);
 	Payload_FuncOut_Set(&_Server->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Server->m_TransportLayer);
-	Payload_FuncOut_Set(&_Server->m_TransportLayer.m_FuncOut, Filesystem_Server_ReveicePayload, NULL, _Server);
+	Payload_FuncOut_Set(&_Server->m_TransportLayer.m_FuncOut, DistroFiles_Server_ReveicePayload, NULL, _Server);
 
 	char tempPath[_Server->m_Service->m_Path.m_Length + 5];
 	sprintf(tempPath, "%s/temp", _Server->m_Service->m_Path.m_Ptr);
 
 	if(Folder_IsEmpty(tempPath) == False)
-		BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+		BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList, True);
 
 	return 0;
 }
 
-int Filesystem_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
+int DistroFiles_Server_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	DistroFiles_Server* _Server = (DistroFiles_Server*) _Context;
 
-	Filesystem_Connection* _Connection = NULL;
-	if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, _TCPSocket, &_Server->m_Bus, &_Connection) != 0)
+	DistroFiles_Connection* _Connection = NULL;
+	if(DistroFiles_Connection_InitializePtr(_Server->m_Service->m_Worker, _TCPSocket, &_Server->m_Bus, &_Connection) != 0)
 		return 1;
 
-	EventHandler_Hook(&_Connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
+	EventHandler_Hook(&_Connection->m_EventHandler, DistroFiles_Server_ConnectionEvent, _Server);
 
 	LinkedList_Push(&_Server->m_Connections, _Connection);
 	return 0;
 }
 
-int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+int DistroFiles_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
-	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	DistroFiles_Connection* _Connection = (DistroFiles_Connection*) _Object;
+	DistroFiles_Server* _Server = (DistroFiles_Server*) _Context;
 
 	switch (_EventCall)
 	{
-		case Filesystem_Connection_Event_Disposed:
+		case DistroFiles_Connection_Event_Disposed:
 		{
 			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
 			return 1;
 		} break;
 
-		case Filesystem_Connection_Event_Disconnected:
+		case DistroFiles_Connection_Event_Disconnected:
 		{
 			printf("Server: ");
 			if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
@@ -222,29 +222,50 @@ int Filesystem_Server_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 				}
 				printf("got disconnected\r\n");
 				LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-				Filesystem_Connection_Dispose(_Connection);
+				DistroFiles_Connection_Dispose(_Connection);
 				return 0;
 			}
 		}
 
-		case Filesystem_Connection_Event_Reconnected:
+		case DistroFiles_Connection_Event_Reconnected:
 		{
 			
 		} break;
 
-		case Filesystem_Connection_Event_ReconnectError:
+		case DistroFiles_Connection_Event_GotInfo:
+		{
+			LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
+			while (currentNode != NULL)
+			{
+				DistroFiles_Connection* connection = (DistroFiles_Connection*) currentNode->m_Item;
+				currentNode = currentNode->m_Next;
+				
+				if(connection != _Connection && Payload_ComperAddresses(&connection->m_Addrass, &_Connection->m_Addrass) == True)
+				{
+					char ip[16];
+					Payload_GetIP(&_Connection->m_Addrass, ip);
+					printf("Server: Old connection \"%s\" got desposed\r\n", ip);
+					LinkedList_RemoveItem(&_Server->m_Connections, connection);
+					DistroFiles_Connection_Dispose(connection);
+				}
+
+			}
+			
+		} break;
+
+		case DistroFiles_Connection_Event_ReconnectError:
 		{
 			LinkedList_RemoveItem(&_Server->m_Connections, _Connection);
-			Filesystem_Connection_Dispose(_Connection);
+			DistroFiles_Connection_Dispose(_Connection);
 			return 0;
 		} break;
 	}
 	return 0;
 }
 
-int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
+int DistroFiles_Server_LoadServer(DistroFiles_Server* _Server)
 {
-	printf("Filesystem_Server_LoadServer\n\r");
+	printf("DistroFiles_Server_LoadServer\n\r");
 	json_t* members = _Server->m_Service->m_Settings.m_Servers;
 	for (int i = 0; i < json_array_size(members); i++)
 	{
@@ -260,10 +281,10 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		TCPSocket* socket = NULL;
 		if(TCPSocket_InitializePtr(charVal, port, NULL, &socket) == 0)
 		{
-			Filesystem_Connection* connection = NULL;
-			if(Filesystem_Connection_InitializePtr(_Server->m_Service->m_Worker, socket, &_Server->m_Bus, &connection) == 0)
+			DistroFiles_Connection* connection = NULL;
+			if(DistroFiles_Connection_InitializePtr(_Server->m_Service->m_Worker, socket, &_Server->m_Bus, &connection) == 0)
 			{
-				EventHandler_Hook(&connection->m_EventHandler, Filesystem_Server_ConnectionEvent, _Server);
+				EventHandler_Hook(&connection->m_EventHandler, DistroFiles_Server_ConnectionEvent, _Server);
 				connection->m_Socket = socket;
 				connection->m_Port = port;
 				Payload_StrToIP(&connection->m_Addrass, charVal);
@@ -286,18 +307,18 @@ int Filesystem_Server_LoadServer(Filesystem_Server* _Server)
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Discover", strlen("Discover"));
 	}
 	
-	_Server->m_State = Filesystem_Server_State_Conneced;
+	_Server->m_State = DistroFiles_Server_State_Conneced;
 	return 0;
 }
 
 //TODO: #75 Fix sync quantity check
-int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
+int DistroFiles_Server_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	DistroFiles_Server* _Server = (DistroFiles_Server*) _Context;
 
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 	{
-		printf("Filesystem_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
+		printf("DistroFiles_Server_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 		return 0;
 	}
 
@@ -310,8 +331,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadUInt8(&_Message->m_Data, &isOk);
 
 		if(isOk == 0) {
-			SystemMonotonicMS(&_Server->m_LastSynced);
-			_Server->m_State = Filesystem_Server_State_Synced;
+			_Server->m_State = DistroFiles_Server_State_Synced;
 			return 0;
 		}
 
@@ -322,8 +342,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
 		path[size] = 0;
 
-		if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
-		   BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == True)
+		if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList) == True &&
+		   BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList) == True)
 		{
 			void* ptr = _Server->m_TempListBuffer.m_Ptr;
 			UInt16 pathSize = 0;
@@ -337,6 +357,8 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				return 0;
 
 		}
+
+		printf("Path: %s\r\n", path);
 
 		String filePath;
 		String_Initialize(&filePath, 64);
@@ -378,9 +400,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 			Buffer_Dispose(&listData);
 
 
-			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
+			if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList) == False)
 			{
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList, True);
 			}
 			else
 			{
@@ -389,7 +411,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				unsigned char hash[16];
 				Buffer_ReadBuffer(&_Server->m_TempListBuffer, hash, 16);
 
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend, True);
 
 			}
 		}
@@ -426,7 +448,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "SyncAck", strlen("SyncAck"));
 		_Replay->m_Type = Payload_Type_Respons;
 
-		if(Filesystem_Server_HashCheck(hash, serverHash) == True)
+		if(DistroFiles_Server_HashCheck(hash, serverHash) == True)
 		{
 			_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, 0);
 			String_Dispose(&fullPath);
@@ -478,7 +500,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Write") == 0)
 	{
-		Filesystem_Checking_SetState(&_Server->m_Checking, Filesystem_Checking_Type_Write, _Message);
+		DistroFiles_Checking_SetState(&_Server->m_Checking, DistroFiles_Checking_Type_Write, _Message);
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 
@@ -510,14 +532,14 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 				File_GetHash(fullPath.m_Ptr, fileHash);
 				Memory_ParseBuffer(bufferHash, _Message->m_Data.m_ReadPtr + size, 16);
 
-				if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
+				if(DistroFiles_Server_HashCheck(bufferHash, fileHash) == False)
 				{
 					File_Remove(fullPath.m_Ptr);
 				}
 				else
 				{
 					printf("Write check OK\r\n");
-					Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, fileHash);
+					DistroFiles_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, fileHash);
 					String_Dispose(&fullPath);
 					return 0;
 				}
@@ -552,15 +574,15 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
-		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server, NULL);
+		if(DistroFiles_Server_HashCheck(hash, bufferHash) == False)
+			DistroFiles_Server_Sync(_Server, NULL);
 		else
-			Filesystem_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, hash);
+			DistroFiles_Server_ForwordWrite(_Server, &_Message->m_Src, isFile, path, hash);
 
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Delete") == 0)
 	{
-		Filesystem_Checking_SetState(&_Server->m_Checking, Filesystem_Checking_Type_Delete, _Message);
+		DistroFiles_Checking_SetState(&_Server->m_Checking, DistroFiles_Checking_Type_Delete, _Message);
 		Bool isFile = True;
 		Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
 
@@ -596,17 +618,17 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		String_Dispose(&fullPath);
 		Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
 		
-		if(Filesystem_Server_HashCheck(hash, bufferHash) == False)
-			Filesystem_Server_Sync(_Server, NULL);
+		if(DistroFiles_Server_HashCheck(hash, bufferHash) == False)
+			DistroFiles_Server_Sync(_Server, NULL);
 		else
-			Filesystem_Server_ForwordDelete(_Server, &_Message->m_Src, isFile, path, hash);
+			DistroFiles_Server_ForwordDelete(_Server, &_Message->m_Src, isFile, path, hash);
 		
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Check") == 0)
 	{
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
-		int success = Filesystem_Checking_WorkOnPayload(&_Server->m_Checking, (Filesystem_Checking_Type)type, _Message);
+		int success = DistroFiles_Checking_WorkOnPayload(&_Server->m_Checking, (DistroFiles_Checking_Type)type, _Message);
 		if(success > 0)
 		{
 			printf("Success: %i\r\n", success);
@@ -619,23 +641,23 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		UInt8 type = 0;
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
 		
-		if(_Server->m_Checking.m_Type == Filesystem_Checking_Type_None)
+		if(_Server->m_Checking.m_Type == DistroFiles_Checking_Type_None)
 			return 0; //* Ignore the message
 
-		if((Filesystem_Checking_Type)type != _Server->m_Checking.m_Type)
+		if((DistroFiles_Checking_Type)type != _Server->m_Checking.m_Type)
 		{
 			printf("Message type: %i\r\nChecking type: %i\r\n", (int)type, (int)_Server->m_Checking.m_Type);
 			return 2; //* Postponed message for 2 sec
 		}
 		
-		Filesystem_Checking_Check* check = NULL;
-		if(Filesystem_Checking_SpawnWriteCheck(&_Server->m_Checking, &_Message->m_Src, &check) == 1)
+		DistroFiles_Checking_Check* check = NULL;
+		if(DistroFiles_Checking_SpawnWriteCheck(&_Server->m_Checking, &_Message->m_Src, &check) == 1)
 			return 0;
 		
 		Buffer_ReadUInt8(&_Message->m_Data, &type);
-		check->m_IsOk = (Filesystem_Checking_Check_Satus)type;
+		check->m_IsOk = (DistroFiles_Checking_Check_Satus)type;
 		
-		if(Filesystem_Server_GetConnection(_Server, &_Message->m_Src, &check->m_Connection) != 0)
+		if(DistroFiles_Server_GetConnection(_Server, &_Message->m_Src, &check->m_Connection) != 0)
 		{
 			printf("Error with: \r\n");
 			for (int i = 0; i < sizeof(_Message->m_Src.m_Address); i++)
@@ -647,7 +669,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "ReSync") == 0)
 	{
-		Filesystem_Server_Sync(_Server, NULL);
+		DistroFiles_Server_Sync(_Server, NULL);
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "Read") == 0)
 	{
@@ -681,11 +703,11 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		int success = -1;
 		if(isFile == True)
 		{
-			success = Filesystem_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
+			success = DistroFiles_Server_ReadFile(_Server, &fullPath, &_Message->m_Data, _Replay);
 		}
 		else
 		{
-			success = Filesystem_Server_ReadFolder(_Server, &fullPath, &_Message->m_Data, _Replay);
+			success = DistroFiles_Server_ReadFolder(_Server, &fullPath, &_Message->m_Data, _Replay);
 
 		}
 		
@@ -721,9 +743,9 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 
 		int success = -1;
 		if(isFile == True)
-			success = Filesystem_Server_WriteFile(_Server, &fullPath, &_Message->m_Data);
+			success = DistroFiles_Server_WriteFile(_Server, &fullPath, &_Message->m_Data);
 		else
-			success = Filesystem_Server_WriteFolder(_Server, &fullPath, &_Message->m_Data);
+			success = DistroFiles_Server_WriteFolder(_Server, &fullPath, &_Message->m_Data);
 
 		if(success < 0)
 		{
@@ -731,10 +753,10 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		}
 		else if(success == 0)
 		{
-			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == True)
+			if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList) == True)
 			{
 				_Server->m_TempListSize--;
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend, True);
 
 			}
 		}
@@ -747,7 +769,7 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 		while (currentNode != NULL)
 		{
-			Filesystem_Connection* _Connection = (Filesystem_Connection*) currentNode->m_Item;
+			DistroFiles_Connection* _Connection = (DistroFiles_Connection*) currentNode->m_Item;
 			if(Payload_ComperAddresses(&_Message->m_Src, &_Connection->m_Addrass) == True)
 			{
 				Buffer_ReadUInt16(&_Message->m_Data, &_Connection->m_Port);
@@ -774,12 +796,12 @@ int Filesystem_Server_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	return 0;
 }
 
-int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address* _Address, Filesystem_Connection** _ConnectionPtr)
+int DistroFiles_Server_GetConnection(DistroFiles_Server* _Server, Payload_Address* _Address, DistroFiles_Connection** _ConnectionPtr)
 {
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		if(Payload_ComperAddresses(&connection->m_Addrass, _Address) == True)
@@ -794,7 +816,7 @@ int Filesystem_Server_GetConnection(Filesystem_Server* _Server, Payload_Address*
 	return 1;
 }
 
-int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
+int DistroFiles_Server_ReadFile(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
 	FILE* f = NULL;
 
@@ -821,7 +843,7 @@ int Filesystem_Server_ReadFile(Filesystem_Server* _Server, String* _FullPath, Bu
 	return 1;
 }
 
-int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
+int DistroFiles_Server_ReadFolder(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer,  Payload* _Replay)
 {
 
 	Payload_SetMessageType(_Replay, Payload_Message_Type_String, "ReadRespons", strlen("ReadRespons"));
@@ -866,7 +888,7 @@ int Filesystem_Server_ReadFolder(Filesystem_Server* _Server, String* _FullPath, 
 	return 1;
 }
 
-int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
+int DistroFiles_Server_WriteFile(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 	FILE* f = NULL;
 	UInt16 size = 0;
@@ -879,7 +901,7 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 		File_GetHash(_FullPath->m_Ptr, fileHash);
 		Memory_ParseBuffer(bufferHash, _DataBuffer->m_ReadPtr + size, 16);
 
-		if(Filesystem_Server_HashCheck(bufferHash, fileHash) == False)
+		if(DistroFiles_Server_HashCheck(bufferHash, fileHash) == False)
 			File_Remove(_FullPath->m_Ptr);
 		else
 			return 0;
@@ -904,7 +926,7 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 	unsigned char serverHash[16] = "";
 	File_GetHash(_FullPath->m_Ptr, serverHash);
 
-	if(Filesystem_Server_HashCheck(hash, serverHash) == False)
+	if(DistroFiles_Server_HashCheck(hash, serverHash) == False)
 	{
 		printf("Hash:\n\r");
 		for (int i = 0; i < 16; i++)
@@ -924,7 +946,7 @@ int Filesystem_Server_WriteFile(Filesystem_Server* _Server, String* _FullPath, B
 	return 0;
 }
 
-int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
+int DistroFiles_Server_WriteFolder(DistroFiles_Server* _Server, String* _FullPath, Buffer* _DataBuffer)
 {
 
 	String str;
@@ -956,7 +978,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	File_Open(str.m_Ptr, File_Mode_ReadWriteCreateBinary, &f);
 	if(f == NULL)
 	{
-		printf("Fullpath error(Filesystem_Server_WriteFolder): %s\n\r", str.m_Ptr);
+		printf("Fullpath error(DistroFiles_Server_WriteFolder): %s\n\r", str.m_Ptr);
 		String_Dispose(&str);
 	}
 
@@ -972,7 +994,7 @@ int Filesystem_Server_WriteFolder(Filesystem_Server* _Server, String* _FullPath,
 	return 0;
 }
 
-int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _DataBuffer)
+int DistroFiles_Server_GetList(DistroFiles_Server* _Server, char* _Path, Buffer* _DataBuffer)
 {
 	String fullPath;
 	String_Initialize(&fullPath, 64);
@@ -1023,7 +1045,7 @@ int Filesystem_Server_GetList(Filesystem_Server* _Server, char* _Path, Buffer* _
 }
 
 //! This gets called from client ONLY
-int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer)
+int DistroFiles_Server_Write(DistroFiles_Server* _Server, Bool _IsFile, char* _Path, Buffer* _DataBuffer)
 {
 	String fullPath;
 	String_Initialize(&fullPath, 64);
@@ -1039,7 +1061,7 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 	if(_IsFile == True)
 	{
 		void* ptr = _DataBuffer->m_ReadPtr;
-		success = Filesystem_Server_WriteFile(_Server, &fullPath, _DataBuffer);
+		success = DistroFiles_Server_WriteFile(_Server, &fullPath, _DataBuffer);
 		if(success == 0)
 		{
 			
@@ -1060,12 +1082,13 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 
 				Payload_SetMessageType(message, Payload_Message_Type_String, "Write", strlen("Write"));
 			}
-
+			
+			EventHandler_EventCall(&_Server->m_EventHandler, DistroFiles_Server_Event_Update, _Server);
 		}
 	}
 	else
 	{
-		printf("Fix Filesystem_Server_Write for Folders\r\n");
+		printf("Fix DistroFiles_Server_Write for Folders\r\n");
 		success = 1;
 	}
 	
@@ -1073,25 +1096,25 @@ int Filesystem_Server_Write(Filesystem_Server* _Server, Bool _IsFile, char* _Pat
 	return success;
 }
 
-int Filesystem_Server_ForwordWrite(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16])
+int DistroFiles_Server_ForwordWrite(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, unsigned char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
 	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
-	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Write);
+	Buffer_WriteUInt8(&data, (UInt8) DistroFiles_Checking_Type_Write);
 	Buffer_WriteUInt8(&data, (UInt8) _IsFile);
 	Buffer_WriteUInt16(&data, strlen((const char*)_Path));
 	Buffer_WriteBuffer(&data, _Path, strlen((const char*)_Path));
 	Buffer_WriteBuffer(&data, _Hash, 16);
 
-	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &data);
+	DistroFiles_Server_Forwording(_Server, _IgnoreAddress, &data);
 	
 	Buffer_Dispose(&data);
 	return 0;
 }
 
 //! This gets called from client ONLY
-int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Path)
+int DistroFiles_Server_Delete(DistroFiles_Server* _Server, Bool _IsFile, char* _Path)
 {
 	String fullPath;
 	String_Initialize(&fullPath, 64);
@@ -1131,37 +1154,39 @@ int Filesystem_Server_Delete(Filesystem_Server* _Server, Bool _IsFile, char* _Pa
 
 			Payload_SetMessageType(message, Payload_Message_Type_String, "Delete", strlen("Delete"));
 		}
+
+		EventHandler_EventCall(&_Server->m_EventHandler, DistroFiles_Server_Event_Update, _Server);
 	}
 
 	String_Dispose(&fullPath);
 	return 0;
 }
 
-int Filesystem_Server_ForwordDelete(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
+int DistroFiles_Server_ForwordDelete(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Bool _IsFile, char* _Path, unsigned char _Hash[16])
 {
 	Buffer data;
 	Buffer_Initialize(&data, 1 + 1 + 2 + strlen((const char*)_Path) + 16);
 
-	Buffer_WriteUInt8(&data, (UInt8) Filesystem_Checking_Type_Delete);
+	Buffer_WriteUInt8(&data, (UInt8) DistroFiles_Checking_Type_Delete);
 	Buffer_WriteUInt8(&data, (UInt8)_IsFile);
 	Buffer_WriteUInt16(&data, strlen((const char*)_Path));
 	Buffer_WriteBuffer(&data, (unsigned char*)_Path, strlen((const char*)_Path));
 	Buffer_WriteBuffer(&data, _Hash, 16);
 	
-	Filesystem_Server_Forwording(_Server, _IgnoreAddress, &data);
+	DistroFiles_Server_Forwording(_Server, _IgnoreAddress, &data);
 
 	Buffer_Dispose(&data);
 	return 0;
 }
 
-void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data)
+void DistroFiles_Server_Forwording(DistroFiles_Server* _Server, Payload_Address* _IgnoreAddress, Buffer* _Data)
 {
-	_Server->m_State = Filesystem_Server_State_Checking;
+	_Server->m_State = DistroFiles_Server_State_Checking;
 
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while (currentNode != NULL)
 	{
-		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		if (Payload_ComperAddresses(&connection->m_Addrass, _IgnoreAddress) == False)
@@ -1182,7 +1207,7 @@ void Filesystem_Server_Forwording(Filesystem_Server* _Server, Payload_Address* _
 	}
 }
 
-void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
+void DistroFiles_Server_Work(UInt64 _MSTime, DistroFiles_Server* _Server)
 {
 	TCPServer_Work(&_Server->m_TCPServer);
 	DataLayer_Work(_MSTime, &_Server->m_DataLayer);
@@ -1190,23 +1215,23 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 	switch (_Server->m_State)
 	{
-		case Filesystem_Server_State_Init:
+		case DistroFiles_Server_State_Init:
 		{
-			_Server->m_State = Filesystem_Server_State_Connecting;
-			Filesystem_Server_LoadServer(_Server);
+			_Server->m_State = DistroFiles_Server_State_Connecting;
+			DistroFiles_Server_LoadServer(_Server);
 		} break;
 
-		case Filesystem_Server_State_Conneced:
+		case DistroFiles_Server_State_Conneced:
 		{
-			_Server->m_State = Filesystem_Server_State_Idel;
+			_Server->m_State = DistroFiles_Server_State_Idel;
 		} break;
 
-		case Filesystem_Server_State_ReSyncing:
-		case Filesystem_Server_State_Syncing:
+		case DistroFiles_Server_State_ReSyncing:
+		case DistroFiles_Server_State_Syncing:
 		{
 
-			if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == True &&
-			BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList) == False)
+			if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList) == True &&
+			BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList) == False)
 			{
 				Buffer_Clear(&_Server->m_TempListBuffer);
 
@@ -1247,7 +1272,7 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 						_Server->m_TempListBuffer.m_BytesLeft -= written;
 
 						Buffer_ReadFromFile(&_Server->m_TempListBuffer, f);
-						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, True);
+						BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList, True);
 
 						File_Close(f);
 						break;
@@ -1258,15 +1283,15 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				tinydir_close(&dir);
 
 				Buffer_ReadUInt16(&_Server->m_TempListBuffer, &_Server->m_TempListSize);
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, True);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend, True);
 			}
-			else if (BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend) == True)
+			else if (BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend) == True)
 			{
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillSend, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillSend, False);
 
 				if(_Server->m_TempListSize == 0)
 				{
-					BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, True);
+					BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillClear, True);
 					return;
 				}
 
@@ -1319,11 +1344,11 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 				}
 				String_Dispose(&str);
 			}
-			else if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear) == True)
+			else if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillClear) == True)
 			{
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, False);
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
-				BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WillClear, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList, False);
+				BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WillClear, False);
 				
 				UInt16 length = 0;
 
@@ -1366,18 +1391,25 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 					tinydir_readfile(&dir, &file);
 					if(strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0)
 					{
-						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_WorkonList, False);
-						BitHelper_SetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList, True);
+						BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_WorkonList, False);
+						BitHelper_SetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList, True);
 
 						break;
 					}
 					tinydir_next(&dir);
 				}
+				String str;
+				String_Initialize(&str, 32);
+				String_Set(&str, "root");
+
+				EventHandler_EventCall(&_Server->m_EventHandler, DistroFiles_Server_Event_Update, &str);
+
+				String_Dispose(&str);
 
 				tinydir_close(&dir);
 
-				if(BitHelper_GetBit(&_Server->m_TempFlag, Filesystem_Server_TempFlag_HasList) == False)
-					_Server->m_State = Filesystem_Server_State_Synced;
+				if(BitHelper_GetBit(&_Server->m_TempFlag, DistroFiles_Server_TempFlag_HasList) == False)
+					_Server->m_State = DistroFiles_Server_State_Synced;
 				
 				
 			}
@@ -1385,32 +1417,35 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 
 		} break;
 
-		case Filesystem_Server_State_Synced:
+		case DistroFiles_Server_State_Synced:
 		{
+			
+			EventHandler_EventCall(&_Server->m_EventHandler, DistroFiles_Server_Event_Update, _Server);
+			
 			_Server->m_NextCheck = 0;
 			SystemMonotonicMS(&_Server->m_LastSynced);
-			_Server->m_State = Filesystem_Server_State_Idel;
+			_Server->m_State = DistroFiles_Server_State_Idel;
 			
 		} break;
 
-		case Filesystem_Server_State_Checking:
+		case DistroFiles_Server_State_Checking:
 		{
-			Filesystem_Checking_Work(_MSTime, &_Server->m_Checking);
+			DistroFiles_Checking_Work(_MSTime, &_Server->m_Checking);
 		} break;
 
-		case Filesystem_Server_State_ReSync:
+		case DistroFiles_Server_State_ReSync:
 		{
-			_Server->m_State = Filesystem_Server_State_ReSyncing;
+			_Server->m_State = DistroFiles_Server_State_ReSyncing;
 			LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 			while (currentNode != NULL)
 			{
-				Filesystem_Connection* _Connection = (Filesystem_Connection*) currentNode->m_Item;
+				DistroFiles_Connection* _Connection = (DistroFiles_Connection*) currentNode->m_Item;
 				currentNode = currentNode->m_Next;
 
-				if(Filesystem_Checking_CanUseConnection(&_Server->m_Checking, _Connection) == True)
+				if(DistroFiles_Checking_CanUseConnection(&_Server->m_Checking, _Connection) == True)
 				{
 					Payload* message = NULL;
-					if(Filesystem_Server_Sync(_Server, &message) == 0)
+					if(DistroFiles_Server_Sync(_Server, &message) == 0)
 						Payload_FilAddress(&message->m_Des, &_Connection->m_Addrass);
 					
 				}
@@ -1419,57 +1454,57 @@ void Filesystem_Server_Work(UInt64 _MSTime, Filesystem_Server* _Server)
 			
 		} break;
 
-		case Filesystem_Server_State_Idel:
+		case DistroFiles_Server_State_Idel:
 		{
 			//printf("Ideling\r\n");
 			if(_Server->m_Service->m_Settings.m_AutoSync == True)
 			{
 				if(_MSTime > _Server->m_LastSynced + _Server->m_Service->m_Settings.m_Interval)
-					Filesystem_Server_Sync(_Server, NULL);
+					DistroFiles_Server_Sync(_Server, NULL);
 				
 			}
 			else if(_Server->m_LastSynced == 0)
 			{
-				Filesystem_Server_Sync(_Server, NULL);
+				DistroFiles_Server_Sync(_Server, NULL);
 			}
 			
 		} break;
-		case Filesystem_Server_State_SyncError:
+		case DistroFiles_Server_State_SyncError:
 		{
 			if(_MSTime > _Server->m_NextCheck && _Server->m_NextCheck != 0)
 			{
-				Filesystem_Server_Sync(_Server, NULL);
+				DistroFiles_Server_Sync(_Server, NULL);
 			}
 			
 		} break;
 
-		case Filesystem_Server_State_Connecting:
+		case DistroFiles_Server_State_Connecting:
 		{ } break;
 
 	}
 }
 
-int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
+int DistroFiles_Server_Sync(DistroFiles_Server* _Server, Payload** _MessagePtr)
 {
 	Payload* message = NULL;
 	char* path = "root";
 
 	int size = 2 + strlen(path) + 16;
 
-	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, Filesystem_Server_SyncTimeout, &message) == 0)
+	if(TransportLayer_CreateMessage(&_Server->m_TransportLayer, Payload_Type_Broadcast, size, DistroFiles_Server_SyncTimeout, &message) == 0)
 	{
-		_Server->m_State = Filesystem_Server_State_Syncing;
+		_Server->m_State = DistroFiles_Server_State_Syncing;
 		Buffer_WriteUInt16(&message->m_Data, strlen(path));
 		Buffer_WriteBuffer(&message->m_Data, (unsigned char*)path, strlen(path));
 
 		unsigned char hash[16];
 		Folder_Hash(_Server->m_FilesytemPath.m_Ptr, hash);
 
-		Filesystem_Server_PrintHash("Sync Hash", hash);
+		DistroFiles_Server_PrintHash("Sync Hash", hash);
 		Buffer_WriteBuffer(&message->m_Data, hash, 16);
 
 		Payload_SetMessageType(message, Payload_Message_Type_String, "Sync", strlen("Sync"));
-		EventHandler_Hook(&message->m_EventHandler, Filesystem_Server_MessageEvent, _Server);
+		EventHandler_Hook(&message->m_EventHandler, DistroFiles_Server_MessageEvent, _Server);
 
 		if(_MessagePtr != NULL)
 			*(_MessagePtr) = message;
@@ -1480,9 +1515,9 @@ int Filesystem_Server_Sync(Filesystem_Server* _Server, Payload** _MessagePtr)
 }
 
 //note: Then return 1 the event gets unhooked;
-int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+int DistroFiles_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
-	Filesystem_Server* _Server = (Filesystem_Server*) _Context;
+	DistroFiles_Server* _Server = (DistroFiles_Server*) _Context;
 	Payload* _Message = (Payload*) _Object;
 	Payload_State _Event = (Payload_Type)_EventCall;
 	int success = 0;
@@ -1521,34 +1556,42 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 					
 					printf("Resanding sync\r\n");
 					Payload* message = NULL;
-					if(TransportLayer_ResendMessage(&_Server->m_TransportLayer, _Message, &message) == 0)
+					if(DistroFiles_Server_Sync(_Server, &message) == 0)
 					{
-						message->m_Timeout = Payload_TimeoutAlgorithm(message->m_Timeout);
+						message->m_Timeout = Payload_TimeoutAlgorithm(_Message->m_Timeout);
 					}
 				}
 			}
 			return 1;
 		} break;
-
+		
 		case Payload_State_Destroyed:
+		{
+			if(_Message->m_State == Payload_State_Resived)
+				return 1;
+		}
 		case Payload_State_Failed:
 		{
 			printf("Event: %i UUID: %s Server status: %i\r\n", _EventCall, str, _Server->m_State);
-			if(_Server->m_State == Filesystem_Server_State_Syncing || _Server->m_State == Filesystem_Server_State_ReSyncing)
+			if(_Server->m_State == DistroFiles_Server_State_Syncing || _Server->m_State == DistroFiles_Server_State_ReSyncing)
 			{
 				if(_Server->m_ErrorTimeout == 0)
-					_Server->m_ErrorTimeout = Filesystem_Server_SyncErrorTimeout;
+					_Server->m_ErrorTimeout = DistroFiles_Server_SyncErrorTimeout;
 
-				_Server->m_State = Filesystem_Server_State_SyncError;
+				_Server->m_State = DistroFiles_Server_State_SyncError;
 				_Server->m_ErrorTimeout = Payload_TimeoutAlgorithm(_Server->m_ErrorTimeout);
 				SystemMonotonicMS(&_Server->m_NextCheck);
 				_Server->m_NextCheck += _Server->m_ErrorTimeout;
 			}
-			success = 1;
-		} break;
+			return 1;
+		}
 		
 		case Payload_State_Removed:
 		{ return 1; } break;
+
+		case Payload_State_Sending:
+		case Payload_State_Sented:
+		{ return 0; } break;
 
 		default: 
 		{
@@ -1559,7 +1602,7 @@ int Filesystem_Server_MessageEvent(EventHandler* _EventHandler, int _EventCall, 
 	return success;
 }
 
-void Filesystem_Server_Dispose(Filesystem_Server* _Server)
+void DistroFiles_Server_Dispose(DistroFiles_Server* _Server)
 {
 	TransportLayer_Dispose(&_Server->m_TransportLayer);
 	NetworkLayer_Dispose(&_Server->m_NetworkLayer);
@@ -1568,11 +1611,11 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 	LinkedList_Node* currentNode = _Server->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
-		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 		LinkedList_RemoveFirst(&_Server->m_Connections);
 
-		Filesystem_Connection_Dispose(connection);
+		DistroFiles_Connection_Dispose(connection);
 	}
 	Bus_Dispose(&_Server->m_Bus);
 
@@ -1583,12 +1626,12 @@ void Filesystem_Server_Dispose(Filesystem_Server* _Server)
 
 	String_Dispose(&_Server->m_FilesytemPath);
 
-	Filesystem_Checking_Dispose(&_Server->m_Checking);
+	DistroFiles_Checking_Dispose(&_Server->m_Checking);
 	Buffer_Dispose(&_Server->m_TempListBuffer);
 
 	if(_Server->m_Allocated == True)
 		Allocator_Free(_Server);
 	else
-		memset(_Server, 0, sizeof(Filesystem_Server));
+		memset(_Server, 0, sizeof(DistroFiles_Server));
 
 }

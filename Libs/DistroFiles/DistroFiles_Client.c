@@ -1,20 +1,21 @@
-#include "Filesystem_Client.h"
+#include "DistroFiles_Client.h"
 
-int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
-int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+int DistroFiles_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context);
+int DistroFiles_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+int DistroFiles_Client_ServerEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
 
-int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
-int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
+int DistroFiles_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size);
+int DistroFiles_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size);
 
-int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
+int DistroFiles_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay);
 
-int Filesystem_Client_InitializePtr(Filesystem_Service* _Service, Filesystem_Client** _ClientPtr)
+int DistroFiles_Client_InitializePtr(DistroFiles_Service* _Service, DistroFiles_Client** _ClientPtr)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*)Allocator_Malloc(sizeof(Filesystem_Client));
+	DistroFiles_Client* _Client = (DistroFiles_Client*)Allocator_Malloc(sizeof(DistroFiles_Client));
 	if(_Client == NULL)
 		return -1;
 	
-	int success = Filesystem_Client_Initialize(_Client, _Service);
+	int success = DistroFiles_Client_Initialize(_Client, _Service);
 	if(success != 0)
 	{
 		Allocator_Free(_Client);
@@ -27,15 +28,16 @@ int Filesystem_Client_InitializePtr(Filesystem_Service* _Service, Filesystem_Cli
 	return 0;
 }
 
-int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service* _Service)
+int DistroFiles_Client_Initialize(DistroFiles_Client* _Client, DistroFiles_Service* _Service)
 {
 	_Client->m_Allocated = False;
 	_Client->m_NextCheck = 0;
 	_Client->m_Timeout = SEC * 10;
 	_Client->m_Service = _Service;
 	_Client->m_Server = _Service->m_Server;
+	_Client->m_Hook = NULL;
 
-	int success = TCPServer_Initialize(&_Client->m_TCPServer, Filesystem_Client_ConnectedSocket, _Client);
+	int success = TCPServer_Initialize(&_Client->m_TCPServer, DistroFiles_Client_ConnectedSocket, _Client);
 	if(success != 0)
 	{
 		printf("Failed to initialize the TCPServer for Server!\n\r");
@@ -54,7 +56,7 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 
 	Bus_Initialize(&_Client->m_Bus);
 
-	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Client->m_Bus, Filesystem_DatalayerWorkTime);
+	success = DataLayer_Initialize(&_Client->m_DataLayer, NULL, Bus_OnRead, Bus_OnWrite, NULL, &_Client->m_Bus, DistroFiles_DatalayerWorkTime);
 	if(success != 0)
 	{
 		printf("Failed to initialize the DataLayer for server!\n\r");
@@ -92,39 +94,41 @@ int Filesystem_Client_Initialize(Filesystem_Client* _Client, Filesystem_Service*
 
 	Payload_FuncOut_Set(&_Client->m_DataLayer.m_FuncOut, NetworkLayer_ReveicePayload, NetworkLayer_SendPayload, &_Client->m_NetworkLayer);
 	Payload_FuncOut_Set(&_Client->m_NetworkLayer.m_FuncOut, TransportLayer_ReveicePayload, TransportLayer_SendPayload, &_Client->m_TransportLayer);
-	Payload_FuncOut_Set(&_Client->m_TransportLayer.m_FuncOut, Filesystem_Client_ReveicePayload, NULL, _Client);
+	Payload_FuncOut_Set(&_Client->m_TransportLayer.m_FuncOut, DistroFiles_Client_ReveicePayload, NULL, _Client);
+
+	_Client->m_Hook = EventHandler_Hook(&_Client->m_Server->m_EventHandler, DistroFiles_Client_ServerEvent, _Client);
 
 	return 0;
 }
 
-int Filesystem_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
+int DistroFiles_Client_ConnectedSocket(TCPSocket* _TCPSocket, void* _Context)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
 
-	Filesystem_Connection* _Connection = NULL;
-	if(Filesystem_Connection_InitializePtr(_Client->m_Service->m_Worker, _TCPSocket, &_Client->m_Bus, &_Connection) != 0)
+	DistroFiles_Connection* _Connection = NULL;
+	if(DistroFiles_Connection_InitializePtr(_Client->m_Service->m_Worker, _TCPSocket, &_Client->m_Bus, &_Connection) != 0)
 		return 1;
 
-	EventHandler_Hook(&_Connection->m_EventHandler, Filesystem_Client_ConnectionEvent, _Client);
+	EventHandler_Hook(&_Connection->m_EventHandler, DistroFiles_Client_ConnectionEvent, _Client);
 
 	LinkedList_Push(&_Client->m_Connections, _Connection);
 	return 0;
 }
 
-int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+int DistroFiles_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
-	Filesystem_Connection* _Connection = (Filesystem_Connection*) _Object;
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	DistroFiles_Connection* _Connection = (DistroFiles_Connection*) _Object;
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
 
 	switch (_EventCall)
 	{
-		case Filesystem_Connection_Event_Disposed:
+		case DistroFiles_Connection_Event_Disposed:
 		{
 			LinkedList_RemoveItem(&_Client->m_Connections, _Connection);
 			return 1;
 		} break;
 
-		case Filesystem_Connection_Event_Disconnected:
+		case DistroFiles_Connection_Event_Disconnected:
 		{
 			printf("Client: ");
 			if(_Connection->m_Addrass.m_Type == Payload_Address_Type_IP)
@@ -147,7 +151,7 @@ int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 				}
 				printf("got disconnected\r\n");
 				LinkedList_RemoveItem(&_Client->m_Connections, _Connection);
-				Filesystem_Connection_Dispose(_Connection);
+				DistroFiles_Connection_Dispose(_Connection);
 				return 0;
 			}
 		}
@@ -156,25 +160,47 @@ int Filesystem_Client_ConnectionEvent(EventHandler* _EventHandler, int _EventCal
 }
 
 
-/*
-int Filesystem_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
+int DistroFiles_Client_ServerEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-	return Filesystem_Service_TCPRead(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
+	DistroFiles_Server_Event _Event = (DistroFiles_Server_Event) _EventCall;
+	DistroFiles_Server* _Server = (DistroFiles_Server*) _Object;
+
+	switch (_Event)
+	{
+		case DistroFiles_Server_Event_Update:
+		{
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Client->m_TransportLayer, Payload_Type_ACK, 0, SEC * 10, &message) == 0)
+			{
+				printf("send update\r\n");
+				Payload_SetMessageType(message, Payload_Message_Type_String, "Update", strlen("Update"));
+			}
+		} break;
+	}
+
+	return 0;
 }
 
-int Filesystem_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
+/*
+int DistroFiles_Client_TCPRead(void* _Context, Buffer* _Buffer, int _Size)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
-	return Filesystem_Service_TCPWrite(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
+	return DistroFiles_Service_TCPRead(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
+}
+
+int DistroFiles_Client_TCPWrite(void* _Context, Buffer* _Buffer, int _Size)
+{
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
+	return DistroFiles_Service_TCPWrite(_Client->m_Service, &_Client->m_Connections, _Buffer, _Size);
 }
 */
 
-int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
+int DistroFiles_Client_ReveicePayload(void* _Context, Payload* _Message, Payload* _Replay)
 {
-	Filesystem_Client* _Client = (Filesystem_Client*) _Context;
+	DistroFiles_Client* _Client = (DistroFiles_Client*) _Context;
 
-	printf("Filesystem_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
+	printf("DistroFiles_Client_ReveicePayload(%i)\n\r", _Message->m_Message.m_Type);
 	if(_Message->m_Message.m_Type != Payload_Message_Type_String)
 		return 0;
 
@@ -192,7 +218,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
 		path[size] = 0;
 
-		Filesystem_Server_Write(_Client->m_Server, isFile, path, &_Message->m_Data);
+		DistroFiles_Server_Write(_Client->m_Server, isFile, path, &_Message->m_Data);
 		
 	}
 	else if(strcmp(_Message->m_Message.m_Method.m_Str, "list") == 0)
@@ -204,7 +230,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
 		path[size] = 0;
 
-		_Replay->m_Size += Filesystem_Server_GetList(_Client->m_Server, path, &_Replay->m_Data);
+		_Replay->m_Size += DistroFiles_Server_GetList(_Client->m_Server, path, &_Replay->m_Data);
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "listRespons", strlen("listRespons"));
 		return 1;
 	}
@@ -235,7 +261,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 		Buffer_ReadBuffer(&_Message->m_Data, (unsigned char*)path, size);
 		path[size] = 0;
 
-		int success = Filesystem_Server_Delete(_Client->m_Server, isFile, path);
+		int success = DistroFiles_Server_Delete(_Client->m_Server, isFile, path);
 
 		_Replay->m_Size += Buffer_WriteUInt8(&_Replay->m_Data, (UInt8)success);
 		Payload_SetMessageType(_Replay, Payload_Message_Type_String, "deleteRespons", strlen("deleteRespons"));
@@ -248,7 +274,7 @@ int Filesystem_Client_ReveicePayload(void* _Context, Payload* _Message, Payload*
 	return 0;
 }
 
-void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
+void DistroFiles_Client_Work(UInt64 _MSTime, DistroFiles_Client* _Client)
 {
 	TCPServer_Work(&_Client->m_TCPServer);
 	DataLayer_Work(_MSTime, &_Client->m_DataLayer);
@@ -256,8 +282,14 @@ void Filesystem_Client_Work(UInt64 _MSTime, Filesystem_Client* _Client)
 
 }
 
-void Filesystem_Client_Dispose(Filesystem_Client* _Client)
+void DistroFiles_Client_Dispose(DistroFiles_Client* _Client)
 {
+	if(_Client->m_Hook != NULL)
+	{
+		EventHandler_UnHook(&_Client->m_Server->m_EventHandler, _Client->m_Hook);
+		_Client->m_Hook = NULL;
+	}
+
 	TransportLayer_Dispose(&_Client->m_TransportLayer);
 	NetworkLayer_Dispose(&_Client->m_NetworkLayer);
 	DataLayer_Dispose(&_Client->m_DataLayer);
@@ -265,11 +297,11 @@ void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 	LinkedList_Node* currentNode = _Client->m_Connections.m_Head;
 	while(currentNode != NULL)
 	{
-		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*)currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		LinkedList_RemoveFirst(&_Client->m_Connections);
-		Filesystem_Connection_Dispose(connection);
+		DistroFiles_Connection_Dispose(connection);
 	}
 	LinkedList_Dispose(&_Client->m_Connections);
 	EventHandler_Dispose(&_Client->m_EventHandler);
@@ -281,6 +313,6 @@ void Filesystem_Client_Dispose(Filesystem_Client* _Client)
 	if(_Client->m_Allocated == True)
 		Allocator_Free(_Client);
 	else
-		memset(_Client, 0, sizeof(Filesystem_Client));
+		memset(_Client, 0, sizeof(DistroFiles_Client));
 
 }

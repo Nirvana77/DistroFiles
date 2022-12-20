@@ -3,8 +3,8 @@
 ```
 $ sudo apt-get update && sudo apt-get upgrade -y
 $ sudo apt-get install -y libjansson-dev gcc libcurl4-gnutls-dev git uuid-dev
-$ git clone https://github.com/Nirvana77/Filesystem.git
-$ cd Filesystem
+$ git clone https://github.com/Nirvana77/DistroFiles.git
+$ cd DistroFiles
 $ ./compile
 ```
 
@@ -13,13 +13,13 @@ When useing the service the host `port` needs to be oppened for the firewall. [L
 To launched the GUI
 
 - `Mode`: If is `deamon` or none.
-- `Path`: Is the path for the booted filesystem. Here is where the settings file will be and the root structor.
+- `Path`: Is the path for the booted DistroFiles. Here is where the settings file will be and the root structor.
 
 ```
 $ ./bin/main <Path> <Mode>
 ```
 # Configuration
-The configuration file is in the `Path` when the filesystem was booted. The file name is `settings.json`.
+The configuration file is in the `Path` when the DistroFiles was booted. The file name is `settings.json`.
 - `version`: Definse the JSON `version` for the settings.
 - `host`: Sets the `port` for the communication with the servers.
 - `GUI`: Sets the `port` for the communication with the GUI.
@@ -48,7 +48,7 @@ Then the service is done it will then print if the developer has missted to free
 ```
 -------------------Not freed memory----------------------
 28,Libs/TCP/TCPSocket.c,5,TCPSocket_InitializePtr,0x7ffff000368a
-160,Libs/Filesystem/Filesystem_Connection.c,9,Filesystem_Connection_InitializePtr,0x7ffff000387a
+160,Libs/DistroFiles/DistroFiles_Connection.c,9,DistroFiles_Connection_InitializePtr,0x7ffff000387a
 255,Libs/Buffer.c,27,Buffer_Initialize,0x7ffff0003aea
 16,Libs/EventHandler.c,33,EventHandler_Hook,0x7ffff000467a
 24,Libs/LinkedList.c,233,LinkedList_CreateNode,0x7ffff000485a
@@ -56,7 +56,7 @@ Then the service is done it will then print if the developer has missted to free
 
 
 -------------------------Stats---------------------------
-Max malloced memory: 1048b at Libs/Filesystem/Filesystem_Server.c,29,Filesystem_Server_InitializePtr
+Max malloced memory: 1048b at Libs/DistroFiles/DistroFiles_Server.c,29,DistroFiles_Server_InitializePtr
 Min malloced memory: 16b at Libs/EventHandler.c,29,EventHandler_Hook
 Average malloced memory: 106b
 Max memory: 2355b

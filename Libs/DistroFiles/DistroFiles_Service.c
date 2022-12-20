@@ -1,18 +1,18 @@
-#include "Filesystem_Service.h"
+#include "DistroFiles_Service.h"
 
-int Filesystem_Service_Work(UInt64 _MSTime, void* _Context);
+int DistroFiles_Service_Work(UInt64 _MSTime, void* _Context);
 
-int Filesystem_Service_Load(Filesystem_Service* _Service);
-int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON);
-int Filesystem_Service_Save(Filesystem_Service* _Service);
+int DistroFiles_Service_Load(DistroFiles_Service* _Service);
+int DistroFiles_Service_Read(DistroFiles_Service* _Service, json_t* _JSON);
+int DistroFiles_Service_Save(DistroFiles_Service* _Service);
 
-int Filesystem_Service_InitializePtr(StateMachine* _Worker, const char* _Path, Filesystem_Service** _ServicePtr)
+int DistroFiles_Service_InitializePtr(StateMachine* _Worker, const char* _Path, DistroFiles_Service** _ServicePtr)
 {
-	Filesystem_Service* _Service = (Filesystem_Service*)Allocator_Malloc(sizeof(Filesystem_Service));
+	DistroFiles_Service* _Service = (DistroFiles_Service*)Allocator_Malloc(sizeof(DistroFiles_Service));
 	if(_Service == NULL)
 		return -1;
 	
-	int success = Filesystem_Service_Initialize(_Service, _Worker, _Path);
+	int success = DistroFiles_Service_Initialize(_Service, _Worker, _Path);
 	if(success != 0)
 	{
 		Allocator_Free(_Service);
@@ -25,7 +25,7 @@ int Filesystem_Service_InitializePtr(StateMachine* _Worker, const char* _Path, F
 	return 0;
 }
 
-int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _Worker, const char* _Path)
+int DistroFiles_Service_Initialize(DistroFiles_Service* _Service, StateMachine* _Worker, const char* _Path)
 {
 	_Service->m_Allocated = False;
 	_Service->m_Json = NULL;
@@ -87,10 +87,10 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	_Service->m_Settings.m_Interval = SEC * 10;
 
 	//-----------------------------------------
-	int loadSuccess = Filesystem_Service_Load(_Service);
+	int loadSuccess = DistroFiles_Service_Load(_Service);
 	if(loadSuccess < 0)
 	{
-		printf("Failed to save Filesystem Server standard settings!\r\n");
+		printf("Failed to save DistroFiles Server standard settings!\r\n");
 		printf("Failed code: %i\n\r", loadSuccess);
 		String_Dispose(&_Service->m_Path);
 		Buffer_Dispose(&_Service->m_Buffer);
@@ -98,10 +98,10 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 	}
 	else if(loadSuccess == 1)
 	{
-		Filesystem_Service_Save(_Service);
+		DistroFiles_Service_Save(_Service);
 	}
 
-	success = Filesystem_Server_InitializePtr(_Service, &_Service->m_Server);
+	success = DistroFiles_Server_InitializePtr(_Service, &_Service->m_Server);
 
 	if(success != 0)
 	{
@@ -112,34 +112,34 @@ int Filesystem_Service_Initialize(Filesystem_Service* _Service, StateMachine* _W
 		return -7;
 	}
 
-	success = Filesystem_Client_InitializePtr(_Service, &_Service->m_Client);
+	success = DistroFiles_Client_InitializePtr(_Service, &_Service->m_Client);
 	if(success != 0)
 	{
 		printf("Failed to initialize client!\r\n");
 		printf("Failed code: %i\n\r", success);
 		String_Dispose(&_Service->m_Path);
-		Filesystem_Server_Dispose(_Service->m_Server);
+		DistroFiles_Server_Dispose(_Service->m_Server);
 		Buffer_Dispose(&_Service->m_Buffer);
 		return -8;
 	}
 
 	EventHandler_Initialize(&_Service->m_EventHandler);
 	
-	StateMachine_CreateTask(_Service->m_Worker, NULL, Filesystem_Service_Work, _Service, &_Service->m_Task);
+	StateMachine_CreateTask(_Service->m_Worker, NULL, DistroFiles_Service_Work, _Service, &_Service->m_Task);
 	return 0;
 }
 
-int Filesystem_Service_Work(UInt64 _MSTime, void* _Context)
+int DistroFiles_Service_Work(UInt64 _MSTime, void* _Context)
 {
-	Filesystem_Service* _Service = (Filesystem_Service*) _Context;
+	DistroFiles_Service* _Service = (DistroFiles_Service*) _Context;
 
-	Filesystem_Server_Work(_MSTime, _Service->m_Server);
-	Filesystem_Client_Work(_MSTime, _Service->m_Client);
+	DistroFiles_Server_Work(_MSTime, _Service->m_Server);
+	DistroFiles_Client_Work(_MSTime, _Service->m_Client);
 	return 0;
 }
 
 
-int Filesystem_Service_Load(Filesystem_Service* _Service)
+int DistroFiles_Service_Load(DistroFiles_Service* _Service)
 {
 	String str;
 	if(String_Initialize(&str, 512) != 0)
@@ -151,7 +151,7 @@ int Filesystem_Service_Load(Filesystem_Service* _Service)
 	int success = String_ReadFromFile(&str, filepath);
 	if(success != 0)
 	{
-		Filesystem_Service_Save(_Service);
+		DistroFiles_Service_Save(_Service);
 		String_Dispose(&str);
 		return 0;
 	}
@@ -164,7 +164,7 @@ int Filesystem_Service_Load(Filesystem_Service* _Service)
 		return -5;
 	}
 	
-	success = Filesystem_Service_Read(_Service, json);
+	success = DistroFiles_Service_Read(_Service, json);
 	_Service->m_Json = json;
 	String_Dispose(&str);
 	
@@ -185,13 +185,13 @@ int Filesystem_Service_Load(Filesystem_Service* _Service)
 	return 0;
 }
 
-int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
+int DistroFiles_Service_Read(DistroFiles_Service* _Service, json_t* _JSON)
 {
 	UInt8 version;
 	
 	if(json_getUInt(_JSON, "version", &version) == 0)
 	{
-		if(version != Filesystem_Service_VERSION)
+		if(version != DistroFiles_Service_VERSION)
 			return 2;
 	}
 	else
@@ -252,7 +252,7 @@ int Filesystem_Service_Read(Filesystem_Service* _Service, json_t* _JSON)
 	return needSave == True ? 1 : 0;
 }
 
-int Filesystem_Service_Save(Filesystem_Service* _Service)
+int DistroFiles_Service_Save(DistroFiles_Service* _Service)
 {
 	String str;
 	if(String_Initialize(&str, 16) != 0)
@@ -267,7 +267,7 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 			"\"servers\": [],"
 			"\"autosync\": %s,"
 			"\"interval\": %u"
-		"}",Filesystem_Service_VERSION, _Service->m_Settings.m_Host, _Service->m_Settings.m_Distributer, _Service->m_Settings.m_AutoSync == True ? "true" : "false", _Service->m_Settings.m_Interval
+		"}",DistroFiles_Service_VERSION, _Service->m_Settings.m_Host, _Service->m_Settings.m_Distributer, _Service->m_Settings.m_AutoSync == True ? "true" : "false", _Service->m_Settings.m_Interval
 	) != 0)
 	{
 		String_Dispose(&str);
@@ -317,19 +317,19 @@ int Filesystem_Service_Save(Filesystem_Service* _Service)
 }
 /*
 
-int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
+int DistroFiles_Service_TCPRead(DistroFiles_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
 		return 0;
 	
 	int totalReaded = 0;
 	LinkedList_Node* currentNode = _List->m_Head;
-	unsigned char buffer[Filesystem_Service_BufferMax];
+	unsigned char buffer[DistroFiles_Service_BufferMax];
 	Buffer_Clear(&_Service->m_Buffer);
 	while(currentNode != NULL)
 	{
 		int readed = 0;
-		Filesystem_Connection* connection = (Filesystem_Connection*)currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*)currentNode->m_Item;
 		readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
 		if(readed > 0) {
 			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);
@@ -347,7 +347,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 		}
 
-		while (readed == Filesystem_Service_BufferMax)
+		while (readed == DistroFiles_Service_BufferMax)
 		{
 			readed = TCPSocket_Read(connection->m_Socket, buffer, sizeof(buffer));
 			totalReaded += Buffer_WriteBuffer(&_Service->m_Buffer, buffer, readed);
@@ -358,7 +358,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 
 	if(totalReaded > 0)
 	{
-		printf("Filesystem_Service_TCPRead(%i)\n\r", totalReaded);
+		printf("DistroFiles_Service_TCPRead(%i)\n\r", totalReaded);
 		Buffer_DeepCopy(_Buffer, &_Service->m_Buffer, _Service->m_Buffer.m_BytesLeft);
 		return totalReaded;
 	}
@@ -366,7 +366,7 @@ int Filesystem_Service_TCPRead(Filesystem_Service* _Service, LinkedList* _List, 
 	return 0;
 }
 
-int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
+int DistroFiles_Service_TCPWrite(DistroFiles_Service* _Service, LinkedList* _List, Buffer* _Buffer, int _Size)
 {
 	if(_List->m_Size == 0)
 		return 0;
@@ -388,7 +388,7 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 	Buffer_ResetReadPtr(_Buffer);
 	while (currentNode != NULL)
 	{
-		Filesystem_Connection* connection = (Filesystem_Connection*) currentNode->m_Item;
+		DistroFiles_Connection* connection = (DistroFiles_Connection*) currentNode->m_Item;
 		currentNode = currentNode->m_Next;
 
 		if(connection->m_Addrass.m_Type == Payload_Address_Type_NONE || des.m_Type == Payload_Address_Type_NONE || CommperIP(connection->m_Addrass.m_Address.MAC, des.m_Address.MAC) == True)
@@ -414,7 +414,7 @@ int Filesystem_Service_TCPWrite(Filesystem_Service* _Service, LinkedList* _List,
 	return 0;
 }
 */
-void Filesystem_Service_Dispose(Filesystem_Service* _Service)
+void DistroFiles_Service_Dispose(DistroFiles_Service* _Service)
 {
 	if(_Service->m_Task != NULL)
 	{
@@ -422,16 +422,16 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 		_Service->m_Task = NULL;
 	}
 
-	if(_Service->m_Server != NULL)
-	{
-		Filesystem_Server_Dispose(_Service->m_Server);
-		_Service->m_Server = NULL;
-	}
-
 	if(_Service->m_Client != NULL)
 	{
-		Filesystem_Client_Dispose(_Service->m_Client);
+		DistroFiles_Client_Dispose(_Service->m_Client);
 		_Service->m_Client = NULL;
+	}
+
+	if(_Service->m_Server != NULL)
+	{
+		DistroFiles_Server_Dispose(_Service->m_Server);
+		_Service->m_Server = NULL;
 	}
 
 	Buffer_Dispose(&_Service->m_Buffer);
@@ -448,6 +448,6 @@ void Filesystem_Service_Dispose(Filesystem_Service* _Service)
 	if(_Service->m_Allocated == True)
 		Allocator_Free(_Service);
 	else
-		memset(_Service, 0, sizeof(Filesystem_Service));
+		memset(_Service, 0, sizeof(DistroFiles_Service));
 
 }
