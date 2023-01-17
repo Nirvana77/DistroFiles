@@ -5,7 +5,6 @@
 #endif
 
 #ifdef ALLOCATOR_DEBUG
-
 	int Allocator_CreateDatapoint(Allocator_Event _Event, void* _Pointer, unsigned int _Size, const char* _FileString, unsigned int _LineNumber, const char* _FunctionString)
 	{
 		if(_Event == ALLOCATOR_EVENT_FREE)

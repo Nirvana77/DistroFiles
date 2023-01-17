@@ -38,7 +38,6 @@ int NetworkLayer_SendPayload(void* _Context, Payload** _PaylodePtr)
 	Payload* message = NULL;
 	if(_NetworkLayer->m_FuncOut.m_Send(_NetworkLayer->m_FuncOut.m_Context, &message) == 1) //Whant to send meesage
 	{
-
 		int success = NetworkLayer_PayloadBuilder(_NetworkLayer, message);
 		if(success == 0)
 		{

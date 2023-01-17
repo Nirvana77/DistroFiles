@@ -11,11 +11,7 @@ int Payload_InitializePtr(UInt8 _UUID[UUID_DATA_SIZE], Payload** _PayloadPtr)
 	if(success != 0)
 	{
 		Allocator_Free(_Payload);
-		return success;
-	}
-	
 	_Payload->m_Allocated = True;
-	
 	*(_PayloadPtr) = _Payload;
 	return 0;
 }
