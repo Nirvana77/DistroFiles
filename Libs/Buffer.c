@@ -1,13 +1,13 @@
 #include "Buffer.h"
 
 
-int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr)
+int Buffer_InitializePtr(int _ExtentionSize, Buffer** _BufferPtr)
 {
 	Buffer* _Buffer = (Buffer*)Allocator_Malloc(sizeof(Buffer));
 	if(_Buffer == NULL)
 		return -1;
 	
-	int success = Buffer_Initialize(_Buffer, _IsDynamic, _ExtentionSize);
+	int success = Buffer_Initialize(_Buffer, _ExtentionSize);
 	if(success != 0)
 	{
 		Allocator_Free(_Buffer);
@@ -20,7 +20,7 @@ int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPt
 	return 0;
 }
 
-int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize)
+int Buffer_Initialize(Buffer* _Buffer, int _ExtentionSize)
 {
 	_Buffer->m_Allocated = False;
 
@@ -29,7 +29,6 @@ int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize)
 	if(_Buffer->m_Ptr == NULL)
 		return -2;
 
-	_Buffer->m_Dynamic = _IsDynamic;
 	_Buffer->m_ReadPtr = _Buffer->m_Ptr;
 	_Buffer->m_WritePtr = _Buffer->m_Ptr;
 	_Buffer->m_ExtentionSize = _ExtentionSize;
@@ -43,8 +42,6 @@ int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize)
 
 int Buffer_ExtendBy(Buffer* _Buffer, int _Size)
 {
-	if(_Buffer->m_Dynamic == False)
-		return -2;
 
 	if(_Size % _Buffer->m_ExtentionSize != 0)
 		_Size += _Buffer->m_ExtentionSize - _Size % _Buffer->m_ExtentionSize;
@@ -177,7 +174,7 @@ int Buffer_WriteBuffer(Buffer* _Buffer, unsigned char* _Ptr, int _Size)
 	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + _Size)
 	{
 		if(Buffer_ExtendBy(_Buffer, _Size) != 0)
-				return -1;
+			return -1;
 	}
 
 	int readBytes = 0;
@@ -192,7 +189,7 @@ int Buffer_ReadFromFile(Buffer* _Buffer, FILE* _File)
 {
 	int size = File_GetSize(_File);
 	
-	if(_Buffer->m_Size - _Buffer->m_BytesLeft < size)
+	if(_Buffer->m_Size < _Buffer->m_WritePtr - _Buffer->m_Ptr + size)
 	{
 		if(Buffer_ExtendBy(_Buffer, size) != 0)
 			return -1;
@@ -214,17 +211,14 @@ int Buffer_Copy(Buffer* _Des, Buffer* _Src, int _Size)
 	if(_Des->m_Size < _Des->m_WritePtr - _Des->m_Ptr + _Size)
 	{
 		if(Buffer_ExtendBy(_Des, _Des->m_Size + (int)(_Des->m_WritePtr - _Des->m_Ptr + _Size)) != 0)
-				return -1;
+			return -1;
 	}
 
 	Buffer_Clear(_Des);
 
 	int wrtten = Buffer_WriteBuffer(_Des, _Src->m_ReadPtr, _Size);
 
-	_Src->m_ReadPtr += wrtten;
-	_Src->m_BytesLeft -= wrtten;
-
-	return 1;
+	return wrtten;
 }
 
 

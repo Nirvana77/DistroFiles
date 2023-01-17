@@ -7,14 +7,9 @@ typedef struct T_Buffer Buffer;
 #include "Types.h"
 #include "Memory.h"
 
-#ifndef TCPBufferSize
-	#define TCPBufferSize 256
-#endif
-
 struct T_Buffer
 {
 	Bool m_Allocated;
-	Bool m_Dynamic;
 
 	unsigned char* m_Ptr;
 	unsigned char* m_ReadPtr;
@@ -26,8 +21,8 @@ struct T_Buffer
 
 };
 
-int Buffer_InitializePtr(Bool _IsDynamic, int _ExtentionSize, Buffer** _BufferPtr);
-int Buffer_Initialize(Buffer* _Buffer, Bool _IsDynamic, int _ExtentionSize);
+int Buffer_InitializePtr(int _ExtentionSize, Buffer** _BufferPtr);
+int Buffer_Initialize(Buffer* _Buffer, int _ExtentionSize);
 
 void Buffer_Clear(Buffer* _Buffer);
 
@@ -35,6 +30,10 @@ int Buffer_ExtendBy(Buffer* _Buffer, int _Size);
 static inline int Buffer_Extend(Buffer* _Buffer)
 {
 	return Buffer_ExtendBy(_Buffer, _Buffer->m_ExtentionSize);
+}
+static inline int Buffer_SizeLeft(Buffer* _Buffer)
+{
+	return _Buffer->m_Size - (_Buffer->m_WritePtr - _Buffer->m_Ptr);
 }
 
 int Buffer_ReadUInt64(Buffer* _Buffer, UInt64* _Value);
@@ -68,6 +67,15 @@ static inline void Buffer_Reset(Buffer* _Buffer)
 {
 	Buffer_ResetReadPtr(_Buffer);
 	Buffer_ResetWritePtr(_Buffer);
+}
+static inline int Buffer_DeepCopy(Buffer* _Des, Buffer* _Src, int _Size)
+{
+	int written = Buffer_Copy(_Des, _Src, _Size);
+	
+	_Src->m_ReadPtr += written;
+	_Src->m_BytesLeft -= written;
+
+	return written;
 }
 
 void Buffer_Dispose(Buffer* _Buffer);

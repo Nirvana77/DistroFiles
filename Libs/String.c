@@ -232,7 +232,7 @@ int String_SaveToFile(String* _Str, const char* _Path)
 	}
 
 	File_Close(f);
-	return success;
+	return 0;
 }
 
 Bool String_EndsWith(String* _Str, const char* _Exp)
@@ -272,19 +272,68 @@ int String_IndexOf(String* _Str, const char* _Exp)
 {
 	for (int i = 0; i < _Str->m_Length; i++)
 	{
+		Bool isFouned = True;
 		if((char)_Str->m_Ptr[i] == _Exp[0])
 		{
 			for (int j = 1; j < strlen(_Exp); j++)
 			{
 				if((char)_Str->m_Ptr[i + j] != _Exp[j])
-					return -1;
+				{
+					isFouned = False;
+					break;
+				}
 			}
-			return i + strlen(_Exp);
+			if(isFouned == True)
+				return i + strlen(_Exp);
 		}
 	}
 	
 
 	return -1;
+}
+
+int String_LastIndexOf(String* _Str, const char* _Exp)
+{
+	int length = strlen(_Exp) - 1;
+	for (int i = _Str->m_Length - 1; i >= 0; i--)
+	{
+		Bool isFouned = True;
+		if((char)_Str->m_Ptr[i] == _Exp[length])
+		{
+			for (int j = 1; j < length; j++)
+			{
+				if((char)_Str->m_Ptr[i - j] != _Exp[length - j])
+				{
+					isFouned = False;
+					break;
+				}
+			}
+			if(isFouned == True)
+				return i;
+		}
+	}
+	
+	return -1;
+}
+
+int String_SubString(String* _Str, int _Start, int _End)
+{
+	if(_Start < 0)
+		return -1;
+	if(_End > _Str->m_Length)
+		return -2;
+
+	int length = _Str->m_Length - _End;
+	if(length != 0)
+	{
+
+	}
+	else
+	{
+		_Str->m_Ptr[_Start] = 0;
+	}
+
+	return 0;
 }
 
 void String_Dispose(String* _Str)

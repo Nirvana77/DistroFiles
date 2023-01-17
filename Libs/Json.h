@@ -45,4 +45,18 @@ static inline int json_getString(json_t* _JSON, const char* _Filed, const char**
 	return 0;
 }
 
+static inline int json_getBool(json_t* _JSON, const char* _Filed, Bool* _Value)
+{
+	if(_Value == NULL)
+		return -1;
+	
+	json_t* value = json_object_get(_JSON, _Filed);
+	if(value == NULL)
+		return -2;
+		
+	*(_Value) = json_boolean_value(value) == 0 ? False : True;
+	
+	return 0;
+}
+
 #endif // Json_h__

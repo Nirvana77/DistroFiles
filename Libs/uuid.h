@@ -9,6 +9,7 @@ typedef struct T_uuid uuid;
 
 #define UUID_DATA_SIZE 16
 #define UUID_STRING_SIZE 33
+#define UUID_FULLSTRING_SIZE 37
 
 struct T_uuid
 {
@@ -21,7 +22,13 @@ struct T_uuid
 int uuid_InitializePtr(uuid** _UUIDPtr);
 int uuid_Initialize(uuid* _UUID);
 
-int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[37]);
+int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[UUID_FULLSTRING_SIZE]);
+Bool uuid_Compere(UInt8 _A[UUID_DATA_SIZE], UInt8 _B[UUID_DATA_SIZE]);
+
+static inline int uuid_Copy(UInt8 _Des[UUID_DATA_SIZE], UInt8 _Src[UUID_DATA_SIZE])
+{
+	return Memory_Copy(_Des, _Src, UUID_DATA_SIZE);
+}
 
 void uuid_Dispose(uuid* _UUID);
 

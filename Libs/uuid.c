@@ -26,7 +26,7 @@ int uuid_Initialize(uuid* _UUID)
 	return 0;
 }
 
-int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[37])
+int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[UUID_FULLSTRING_SIZE])
 {
 	char* ptr = _Buffer;
 	int i;
@@ -37,6 +37,16 @@ int uuid_ToString(UInt8 _Data[UUID_DATA_SIZE], char _Buffer[37])
 	return 0;
 }
 
+Bool uuid_Compere(UInt8 _A[UUID_DATA_SIZE], UInt8 _B[UUID_DATA_SIZE])
+{
+	for (int i = 0; i < UUID_DATA_SIZE; i++)
+	{
+		if(_A[i] != _B[i])
+			return False;
+	}
+	
+	return True;
+}
 
 void uuid_Dispose(uuid* _UUID)
 {

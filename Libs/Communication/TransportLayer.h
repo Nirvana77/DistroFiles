@@ -12,7 +12,8 @@ struct T_TransportLayer
 	Bool m_Allocated;
 
 	LinkedList m_Queued;
-	LinkedList m_Sented;
+	LinkedList m_Sent;
+	LinkedList m_Postponed;
 
 	Payload_FuncOut m_FuncOut;
 	
@@ -21,7 +22,7 @@ struct T_TransportLayer
 int TransportLayer_InitializePtr(TransportLayer** _TransportLayerPtr);
 int TransportLayer_Initialize(TransportLayer* _TransportLayer);
 
-int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Address_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr);
+int TransportLayer_CreateMessage(TransportLayer* _TransportLayer, Payload_Type _Type, int _Size, int _Timeout, Payload** _PayloadPtr);
 int TransportLayer_DestroyMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 int TransportLayer_RemoveMessage(TransportLayer* _TransportLayer, Payload* _Payload);
 

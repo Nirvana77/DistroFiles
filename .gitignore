@@ -3,3 +3,7 @@ bin
 bin/*
 Shared
 Shared/*
+*.json
+*.txt
+*__pycache__
+*__pycache__/*

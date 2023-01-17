@@ -1,26 +1,22 @@
 #include "Payload.h"
 
 
-int Payload_InitializePtr(Payload** _PayloadPtr)
+int Payload_InitializePtr(UInt8 _UUID[UUID_DATA_SIZE], Payload** _PayloadPtr)
 {
 	Payload* _Payload = (Payload*)Allocator_Malloc(sizeof(Payload));
 	if(_Payload == NULL)
 		return -1;
 	
-	int success = Payload_Initialize(_Payload);
+	int success = Payload_Initialize(_Payload, _UUID);
 	if(success != 0)
 	{
 		Allocator_Free(_Payload);
-		return success;
-	}
-	
 	_Payload->m_Allocated = True;
-	
 	*(_PayloadPtr) = _Payload;
 	return 0;
 }
 
-int Payload_Initialize(Payload* _Payload)
+int Payload_Initialize(Payload* _Payload, UInt8 _UUID[UUID_DATA_SIZE])
 {
 	_Payload->m_Allocated = False;
 	_Payload->m_State = Payload_State_Init;
@@ -30,7 +26,13 @@ int Payload_Initialize(Payload* _Payload)
 
 	_Payload->m_Type = Payload_Type_UnSafe;
 
-	Buffer_Initialize(&_Payload->m_Data, True, 64);
+	Buffer_Initialize(&_Payload->m_Data, 64);
+	EventHandler_Initialize(&_Payload->m_EventHandler);
+
+	if(_UUID == NULL)
+		uuid_generate(_Payload->m_UUID);
+	else
+		memcpy(_Payload->m_UUID, _UUID, UUID_DATA_SIZE);
 
 	memset(&_Payload->m_Src, 0, sizeof(Payload_Address));
 	memset(&_Payload->m_Des, 0, sizeof(Payload_Address));
@@ -39,11 +41,11 @@ int Payload_Initialize(Payload* _Payload)
 	return 0;
 }
 
-int Payload_WriteCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
+int Payload_WriteAddress(Payload_Address* _Address, Buffer* _Buffer)
 {
 
-	Buffer_WriteUInt8(_Buffer, _Communicator->m_Type);
-	return Buffer_WriteBuffer(_Buffer, (unsigned char*)&_Communicator->m_Address, sizeof(_Communicator->m_Address)) + 1;
+	Buffer_WriteUInt8(_Buffer, _Address->m_Type);
+	return Buffer_WriteBuffer(_Buffer, (unsigned char*)&_Address->m_Address, sizeof(_Address->m_Address)) + 1;
 }
 
 int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
@@ -85,9 +87,9 @@ int Payload_WriteMessage(Payload_Message* _Message, Buffer* _Buffer)
 	return written;
 }
 
-int Payload_ReadCommunicator(Payload_Address* _Communicator, Buffer* _Buffer)
+int Payload_ReadAddress(Payload_Address* _Address, Buffer* _Buffer)
 {
-	return Buffer_ReadBuffer(_Buffer, (unsigned char*)&_Communicator->m_Address, sizeof(_Communicator->m_Address));
+	return Buffer_ReadBuffer(_Buffer, (unsigned char*)&_Address->m_Address, sizeof(_Address->m_Address));
 }
 
 int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
@@ -100,11 +102,14 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		return -1;
 
 	readed += success;
+	
+	if(type < Payload_Message_Type_Min || type > Payload_Message_Type_Max)
+		return -2;
 	_Message->m_Type = (Payload_Message_Type)type;
 
 	Buffer_ReadUInt16(_Buffer, &_Message->m_Size);
 	if(success < 0)
-		return -2;
+		return -3;
 
 	readed += success;
 
@@ -114,7 +119,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 		{
 			Buffer_ReadBuffer(_Buffer, (UInt8*)_Message->m_Method.m_Str, _Message->m_Size);
 			if(success < 0)
-				return -3;
+				return -4;
 
 			_Message->m_Method.m_Str[_Message->m_Size] = 0;
 
@@ -129,7 +134,7 @@ int Payload_ReadMessage(Payload_Message* _Message, Buffer* _Buffer)
 	return readed;
 }
 
-void Payload_FilCommunicator(Payload_Address* _Des, Payload_Address* _Src)
+void Payload_FilAddress(Payload_Address* _Des, Payload_Address* _Src)
 {
 	_Des->m_Type = _Src->m_Type;
 	switch (_Src->m_Type)
@@ -180,12 +185,11 @@ void Payload_FilMessage(Payload_Message* _Des, Payload_Message* _Src)
 void Payload_Copy(Payload* _Des, Payload* _Src)
 {
 	_Des->m_Size = _Src->m_Size;
-	_Des->m_Time = _Src->m_Time;
 	_Des->m_Type = _Src->m_Type;
-	_Des->m_State = _Src->m_State;
+	_Des->m_Timeout = _Src->m_Timeout;
 
-	Payload_FilCommunicator(&_Des->m_Des, &_Src->m_Des);
-	Payload_FilCommunicator(&_Des->m_Src, &_Src->m_Src);
+	Payload_FilAddress(&_Des->m_Des, &_Src->m_Des);
+	Payload_FilAddress(&_Des->m_Src, &_Src->m_Src);
 
 	Payload_FilMessage(&_Des->m_Message, &_Src->m_Message);
 
@@ -194,6 +198,7 @@ void Payload_Copy(Payload* _Des, Payload* _Src)
 
 void Payload_Dispose(Payload* _Payload)
 {
+	EventHandler_Dispose(&_Payload->m_EventHandler);
 	Buffer_Dispose(&_Payload->m_Data);
 
 	if(_Payload->m_Allocated == True)

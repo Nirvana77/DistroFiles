@@ -52,6 +52,7 @@ int File_Hash(FILE* _File, unsigned char _Result[16])
 
 	int bytesLeft = totalSize;
 	char buffer[8];
+	
 	while(bytesLeft > 0)
 	{
 		int bytesToRead = sizeof(buffer);
@@ -153,6 +154,18 @@ int File_WriteAll(FILE* _File, const unsigned char* _Data, int _DataSize)
 	return totalWritten;
 }
 
+
+Bool File_Exist(const char* _Path)
+{
+	FILE* f = NULL;
+	File_Open(_Path, File_Mode_Read, &f);
+
+	if(f == NULL)
+		return False;
+
+	File_Close(f);
+	return True;
+}
 
 int File_Move(const char* _Source, const char* _Destination)
 {

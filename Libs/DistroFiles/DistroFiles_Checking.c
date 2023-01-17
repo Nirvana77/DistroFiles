@@ -1,0 +1,485 @@
+#include "DistroFiles_Checking.h"
+
+void DistroFiles_Checking_ResetCheckingState(DistroFiles_Checking* _Checking);
+int DistroFiles_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context);
+void DistroFiles_Checking_ResendCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* check);
+
+int DistroFiles_Checking_InitializePtr(DistroFiles_Server* _Server, DistroFiles_Checking** _CheckingPtr)
+{
+	DistroFiles_Checking* _Checking = (DistroFiles_Checking*)Allocator_Malloc(sizeof(DistroFiles_Checking));
+	if(_Checking == NULL)
+		return -1;
+	
+	int success = DistroFiles_Checking_Initialize(_Checking, _Server);
+	if(success != 0)
+	{
+		Allocator_Free(_Checking);
+		return success;
+	}
+	
+	_Checking->m_Allocated = True;
+	
+	*(_CheckingPtr) = _Checking;
+	return 0;
+}
+
+int DistroFiles_Checking_Initialize(DistroFiles_Checking* _Checking, DistroFiles_Server* _Server)
+{
+	_Checking->m_Allocated = False;
+	_Checking->m_Server = _Server;
+
+	int success = Payload_Initialize(&_Checking->m_Message, NULL);
+
+	if(success != 0)
+	{
+		printf("Failed to initialize the payload!\n\r");
+		printf("Error code: %i\n\r", success);
+		return -2;
+	}
+
+	LinkedList_Initialize(&_Checking->m_List);
+	
+	return 0;
+}
+
+
+void DistroFiles_Checking_RemoveCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* _Check)
+{
+	_Check->m_IsUsed = False;
+	_Check->m_Connection = NULL;
+
+	LinkedList_Node* node = NULL;
+	if(LinkedList_UnlinkItem(&_Checking->m_List, _Check, &node) == 0)
+		LinkedList_LinkLast(&_Checking->m_List, node);
+}
+
+void DistroFiles_Checking_Clear(DistroFiles_Checking* _Checking)
+{
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*)currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+			return;
+		
+		check->m_IsUsed = False;
+		check->m_Connection = NULL;
+		currentNode = currentNode->m_Next;
+	}
+	
+	_Checking->m_Type = DistroFiles_Checking_Type_None;
+}
+
+int DistroFiles_Checking_SpawnWriteCheck(DistroFiles_Checking* _Checking, Payload_Address* _Address, DistroFiles_Checking_Check** _CheckPtr)
+{
+	if(_CheckPtr == NULL)
+		return -1;
+
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*)currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+		{
+			check->m_IsUsed = True;
+			check->m_Connection = NULL;
+			LinkedList_UnlinkNode(&_Checking->m_List, currentNode);
+			LinkedList_LinkFirst(&_Checking->m_List, currentNode);
+
+			SystemMonotonicMS(&check->m_Timeout);
+			*(_CheckPtr) = check;
+			return 0;
+		}
+		else if(Payload_ComperAddresses(&check->m_Connection->m_Addrass, _Address) == True)
+		{
+			*(_CheckPtr) = check;
+			return 1;
+		}
+		currentNode = currentNode->m_Next;
+	}
+	
+	DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) Allocator_Malloc(sizeof(DistroFiles_Checking_Check));
+
+	check->m_Connection = NULL;
+	check->m_IsUsed = True;
+
+	LinkedList_AddFirst(&_Checking->m_List, check);	
+	SystemMonotonicMS(&check->m_Timeout);
+	*(_CheckPtr) = check;
+	return 0;
+}
+
+//TODO: make this rturn if made an respons
+int DistroFiles_Checking_WorkOnPayload(DistroFiles_Checking* _Checking, DistroFiles_Checking_Type _Type, Payload* _Message)
+{
+	if(_Checking->m_Type != DistroFiles_Checking_Type_None && (_Checking->m_Type != _Type || _Checking->m_Server->m_State == DistroFiles_Server_State_Connecting))
+		return 1;
+
+	DistroFiles_Checking_ResetCheckingState(_Checking);
+
+	switch (_Type)
+	{
+		case DistroFiles_Checking_Type_Write:
+		{
+			Bool isFile = True;
+			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+			UInt16 size = 0;
+			Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+			unsigned char path[size + 1];
+			Buffer_ReadBuffer(&_Message->m_Data, path, size);
+			path[size] = 0;
+			String fullPath;
+
+			String_Initialize(&fullPath, 64);
+			String_Set(&fullPath, _Checking->m_Server->m_FilesytemPath.m_Ptr);
+
+			if(String_EndsWith(&fullPath, "/") == False)
+				String_Append(&fullPath, "/", 1);
+
+			String_Append(&fullPath, (const char*)path, size);
+
+			unsigned char hash[16] = "";
+			unsigned char serverHash[16] = "";
+			Buffer_ReadBuffer(&_Message->m_Data, hash, 16);
+			Bool exist = False;
+
+			if(isFile == True)
+			{
+				exist = File_Exist(fullPath.m_Ptr);
+				if(exist == True)
+					File_GetHash(fullPath.m_Ptr, serverHash);
+			}
+			else
+			{
+				exist = Folder_Exist(fullPath.m_Ptr);
+				if(exist == True)
+					Folder_Hash(fullPath.m_Ptr, serverHash);
+
+			}
+
+			if(exist == True)
+			{
+				Bool isSame = DistroFiles_Server_HashCheck(serverHash, hash);
+
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
+				{
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					if(isSame == True)
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 0);
+					}
+					else
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 1);
+						Buffer_WriteUInt16(&msg->m_Data, size);
+						Buffer_WriteBuffer(&msg->m_Data, path, size);
+						Buffer_WriteBuffer(&msg->m_Data, serverHash, 16);
+					}
+
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+				}
+			}
+			else
+			{
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
+				{
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					Buffer_WriteUInt8(&msg->m_Data, 2);
+
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+				}
+			}
+			
+			String_Dispose(&fullPath);
+		} break;
+
+		case DistroFiles_Checking_Type_Delete:
+		{
+			Bool isFile = True;
+			Buffer_ReadUInt8(&_Message->m_Data, (UInt8*)&isFile);
+
+			UInt16 size = 0;
+			Buffer_ReadUInt16(&_Message->m_Data, &size);
+
+			unsigned char path[size + 1];
+			Buffer_ReadBuffer(&_Message->m_Data, path, size);
+			path[size] = 0;
+			String fullPath;
+
+			String_Initialize(&fullPath, 64);
+			String_Set(&fullPath, _Checking->m_Server->m_FilesytemPath.m_Ptr);
+
+			if(String_EndsWith(&fullPath, "/") == False)
+				String_Append(&fullPath, "/", 1);
+
+			String_Append(&fullPath, (const char*)path, size);
+
+			Bool exist = False;
+
+			if(isFile == True)
+				exist = File_Exist(fullPath.m_Ptr);
+			
+			else
+				exist = Folder_Exist(fullPath.m_Ptr);
+
+			if(exist == False)
+			{
+				int index = String_LastIndexOf(&fullPath, "/");
+				String_SubString(&fullPath, index, fullPath.m_Length);
+
+				unsigned char bufferHash[16] = "";
+				unsigned char hash[16] = "";
+				Buffer_ReadBuffer(&_Message->m_Data, bufferHash, 16);
+				Folder_Hash(fullPath.m_Ptr, hash);
+
+				Bool isSame = DistroFiles_Server_HashCheck(bufferHash, hash);
+
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1 + (isSame == False ? 2 + size + 16 : 0), SEC, &msg) == 0)
+				{
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					if(isSame == True)
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 0);
+					}
+					else
+					{
+						Buffer_WriteUInt8(&msg->m_Data, 1);
+						Buffer_WriteUInt16(&msg->m_Data, size);
+						Buffer_WriteBuffer(&msg->m_Data, path, size);
+						Buffer_WriteBuffer(&msg->m_Data, hash, 16);
+					}
+
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+				}
+
+			}
+			else
+			{
+				Payload* msg = NULL;
+				if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
+				{
+					Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+					Buffer_WriteUInt8(&msg->m_Data, 2);
+
+					uuid_Copy(msg->m_UUID, _Message->m_UUID);
+					Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+					Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+					EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+				}
+			}
+			
+			String_Dispose(&fullPath);
+		} break;
+
+		case DistroFiles_Checking_Type_Syncing:
+		{
+			printf("Checking_Type is DistroFiles_Checking_Type_Syncing!\r\n");
+
+		} break;
+
+		case DistroFiles_Checking_Type_None:
+		{
+			printf("Checking_Type is DistroFiles_Checking_Type_None!\r\n");
+			Payload* msg = NULL;
+			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Respons, 1 + 1, SEC, &msg) == 0)
+			{
+				Buffer_WriteUInt8(&msg->m_Data, (UInt8)_Type);
+				Buffer_WriteUInt8(&msg->m_Data, 2);
+
+				uuid_Copy(msg->m_UUID, _Message->m_UUID);
+				Payload_FilAddress(&msg->m_Des, &_Message->m_Src);
+				Payload_SetMessageType(msg, Payload_Message_Type_String, "CheckAck", strlen("CheckAck"));
+				EventHandler_Hook(&msg->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+			}
+			
+			return -1;
+		} break;
+	}
+
+	return 0;
+}
+
+int DistroFiles_Checking_MessageEvent(EventHandler* _EventHandler, int _EventCall, void* _Object, void* _Context)
+{
+	DistroFiles_Checking* _Checking = (DistroFiles_Checking*) _Context;
+	Payload* _Message = (Payload*) _Object;
+	Payload_State state = (Payload_State) _EventCall;
+	
+	switch (state)
+	{
+		case Payload_State_Failed:
+		case Payload_State_Timeout:
+		{
+			Payload_Print(_Message, "Checking Failed");
+			Payload* message = NULL;
+			if(TransportLayer_ResendMessage(&_Checking->m_Server->m_TransportLayer, _Message, &message) == 0)
+				EventHandler_Hook(&message->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+
+			return 1;
+		} break;
+
+		case Payload_State_Sented:
+		{
+			return 1;
+		} break;
+
+		default: { };
+	}
+
+	return 0;
+}
+
+void DistroFiles_Checking_ResetCheckingState(DistroFiles_Checking* _Checking)
+{
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
+		if(check->m_IsUsed == False)
+			break;
+
+		check->m_IsUsed = False;
+		currentNode = currentNode->m_Next;
+	}
+}
+
+Bool DistroFiles_Checking_CanUseConnection(DistroFiles_Checking* _Checking, DistroFiles_Connection* _Connection)
+{
+	LinkedList_Node* node = _Checking->m_List.m_Head;
+	while (node != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) node->m_Item;
+
+		if(check->m_IsUsed == False)
+		{
+			return True;
+		}
+		else if(_Connection == check->m_Connection)
+		{
+			if(check->m_IsOk != DistroFiles_Checking_Check_Satus_OK)
+				return False;
+			
+			return True;
+		}
+		else
+		{
+			node = node->m_Next;
+		}
+	}
+
+	return True;
+}
+
+void DistroFiles_Checking_ResendCheck(DistroFiles_Checking* _Checking, DistroFiles_Checking_Check* check)
+{
+	printf("TODO: do resend check");
+}
+
+void DistroFiles_Checking_Work(UInt64 _MSTime, DistroFiles_Checking* _Checking)
+{
+
+	int size = 0;
+	int oks = 0;
+	int notSync = 0;
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+			break;
+
+		if(check->m_IsOk == 0)
+			oks++;
+
+		else if(check->m_IsOk == 2)
+			notSync++;
+		
+		else if(_MSTime > check->m_Timeout + DistroFiles_Checking_Timeout)
+			DistroFiles_Checking_ResendCheck(_Checking, check);
+
+		size++;
+		currentNode = currentNode->m_Next;
+	}
+	
+	if(size != _Checking->m_Server->m_Connections.m_Size - 1)
+		return;
+
+	if(size - notSync != 0)
+	{
+		int error = (int)((double)(1 - oks / (size - notSync)) * 100);
+		if(error >= DistroFiles_Checking_CheckError)
+		{
+			_Checking->m_Type = DistroFiles_Checking_Type_None;
+			_Checking->m_Server->m_State = DistroFiles_Server_State_ReSync;
+			return;
+		}
+	}
+
+	_Checking->m_Server->m_State = DistroFiles_Server_State_Synced;
+
+	currentNode = _Checking->m_List.m_Head;
+	while (currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* check = (DistroFiles_Checking_Check*) currentNode->m_Item;
+
+		if(check->m_IsUsed == False)
+			break;
+
+		if(check->m_IsOk == DistroFiles_Checking_Check_Satus_DontHave)
+		{
+			Payload* message = NULL;
+			if(TransportLayer_CreateMessage(&_Checking->m_Server->m_TransportLayer, Payload_Type_Safe, _Checking->m_Message.m_Size, SEC, &message) == 0)
+			{
+				Payload_FilAddress(&_Checking->m_Message.m_Des, &check->m_Connection->m_Addrass);
+				Payload_Copy(message, &_Checking->m_Message);
+				EventHandler_Hook(&message->m_EventHandler, DistroFiles_Checking_MessageEvent, _Checking);
+			}
+		}
+
+		size++;
+		currentNode = currentNode->m_Next;
+	}
+
+	DistroFiles_Checking_Clear(_Checking);
+			
+
+}
+
+void DistroFiles_Checking_Dispose(DistroFiles_Checking* _Checking)
+{
+	LinkedList_Node* currentNode = _Checking->m_List.m_Head;
+	while(currentNode != NULL)
+	{
+		DistroFiles_Checking_Check* _Check = (DistroFiles_Checking_Check*)currentNode->m_Item;
+		currentNode = currentNode->m_Next;
+
+		_Check->m_Connection = NULL;
+		Allocator_Free(_Check);
+		LinkedList_RemoveFirst(&_Checking->m_List);
+	}
+
+	Payload_Dispose(&_Checking->m_Message);
+
+	if(_Checking->m_Allocated == True)
+		Allocator_Free(_Checking);
+	else
+		memset(_Checking, 0, sizeof(DistroFiles_Checking));
+
+}

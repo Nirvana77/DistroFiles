@@ -5,7 +5,7 @@ clear
 FILENAME="main"
 
 DFLAGS="-Wall -Wno-psabi -Wfatal-errors -Wno-unused-function"
-LFLAGS="-ljansson -lcurl -luuid"
+LFLAGS="-ljansson -lcurl -luuid -lpthread"
 
 echo "Cleaning up..."
 rm *.o
@@ -21,12 +21,12 @@ else
 	if [ "$1" == "gdb" ]; then
 		echo "Compiling for gdb"
 
-		gcc -g -D COMPILEDEBUG -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -g -D COMPILEDEBUG -c $FILENAME.c -lbsd $LFLAGS $DFLAGS || exit
 
 	else
 	    echo "Compiling"
 
-		gcc -c $FILENAME.c -pthread -lbsd $LFLAGS $DFLAGS || exit
+		gcc -c $FILENAME.c -lbsd $LFLAGS $DFLAGS || exit
 	fi
 fi
 
@@ -49,6 +49,11 @@ rm *.o
 echo "All done!"
 echo "File: bin/\"$FILENAME\" is created"
 
-if [ "$1" == "r" ] || [ "$1" == "R" ] || [ "$2" == "r" ] || [ "$2" == "R" ]; then
-	./bin/$FILENAME
+if [ "$1" == "r" ] || [ "$1" == "R" ]; then
+	./bin/$FILENAME $2 $3
+fi
+
+if [ "$2" == "r" ] || [ "$2" == "R" ]; then
+	./bin/$FILENAME $3 $4
+
 fi

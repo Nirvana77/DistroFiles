@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "Hash/md5.h"
+#include "Types.h"
 
 typedef enum
 {
@@ -64,8 +65,9 @@ int File_ReadAll(FILE* _File, unsigned char* _Buffer, int _BufferSize);
 
 int File_WriteAll(FILE* _File, const unsigned char* _Data, int _DataSize);
 
-int File_Copy(const char* _Source, const char* _Destination);
+Bool File_Exist(const char* _Path);
 int File_Move(const char* _Source, const char* _Destination);
+int File_Copy(const char* _Source, const char* _Destination);
 int File_Remove(const char* _Source);
 
 
