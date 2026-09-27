@@ -12,6 +12,25 @@ typedef struct T_DataLayer DataLayer;
 	#define DataLayer_CRC (0b11011)
 #endif
 
+//The degree of the DataLayer_CRC polynomial is the width of the CRC, and the CRC is
+//sent as one byte, so the polynomial has to fit in 0b10 to 0b111111111.
+#if (DataLayer_CRC) < 0b10 || (DataLayer_CRC) > 0b111111111
+	#error "DataLayer_CRC has to be a polynomial of degree 1 to 8, like 0b11011."
+#endif
+
+//The width of the CRC in bits, the degree of the DataLayer_CRC polynomial.
+#define DataLayer_CRC_Width ( \
+	((DataLayer_CRC) & 0b100000000) != 0 ? 8 : \
+	((DataLayer_CRC) & 0b010000000) != 0 ? 7 : \
+	((DataLayer_CRC) & 0b001000000) != 0 ? 6 : \
+	((DataLayer_CRC) & 0b000100000) != 0 ? 5 : \
+	((DataLayer_CRC) & 0b000010000) != 0 ? 4 : \
+	((DataLayer_CRC) & 0b000001000) != 0 ? 3 : \
+	((DataLayer_CRC) & 0b000000100) != 0 ? 2 : 1)
+
+//The polynomial without its top bit, that bit is implicit in the division.
+#define DataLayer_CRC_Divisor ((UInt8)((DataLayer_CRC) & ((0x1 << DataLayer_CRC_Width) - 1)))
+
 #define DataLayer_HasSourceBit 0
 #define DataLayer_HasDestinationBit 1
 #define DataLayer_HasMethodBit 2
@@ -37,27 +56,25 @@ struct T_DataLayer
 };
 
 //Creds: https://quickbirdstudios.com/blog/validate-data-with-crc/
-//TODO: #72 Fix to the CRC
 static inline void DataLayer_GetCRC(unsigned char* _Data, int _Size, UInt8* _Result)
 {
 	unsigned char* ptr = _Data;
-	UInt8 CRC = DataLayer_CRC;
-	BitHelper_SetBit(&CRC, 4, False);
+	UInt8 CRC = DataLayer_CRC_Divisor;
 	UInt16 result = 0;
 	
 	for (int i = 0; i < _Size; i++)
 	{
 		UInt8 data;
 		ptr += Memory_ParseUInt8(ptr, &data);
-		result = result + (data << 4);
+		result = result + (data << DataLayer_CRC_Width);
 
-		for (int j = 11; j >= 4; j--)
+		for (int j = DataLayer_CRC_Width + 7; j >= DataLayer_CRC_Width; j--)
 		{
 			Bool bit = BitHelper_Get16Bit(&result, j);
 			BitHelper_Set16Bit(&result, j, False);
 			if(bit == True)
 			{
-				result = result ^ (CRC << (j - 4));
+				result = result ^ (CRC << (j - DataLayer_CRC_Width));
 			}
 		}
 	}

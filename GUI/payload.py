@@ -77,15 +77,21 @@ def str_to_hex_array(string) -> list:
 
 	return arr
 
+# Has to match DataLayer_CRC in SystemConfig.h.
+DATALAYER_CRC = 0b11011
+
 def get_crc(array, result = 0) -> int:
-	CRC = 0b01011
+	# The degree of the polynomial is the width of the CRC, the top bit is implicit
+	# in the division so it is not part of the divisor.
+	width = DATALAYER_CRC.bit_length() - 1
+	CRC = DATALAYER_CRC & ((1 << width) - 1)
 
 	for data in array:
 		if data > 0xff:
 			print(data)
 
-		result = result + ((data & 0xff) << 4)
-		for j in reversed(range(4, 12)):
+		result = result + ((data & 0xff) << width)
+		for j in reversed(range(width, width + 8)):
 			bit = (result >> j) & 0x1 
 
 			if bit > 1:
@@ -93,8 +99,8 @@ def get_crc(array, result = 0) -> int:
 
 			result = result & ~(0x1 << j)
 			if(bit == 1):
-				result = result ^ (CRC << (j - 4))
-		if result > 0xf:
+				result = result ^ (CRC << (j - width))
+		if result > (1 << width) - 1:
 			print("result error")
 	
 	return result
